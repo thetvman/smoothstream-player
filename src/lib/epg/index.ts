@@ -2,12 +2,10 @@
 // Main EPG service module that exports all functionality
 
 // Re-export from modules
-export type { EPGProgram, EPGProgressInfo, EPGParsingOptions } from './types';
-export { getEPGLoadingProgress } from './progress';
+export type { EPGProgram, EPGParsingOptions } from './types';
 export { hasValidCachedEPG, saveCache, clearCache } from './cache';
 export { getCustomEpgUrl, setCustomEpgUrl } from './settings';
 export { fetchEPGData } from './fetcher';
-export { prefetchEPGDataForChannels } from './prefetch';
 
 // Register event listeners for cache management
 if (typeof window !== 'undefined') {

@@ -7,17 +7,12 @@ import ChannelList from "@/components/ChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
-import EPGLoadingProgress from "@/components/EPGLoadingProgress";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { 
   fetchEPGData, 
-  type EPGProgram, 
-  prefetchEPGDataForChannels, 
-  getEPGLoadingProgress,
-  type EPGProgressInfo,
-  hasValidCachedEPG
+  type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Film, Tv } from "lucide-react";
@@ -49,13 +44,6 @@ const Index = () => {
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [epgProgress, setEpgProgress] = useState<EPGProgressInfo>({
-    total: 0,
-    processed: 0,
-    progress: 0,
-    isLoading: false
-  });
-  const [cachedChannelCount, setCachedChannelCount] = useState(0);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -69,33 +57,12 @@ const Index = () => {
           const channel = parsedPlaylist.channels.find(c => c.id === savedChannelId) || null;
           setSelectedChannel(channel);
         }
-        
-        const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
-        if (channelsWithEpg.length > 0) {
-          const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
-          setCachedChannelCount(cachedCount);
-          
-          if (cachedCount < channelsWithEpg.length) {
-            console.log(`Starting background EPG prefetch for ${channelsWithEpg.length - cachedCount} channels (${cachedCount} from cache)`);
-            prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
-          } else {
-            console.log(`All ${cachedCount} channels have cached EPG data, skipping prefetch`);
-          }
-        }
       }
     }
 
     const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
     setIsDarkMode(darkModePreference);
   }, []);
-  
-  useEffect(() => {
-    if (playlist && playlist.channels) {
-      const channelsWithEpg = playlist.channels.filter(c => c.epg_channel_id);
-      const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
-      setCachedChannelCount(cachedCount);
-    }
-  }, [epgProgress, playlist]);
   
   useEffect(() => {
     if (isDarkMode) {
@@ -159,19 +126,6 @@ const Index = () => {
       }
       
       setIsLoading(false);
-      
-      const channelsWithEpg = newPlaylist.channels.filter(c => c.epg_channel_id);
-      if (channelsWithEpg.length > 0) {
-        const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
-        setCachedChannelCount(cachedCount);
-        
-        if (cachedCount < channelsWithEpg.length) {
-          console.log(`Starting EPG prefetch for ${channelsWithEpg.length - cachedCount} channels (${cachedCount} from cache)`);
-          prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
-        } else {
-          console.log(`All ${cachedCount} channels have cached EPG data, skipping prefetch`);
-        }
-      }
     }, 50);
   };
   
@@ -301,17 +255,6 @@ const Index = () => {
       
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
           <div className="lg:col-span-2 flex flex-col space-y-4">
-            {epgProgress.isLoading && (
-              <EPGLoadingProgress 
-                isLoading={epgProgress.isLoading}
-                progress={epgProgress.progress}
-                total={epgProgress.total}
-                processed={epgProgress.processed}
-                message={epgProgress.message}
-                cachedCount={cachedChannelCount}
-              />
-            )}
-          
             <div className="animate-fade-in">
               <VideoPlayer channel={selectedChannel} />
               

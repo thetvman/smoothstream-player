@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -7,15 +8,9 @@ import { ArrowLeft, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
-import EPGLoadingProgress from "@/components/EPGLoadingProgress";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  fetchEPGData, 
-  EPGProgram, 
-  getEPGLoadingProgress, 
-  hasValidCachedEPG 
-} from "@/lib/epg";
+import { fetchEPGData, EPGProgram } from "@/lib/epg";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -25,29 +20,6 @@ const Player = () => {
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const { toast } = useToast();
-  const [epgProgress, setEpgProgress] = useState(getEPGLoadingProgress());
-  const [cachedChannelCount, setCachedChannelCount] = useState(0);
-  
-  useEffect(() => {
-    if (epgProgress.isLoading) {
-      const interval = setInterval(() => {
-        const progress = getEPGLoadingProgress();
-        setEpgProgress(progress);
-        
-        const savedPlaylist = localStorage.getItem("iptv-playlist");
-        if (savedPlaylist) {
-          const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
-          if (parsedPlaylist) {
-            const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
-            const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
-            setCachedChannelCount(cachedCount);
-          }
-        }
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [epgProgress.isLoading]);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -146,21 +118,6 @@ const Player = () => {
       <div className="h-full flex">
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-screen-2xl mx-auto relative">
-            {epgProgress.isLoading && (
-              <div className="absolute top-0 left-0 right-0 z-10 p-4">
-                <EPGLoadingProgress 
-                  isLoading={epgProgress.isLoading}
-                  progress={epgProgress.progress}
-                  total={epgProgress.total}
-                  processed={epgProgress.processed}
-                  message={epgProgress.message}
-                  cachedCount={cachedChannelCount}
-                  parsingSpeed={epgProgress.parsingSpeed}
-                  estimatedTimeRemaining={epgProgress.estimatedTimeRemaining}
-                />
-              </div>
-            )}
-            
             <VideoPlayer channel={channel} autoPlay />
             
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
