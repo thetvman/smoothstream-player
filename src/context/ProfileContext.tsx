@@ -3,6 +3,8 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { UserProfile, UserPreferences } from '@/lib/types';
 import { getCurrentProfile, createProfile, saveProfile, updatePreferences } from '@/lib/profileService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileContextType {
   profile: UserProfile | null;
@@ -19,13 +21,50 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Load profile from localStorage on component mount
+    // Load profile from localStorage on component mount or when auth user changes
     const loadProfile = async () => {
       try {
-        const savedProfile = getCurrentProfile();
-        setProfile(savedProfile);
+        if (user) {
+          // Try to fetch profile from Supabase first if user is authenticated
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          if (data) {
+            // If we have a Supabase profile, convert it to our local format
+            // This is a temporary measure until we fully migrate to Supabase
+            const supabaseProfile = {
+              id: data.id,
+              username: data.username,
+              email: user.email,
+              createdAt: new Date(data.created_at),
+              preferences: {
+                theme: 'system',
+                showEPG: true,
+                autoPlayNext: true,
+                defaultVolume: 70,
+                favoriteChannels: [],
+                favoriteMovies: [],
+                favoriteSeries: [],
+                recentlyWatched: []
+              }
+            };
+            setProfile(supabaseProfile);
+          } else {
+            // Fallback to localStorage
+            const savedProfile = getCurrentProfile();
+            setProfile(savedProfile);
+          }
+        } else {
+          // No authenticated user, try localStorage
+          const savedProfile = getCurrentProfile();
+          setProfile(savedProfile);
+        }
       } catch (error) {
         console.error('Error loading profile:', error);
         toast({
@@ -33,13 +72,17 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
           description: 'Failed to load your profile',
           variant: 'destructive',
         });
+        
+        // Fallback to localStorage
+        const savedProfile = getCurrentProfile();
+        setProfile(savedProfile);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadProfile();
-  }, [toast]);
+  }, [toast, user]);
 
   const createUserProfile = (username: string, email?: string) => {
     try {
