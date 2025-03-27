@@ -59,6 +59,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, username: string) => {
     try {
       setIsLoading(true);
+      
+      // Check if username already exists before attempting to sign up
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking username:', checkError);
+      }
+      
+      if (existingUsers) {
+        throw new Error('Username already taken. Please choose a different username.');
+      }
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -97,6 +113,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       setIsLoading(true);
+      
+      // If username is being updated, check if it already exists
+      if (data.username) {
+        const { data: existingUsers, error: checkError } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', data.username)
+          .neq('id', user.id) // Exclude current user
+          .maybeSingle();
+        
+        if (checkError) {
+          console.error('Error checking username:', checkError);
+        }
+        
+        if (existingUsers) {
+          throw new Error('Username already taken. Please choose a different username.');
+        }
+      }
       
       const { error } = await supabase
         .from('profiles')

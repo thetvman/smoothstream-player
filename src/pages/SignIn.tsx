@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -124,7 +125,10 @@ const SignIn = () => {
                     />
                   </div>
                   {formError && activeTab === "signin" && (
-                    <p className="text-sm font-medium text-destructive">{formError}</p>
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{formError}</AlertDescription>
+                    </Alert>
                   )}
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     <LogIn className="mr-2 h-4 w-4" />
@@ -168,7 +172,10 @@ const SignIn = () => {
                     />
                   </div>
                   {formError && activeTab === "signup" && (
-                    <p className="text-sm font-medium text-destructive">{formError}</p>
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{formError}</AlertDescription>
+                    </Alert>
                   )}
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     <UserPlus className="mr-2 h-4 w-4" />
