@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { UserProfile, UserPreferences } from '@/lib/types';
 import { getCurrentProfile, createProfile, saveProfile, updatePreferences } from '@/lib/profileService';
@@ -38,13 +37,17 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
           if (data) {
             // If we have a Supabase profile, convert it to our local format
             // This is a temporary measure until we fully migrate to Supabase
-            const supabaseProfile = {
+            // Validate the theme to ensure it's one of the allowed values
+            const themeValue = data.theme || 'system';
+            const validatedTheme = isValidTheme(themeValue) ? themeValue : 'system';
+            
+            const supabaseProfile: UserProfile = {
               id: data.id,
               username: data.username,
-              email: user.email,
+              email: user.email || '',
               createdAt: new Date(data.created_at),
               preferences: {
-                theme: 'system',
+                theme: validatedTheme as 'system' | 'light' | 'dark',
                 showEPG: true,
                 autoPlayNext: true,
                 defaultVolume: 70,
@@ -83,6 +86,11 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
 
     loadProfile();
   }, [toast, user]);
+
+  // Helper function to validate theme value
+  const isValidTheme = (theme: string): theme is 'system' | 'light' | 'dark' => {
+    return ['system', 'light', 'dark'].includes(theme);
+  };
 
   const createUserProfile = (username: string, email?: string) => {
     try {
