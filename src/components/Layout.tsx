@@ -31,8 +31,8 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div 
       className={cn(
-        "mx-auto w-full",
-        withSidebar ? "flex" : "",
+        "w-full",
+        withSidebar ? "flex" : "mx-auto",
         maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
         padded && !withSidebar ? "px-4 sm:px-6 md:px-8" : "",
         fullHeight ? "min-h-screen flex flex-col" : "",
