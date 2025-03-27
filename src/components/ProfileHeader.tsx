@@ -11,25 +11,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useProfile } from "@/context/ProfileContext";
 import { useAuth } from "@/context/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { UserRound, Settings, Heart, Clock, LogOut, User, Moon, Sun } from "lucide-react";
 
 const ProfileHeader = () => {
   const navigate = useNavigate();
-  const { profile, isLoading: profileLoading, updateUserPreferences } = useProfile();
   const { user, signOut, isLoading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
+  const { preferences, updatePreferences, loading: preferencesLoading } = useUserPreferences();
+
+  const isLoading = authLoading || profileLoading || preferencesLoading;
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  const toggleTheme = () => {
-    if (!profile) return;
+  const toggleTheme = async () => {
+    if (!preferences) return;
     
-    const newTheme = profile.preferences.theme === 'dark' ? 'light' : 'dark';
-    updateUserPreferences({ theme: newTheme });
+    const newTheme = preferences.theme === 'dark' ? 'light' : 'dark';
+    await updatePreferences({ theme: newTheme });
     
     // Apply theme change immediately
     if (newTheme === 'dark') {
@@ -39,7 +43,14 @@ const ProfileHeader = () => {
     }
   };
 
-  const isLoading = profileLoading || authLoading;
+  // Set initial theme based on preferences
+  React.useEffect(() => {
+    if (preferences?.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [preferences?.theme]);
 
   if (isLoading) {
     return (
@@ -64,7 +75,7 @@ const ProfileHeader = () => {
     );
   }
 
-  const isDarkMode = profile.preferences.theme === 'dark';
+  const isDarkMode = preferences?.theme === 'dark';
 
   return (
     <div className="flex items-center gap-2">
@@ -82,7 +93,7 @@ const ProfileHeader = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={profile.avatar} alt={profile.username} />
+              <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
               <AvatarFallback>
                 {profile.username.slice(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -93,11 +104,9 @@ const ProfileHeader = () => {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{profile.username}</p>
-              {profile.email && (
-                <p className="text-xs leading-none text-muted-foreground">
-                  {profile.email}
-                </p>
-              )}
+              <p className="text-xs leading-none text-muted-foreground">
+                {user.email}
+              </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

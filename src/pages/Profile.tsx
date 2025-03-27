@@ -1,7 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useProfile } from "@/context/ProfileContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -9,66 +9,152 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { User, Settings, Heart, Clock, LogOut, Save, Tv } from "lucide-react";
-import { getRecentlyWatched } from "@/lib/profileService";
+import { User, Settings, Heart, Clock, LogOut, Save, Tv, Link, MapPin } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useAuth } from "@/context/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useUserPosts } from "@/hooks/useUserPosts";
 
 const profileFormSchema = z.object({
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
   }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }).optional().or(z.literal('')),
+  bio: z.string().optional(),
+  location: z.string().optional(),
+  website: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal('')),
 });
+
+const postFormSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  content: z.string().min(10, { message: "Content must be at least 10 characters" }),
+  is_published: z.boolean().default(true),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type PostFormValues = z.infer<typeof postFormSchema>;
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { profile, isLoading, updateProfile, updateUserPreferences, signOut } = useProfile();
-  const [recentItems, setRecentItems] = useState(getRecentlyWatched());
+  const { user, isLoading: authLoading, signOut, updateProfile } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
+  const { preferences, loading: preferencesLoading, updatePreferences } = useUserPreferences();
+  const { posts, loading: postsLoading, createPost, updatePost, deletePost } = useUserPosts();
+  
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+
+  const isLoading = authLoading || profileLoading || preferencesLoading;
 
   useEffect(() => {
-    if (!isLoading && !profile) {
-      navigate("/");
+    if (!authLoading && !user) {
+      navigate("/signin");
     }
-  }, [profile, isLoading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  const form = useForm<z.infer<typeof profileFormSchema>>({
+  const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      username: profile?.username || "",
-      email: profile?.email || "",
+      username: "",
+      bio: "",
+      location: "",
+      website: "",
     },
   });
 
-  const onSubmit = (values: z.infer<typeof profileFormSchema>) => {
-    updateProfile({
-      username: values.username,
-      email: values.email || undefined,
-    });
-    toast("Profile updated successfully");
-  };
+  const postForm = useForm<PostFormValues>({
+    resolver: zodResolver(postFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      is_published: true,
+    },
+  });
 
+  // Update form when profile data is loaded
   useEffect(() => {
     if (profile) {
-      form.reset({
-        username: profile.username,
-        email: profile.email || "",
+      profileForm.reset({
+        username: profile.username || "",
+        bio: profile.bio || "",
+        location: profile.location || "",
+        website: profile.website || "",
       });
     }
-  }, [profile, form]);
+  }, [profile, profileForm]);
 
-  const handleToggleTheme = () => {
-    if (!profile) return;
+  const onProfileSubmit = async (values: ProfileFormValues) => {
+    try {
+      await updateProfile({
+        username: values.username,
+        bio: values.bio || null,
+        location: values.location || null,
+        website: values.website || null,
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const onPostSubmit = async (values: PostFormValues) => {
+    try {
+      if (editingPostId) {
+        await updatePost(editingPostId, values);
+        setEditingPostId(null);
+      } else {
+        await createPost(values);
+      }
+      postForm.reset({
+        title: "",
+        content: "",
+        is_published: true,
+      });
+      setIsCreatingPost(false);
+    } catch (error) {
+      console.error("Error with post:", error);
+    }
+  };
+
+  const handleEditPost = (post: any) => {
+    postForm.reset({
+      title: post.title,
+      content: post.content,
+      is_published: post.is_published,
+    });
+    setEditingPostId(post.id);
+    setIsCreatingPost(true);
+  };
+
+  const handleCancelPost = () => {
+    postForm.reset();
+    setEditingPostId(null);
+    setIsCreatingPost(false);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      await deletePost(id);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const handleToggleTheme = async () => {
+    if (!preferences) return;
     
-    const newTheme = profile.preferences.theme === 'dark' ? 'light' : 'dark';
-    updateUserPreferences({ theme: newTheme });
+    const newTheme = preferences.theme === 'dark' ? 'light' : 'dark';
+    await updatePreferences({ theme: newTheme });
     
+    // Apply theme change immediately
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -76,32 +162,34 @@ const Profile = () => {
     }
   };
 
-  const handleToggleEPG = () => {
-    if (!profile) return;
-    updateUserPreferences({ showEPG: !profile.preferences.showEPG });
+  const handleToggleNotifications = async () => {
+    if (!preferences) return;
+    await updatePreferences({ 
+      notification_enabled: !preferences.notification_enabled 
+    });
   };
 
-  const handleToggleAutoPlay = () => {
-    if (!profile) return;
-    updateUserPreferences({ autoPlayNext: !profile.preferences.autoPlayNext });
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!profile) return;
-    updateUserPreferences({ defaultVolume: parseInt(e.target.value) });
-  };
-
-  const handleSignOut = () => {
-    signOut();
-    navigate("/");
-  };
-
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <Layout fullHeight className="py-6 md:py-8">
         <div className="flex items-center justify-center h-full">
           <div className="animate-pulse text-center">
             <p className="text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user || !profile) {
+    return (
+      <Layout fullHeight className="py-6 md:py-8">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <p className="text-muted-foreground">Profile not found</p>
+            <Button onClick={() => navigate("/")} className="mt-4">
+              Go to Home
+            </Button>
           </div>
         </div>
       </Layout>
@@ -126,18 +214,31 @@ const Profile = () => {
             <CardHeader>
               <div className="flex flex-col items-center space-y-3">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.avatar} alt={profile.username} />
+                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
                   <AvatarFallback className="text-xl">
                     {profile.username.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-center">
                   <h2 className="text-xl font-semibold">{profile.username}</h2>
-                  {profile.email && (
-                    <p className="text-sm text-muted-foreground">{profile.email}</p>
+                  {profile.bio && (
+                    <p className="text-sm text-muted-foreground mt-1">{profile.bio}</p>
+                  )}
+                  {profile.location && (
+                    <p className="text-xs flex items-center justify-center gap-1 text-muted-foreground mt-1">
+                      <MapPin className="h-3 w-3" /> {profile.location}
+                    </p>
+                  )}
+                  {profile.website && (
+                    <p className="text-xs flex items-center justify-center gap-1 text-muted-foreground mt-1">
+                      <Link className="h-3 w-3" /> 
+                      <a href={profile.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {new URL(profile.website).hostname}
+                      </a>
+                    </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    Member since {profile.createdAt.toLocaleDateString()}
+                    Member since {new Date(profile.created_at).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -162,7 +263,7 @@ const Profile = () => {
           </Card>
 
           <Tabs defaultValue="account">
-            <TabsList className="grid w-full md:w-[400px] grid-cols-2">
+            <TabsList className="grid w-full md:w-[400px] grid-cols-3">
               <TabsTrigger value="account">
                 <User className="mr-2 h-4 w-4" />
                 Account
@@ -170,6 +271,10 @@ const Profile = () => {
               <TabsTrigger value="preferences">
                 <Settings className="mr-2 h-4 w-4" />
                 Preferences
+              </TabsTrigger>
+              <TabsTrigger value="posts">
+                <Tv className="mr-2 h-4 w-4" />
+                Posts
               </TabsTrigger>
             </TabsList>
 
@@ -182,10 +287,10 @@ const Profile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                       <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
@@ -201,16 +306,48 @@ const Profile = () => {
                         )}
                       />
                       <FormField
-                        control={form.control}
-                        name="email"
+                        control={profileForm.control}
+                        name="bio"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>Bio</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" />
+                              <Textarea {...field} placeholder="Tell us about yourself" />
                             </FormControl>
                             <FormDescription>
-                              Your email address (optional).
+                              A brief description about yourself.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profileForm.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Location</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="City, Country" />
+                            </FormControl>
+                            <FormDescription>
+                              Your location (optional).
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profileForm.control}
+                        name="website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Website</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="url" placeholder="https://example.com" />
+                            </FormControl>
+                            <FormDescription>
+                              Your personal website or social media (optional).
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -231,7 +368,7 @@ const Profile = () => {
                 <CardHeader>
                   <CardTitle>Preferences</CardTitle>
                   <CardDescription>
-                    Customize your viewing experience
+                    Customize your experience
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -244,7 +381,7 @@ const Profile = () => {
                     </div>
                     <Switch
                       id="theme"
-                      checked={profile.preferences.theme === 'dark'}
+                      checked={preferences?.theme === 'dark'}
                       onCheckedChange={handleToggleTheme}
                     />
                   </div>
@@ -253,91 +390,144 @@ const Profile = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label htmlFor="epg">Show EPG Guide</Label>
+                      <Label htmlFor="notifications">Notifications</Label>
                       <p className="text-sm text-muted-foreground">
-                        Display program guide when available
+                        Enable or disable notifications
                       </p>
                     </div>
                     <Switch
-                      id="epg"
-                      checked={profile.preferences.showEPG}
-                      onCheckedChange={handleToggleEPG}
+                      id="notifications"
+                      checked={preferences?.notification_enabled}
+                      onCheckedChange={handleToggleNotifications}
                     />
                   </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="autoplay">Auto Play Next</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically play next episode or recommended content
-                      </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="posts" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Your Posts</CardTitle>
+                      <CardDescription>
+                        Manage your content
+                      </CardDescription>
                     </div>
-                    <Switch
-                      id="autoplay"
-                      checked={profile.preferences.autoPlayNext}
-                      onCheckedChange={handleToggleAutoPlay}
-                    />
+                    {!isCreatingPost && (
+                      <Button onClick={() => setIsCreatingPost(true)}>
+                        Create Post
+                      </Button>
+                    )}
                   </div>
-                  
-                  <Separator />
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="volume">Default Volume ({profile.preferences.defaultVolume}%)</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="volume"
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={profile.preferences.defaultVolume}
-                        onChange={handleVolumeChange}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                      />
+                </CardHeader>
+                <CardContent>
+                  {isCreatingPost ? (
+                    <Form {...postForm}>
+                      <form onSubmit={postForm.handleSubmit(onPostSubmit)} className="space-y-4">
+                        <FormField
+                          control={postForm.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Title</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Post title" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={postForm.control}
+                          name="content"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Content</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} placeholder="Write your post content here..." rows={5} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={postForm.control}
+                          name="is_published"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Published</FormLabel>
+                                <FormDescription>
+                                  Make this post visible to others
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button type="button" variant="outline" onClick={handleCancelPost}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            {editingPostId ? 'Update Post' : 'Create Post'}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  ) : postsLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Loading posts...</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Set your preferred default volume level
-                    </p>
-                  </div>
+                  ) : posts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">You haven't created any posts yet.</p>
+                      <Button onClick={() => setIsCreatingPost(true)} className="mt-4">
+                        Create Your First Post
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {posts.map((post) => (
+                        <Card key={post.id}>
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="text-lg">{post.title}</CardTitle>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(post.created_at).toLocaleDateString()} • 
+                                  {post.is_published ? ' Published' : ' Draft'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => handleEditPost(post)}>
+                                  Edit
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeletePost(post.id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="whitespace-pre-wrap">{post.content}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
-
-        {recentItems.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold mb-4">Recently Watched</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {recentItems.slice(0, 6).map((item) => (
-                <Card key={`${item.type}-${item.id}`} className="overflow-hidden">
-                  <div className="flex items-center p-4">
-                    <div className="w-12 h-12 mr-4 rounded bg-muted flex items-center justify-center">
-                      {item.type === 'channel' && <Tv className="h-6 w-6 text-primary" />}
-                      {item.type === 'movie' && <User className="h-6 w-6 text-primary" />}
-                      {item.type === 'episode' && <Settings className="h-6 w-6 text-primary" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{item.title}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Watched {new Date(item.lastWatched).toLocaleDateString()}
-                      </p>
-                      {item.progress && (
-                        <div className="w-full h-1 bg-secondary mt-2 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary" 
-                            style={{ width: `${item.progress}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );

@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
   isLoading: boolean;
+  updateProfile: (data: { username?: string, bio?: string, location?: string, website?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,8 +92,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateProfile = async (data: { username?: string, bio?: string, location?: string, website?: string }) => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating profile');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, signIn, signUp, signOut, isLoading }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      signIn, 
+      signUp, 
+      signOut, 
+      isLoading,
+      updateProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );
