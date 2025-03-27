@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -112,7 +111,6 @@ const FormControl = React.forwardRef<
     <Slot
       ref={ref}
       id={formItemId}
-      name={formItemId}
       aria-describedby={
         !error
           ? `${formDescriptionId}`
