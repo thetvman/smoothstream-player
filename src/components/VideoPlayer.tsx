@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
@@ -70,9 +71,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       }
       
       const isHlsStream = streamUrl.endsWith('.m3u8');
+      console.log('Loading ' + (isHlsStream ? 'HLS' : 'direct') + ' stream:', streamUrl);
       
       if (isHlsStream && Hls.isSupported()) {
-        console.log('Loading HLS stream:', streamUrl);
         const hls = new Hls({
           startLevel: -1,
           manifestLoadingMaxRetry: 5,

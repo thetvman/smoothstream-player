@@ -180,6 +180,7 @@ const getXtreamStreamUrl = (
 const getXtreamM3UUrl = (credentials: XtreamCredentials): string => {
   const { server, username, password } = credentials;
   const baseUrl = server.replace(/\/$/, "");
+  // Include the output parameter for better compatibility
   return `${baseUrl}/get.php?username=${username}&password=${password}&type=m3u&output=m3u8`;
 };
 
