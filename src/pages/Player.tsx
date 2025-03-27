@@ -18,12 +18,12 @@ const Player = () => {
   const [epgData, setEpgData] = useState<any[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   
-  // Auto-hide channel info after 5 seconds
+  // Auto-hide channel info after a longer time (15 seconds instead of 5)
   useEffect(() => {
     if (showChannelInfo) {
       const timer = setTimeout(() => {
         setShowChannelInfo(false);
-      }, 5000);
+      }, 15000); // Increased from 5000 to 15000 ms
       
       return () => clearTimeout(timer);
     }
