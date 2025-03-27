@@ -1,7 +1,7 @@
 
 import { Channel, PaginatedChannels } from "./types";
 
-export const ITEMS_PER_PAGE = 50;
+export const ITEMS_PER_PAGE = 12; // Changed from 50 to 12 channels per page
 
 /**
  * Paginate an array of channels

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { Channel, ChannelListProps } from "@/lib/types";
 import { Search } from "lucide-react";
@@ -15,7 +14,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [filteredPagination, setFilteredPagination] = useState(paginatedChannels);
   
-  // Extract unique groups from the playlist
   const groups = useMemo(() => {
     if (!playlist?.channels) return [];
     
@@ -27,14 +25,12 @@ const ChannelList: React.FC<ChannelListProps> = ({
     return uniqueGroups.sort();
   }, [playlist]);
   
-  // Apply filtering and update pagination when search term or active group changes
   useEffect(() => {
     if (!playlist?.channels) {
       setFilteredPagination(null);
       return;
     }
     
-    // Filter based on search term and active group
     const filteredChannels = playlist.channels.filter(channel => {
       const matchesSearch = !searchTerm || 
         channel.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -44,7 +40,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
       return matchesSearch && matchesGroup;
     });
     
-    // Create new pagination based on filtered channels
     const newPagination = paginateChannels(
       filteredChannels, 
       paginatedChannels?.currentPage || 1,
@@ -77,7 +72,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
   
   return (
     <div className="flex flex-col h-full overflow-hidden bg-card rounded-lg border border-border">
-      {/* Search header */}
       <div className="p-3 border-b border-border">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -91,7 +85,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
         </div>
       </div>
       
-      {/* Group filters */}
       {groups.length > 0 && (
         <div className="px-3 py-2 border-b border-border">
           <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
@@ -123,7 +116,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
         </div>
       )}
       
-      {/* Channel list */}
       <div className="flex-1 overflow-y-auto p-1">
         {(!filteredPagination || filteredPagination.items.length === 0) ? (
           <div className="p-4 text-center">
@@ -166,12 +158,14 @@ const ChannelList: React.FC<ChannelListProps> = ({
         )}
       </div>
       
-      {/* Playlist info footer */}
       <div className="p-3 border-t border-border bg-secondary/30">
         <div className="text-xs text-muted-foreground">
           <span className="font-medium">{playlist.name}</span> • {playlist.channels.length} channels
           {activeGroup && 
             ` • ${filteredPagination?.totalItems || 0} in "${activeGroup}"`}
+          {filteredPagination && filteredPagination.totalPages > 1 && (
+            <span> • Page {filteredPagination.currentPage} of {filteredPagination.totalPages}</span>
+          )}
         </div>
       </div>
     </div>
