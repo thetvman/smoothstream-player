@@ -31,7 +31,7 @@ const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({
     <Carousel className="w-full">
       <CarouselContent>
         {suggestions.map((series) => (
-          <CarouselItem key={series.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+          <CarouselItem key={series.id} className="basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 2xl:basis-1/6">
             <div 
               className="p-1 cursor-pointer" 
               onClick={() => onSelectSeries(series)}
