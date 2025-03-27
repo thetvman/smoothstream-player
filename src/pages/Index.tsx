@@ -181,129 +181,164 @@ const Index = () => {
   };
   
   return (
-    <Layout fullHeight className="py-6 md:py-8">
-      <div className="flex flex-col h-full space-y-6">
-        <header className="flex flex-col space-y-1">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-border rounded-md overflow-hidden">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setViewMode('grid')}
-                  className={viewMode === 'grid' ? 'bg-muted' : ''}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setViewMode('list')}
-                  className={viewMode === 'list' ? 'bg-muted' : ''}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+    <div className={`${!playlist ? '' : 'tv-background'} min-h-screen`}>
+      <Layout fullHeight className="py-6 md:py-8">
+        <div className="flex flex-col h-full space-y-6">
+          <header className="flex flex-col space-y-1">
+            <div className="flex justify-between items-center">
+              <h1 className={`text-2xl font-bold tracking-tight ${playlist ? 'text-white' : ''}`}>Stream Player</h1>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border border-border rounded-md overflow-hidden">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setViewMode('grid')}
+                    className={`${viewMode === 'grid' ? 'bg-muted' : ''} ${playlist ? 'text-white hover:text-white hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setViewMode('list')}
+                    className={`${viewMode === 'list' ? 'bg-muted' : ''} ${playlist ? 'text-white hover:text-white hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuLink 
+                        className={`${navigationMenuTriggerStyle()} ${playlist ? 'text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                        onClick={() => navigate('/movies')}
+                      >
+                        <Film className="mr-2 h-4 w-4" />
+                        Movies
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                      <NavigationMenuLink 
+                        className={`${navigationMenuTriggerStyle()} ${playlist ? 'text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                        onClick={() => navigate('/series')}
+                      >
+                        <Tv className="mr-2 h-4 w-4" />
+                        Series
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
               </div>
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink 
-                      className={navigationMenuTriggerStyle()}
-                      onClick={() => navigate('/movies')}
-                    >
-                      <Film className="mr-2 h-4 w-4" />
-                      Movies
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink 
-                      className={navigationMenuTriggerStyle()}
-                      onClick={() => navigate('/series')}
-                    >
-                      <Tv className="mr-2 h-4 w-4" />
-                      Series
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
             </div>
-          </div>
-          <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
-        </header>
-      
-        {!playlist ? (
-          <div className="flex-1">
-            <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
-          </div>
-        ) : (
-          viewMode === 'grid' ? (
-            <div className="flex-1 overflow-hidden">
-              <GridChannelList
-                playlist={playlist}
-                channels={playlist.channels}
-                selectedChannel={selectedChannel}
-                onSelectChannel={handleSelectChannel}
-                isLoading={isLoading}
-              />
+            <p className={`${playlist ? 'text-[hsl(0,30%,85%)]' : 'text-muted-foreground'}`}>
+              Watch your IPTV streams with a premium experience
+            </p>
+          </header>
+        
+          {!playlist ? (
+            <div className="flex-1">
+              <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
             </div>
           ) : (
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
-              <div className="lg:col-span-2 flex flex-col space-y-4">
-                <div className="animate-fade-in">
-                  <VideoPlayer channel={selectedChannel} />
-                </div>
-                
-                {selectedChannel && (
-                  <EPGGuide 
-                    channel={selectedChannel} 
-                    epgData={epgData} 
-                    isLoading={isEpgLoading} 
-                  />
-                )}
-              </div>
-              
-              <div className="h-full flex flex-col overflow-hidden">
-                <ChannelList
+            viewMode === 'grid' ? (
+              <div className="flex-1 overflow-hidden">
+                <GridChannelList
                   playlist={playlist}
-                  paginatedChannels={paginatedChannels}
+                  channels={playlist.channels}
                   selectedChannel={selectedChannel}
                   onSelectChannel={handleSelectChannel}
                   isLoading={isLoading}
                 />
-                
-                {paginatedChannels && paginatedChannels.totalPages > 1 && (
-                  <div className="py-4 border-t">
-                    <Pagination>
-                      <PaginationContent>
-                        {currentPage > 1 && (
-                          <PaginationItem>
-                            <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
-                          </PaginationItem>
-                        )}
-                        
-                        {renderPaginationLinks()}
-                        
-                        {currentPage < paginatedChannels.totalPages && (
-                          <PaginationItem>
-                            <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
-                          </PaginationItem>
-                        )}
-                      </PaginationContent>
-                    </Pagination>
-                    
-                    <div className="text-xs text-center text-muted-foreground mt-2">
-                      Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
-                      {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
-          )
-        )}
-      </div>
-    </Layout>
+            ) : (
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+                <div className="lg:col-span-2 flex flex-col space-y-4">
+                  <div className="animate-fade-in">
+                    <VideoPlayer channel={selectedChannel} />
+                  </div>
+                  
+                  {selectedChannel && (
+                    <div className="tv-card shadow-lg">
+                      <div className="tv-section">
+                        <div className="flex items-center gap-2">
+                          {selectedChannel.logo ? (
+                            <img 
+                              src={selectedChannel.logo} 
+                              alt={selectedChannel.name} 
+                              className="w-8 h-8 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-[hsl(0,73%,25%)] flex items-center justify-center">
+                              {selectedChannel.name.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-bold">{selectedChannel.name}</h3>
+                            {selectedChannel.group && (
+                              <p className="text-xs text-[hsl(0,30%,85%)]">{selectedChannel.group}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="tv-content">
+                        <EPGGuide 
+                          channel={selectedChannel} 
+                          epgData={epgData} 
+                          isLoading={isEpgLoading} 
+                        />
+                        <div className="tv-info-row">
+                          Stream Type: {selectedChannel.stream_type || "m3u8"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="h-full flex flex-col overflow-hidden tv-card">
+                  <ChannelList
+                    playlist={playlist}
+                    paginatedChannels={paginatedChannels}
+                    selectedChannel={selectedChannel}
+                    onSelectChannel={handleSelectChannel}
+                    isLoading={isLoading}
+                  />
+                  
+                  {paginatedChannels && paginatedChannels.totalPages > 1 && (
+                    <div className="py-4 border-t border-[hsl(0,60%,35%)] px-3">
+                      <Pagination>
+                        <PaginationContent>
+                          {currentPage > 1 && (
+                            <PaginationItem>
+                              <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} className="text-white" />
+                            </PaginationItem>
+                          )}
+                          
+                          {renderPaginationLinks()}
+                          
+                          {currentPage < paginatedChannels.totalPages && (
+                            <PaginationItem>
+                              <PaginationNext onClick={() => handlePageChange(currentPage + 1)} className="text-white" />
+                            </PaginationItem>
+                          )}
+                        </PaginationContent>
+                      </Pagination>
+                      
+                      <div className="text-xs text-center text-[hsl(0,30%,85%)] mt-2">
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                        {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </Layout>
+    </div>
   );
 };
 

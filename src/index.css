@@ -40,6 +40,13 @@
     --player-control-hover: 220 70% 60%;
     --player-overlay: 240 10% 3% / 80%;
 
+    /* TV theme variables */
+    --tv-background: 0 83% 28%;
+    --tv-card: 0 73% 18%;
+    --tv-foreground: 0 0% 100%;
+    --tv-muted: 0 30% 85%;
+    --tv-border: 0 60% 35%;
+
     /* Custom scrollbar variables */
     --scrollbar-track: 220 20% 94%;
     --scrollbar-thumb: 220 20% 80%;
@@ -230,6 +237,27 @@
   
   .navigation-item {
     @apply transition-colors duration-200 hover:text-primary relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full;
+  }
+
+  /* TV theme styles */
+  .tv-background {
+    @apply bg-gradient-to-br from-[hsl(0,83%,28%)] to-[hsl(0,83%,18%)];
+  }
+  
+  .tv-card {
+    @apply bg-[hsl(0,73%,18%)] text-white border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
+  }
+  
+  .tv-section {
+    @apply bg-[hsl(0,73%,25%)] text-white p-3 font-medium border-b border-[hsl(0,60%,35%)];
+  }
+  
+  .tv-content {
+    @apply p-4 bg-[hsl(0,73%,18%)] text-white;
+  }
+  
+  .tv-info-row {
+    @apply border-t border-[hsl(0,60%,35%)] mt-2 pt-2 text-sm text-[hsl(0,30%,85%)];
   }
 
   /* Custom ScrollArea styling */
