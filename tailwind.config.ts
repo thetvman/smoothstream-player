@@ -126,6 +126,14 @@ export default {
 					'50%': {
 						transform: 'scale(1.05)'
 					}
+				},
+				'shimmer': {
+					'0%': {
+						backgroundPosition: '-1000px 0'
+					},
+					'100%': {
+						backgroundPosition: '1000px 0'
+					}
 				}
 			},
 			animation: {
@@ -135,7 +143,8 @@ export default {
 				'fade-out': 'fade-out 0.3s ease-out',
 				'slide-up': 'slide-up 0.3s ease-out',
 				'slide-down': 'slide-down 0.3s ease-out',
-				'pulse-scale': 'pulse-scale 2s ease-in-out infinite'
+				'pulse-scale': 'pulse-scale 2s ease-in-out infinite',
+				'shimmer': 'shimmer 2s infinite linear'
 			}
 		}
 	},

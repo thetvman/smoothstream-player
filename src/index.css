@@ -33,7 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -74,6 +74,34 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Glassmorphism utility classes */
+.glass {
+  @apply backdrop-blur-xl bg-white/10 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
+}
+
+.glass-card {
+  @apply glass rounded-xl overflow-hidden transition-all duration-300;
+}
+
+.glass-dark {
+  @apply backdrop-blur-xl bg-black/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)];
+}
+
+.glass-input {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 focus:border-white/30 
+  focus:bg-white/15 transition-all duration-300;
+}
+
+.glass-button {
+  @apply bg-white/20 backdrop-blur-md hover:bg-white/30 active:bg-white/10 
+  border border-white/20 transition-all duration-300;
+}
+
+.glass-gradient {
+  @apply bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl 
+  border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
 }
 
 /* Category tabs styling */
@@ -151,7 +179,7 @@
 
 /* EPG styling */
 .epg-program {
-  @apply relative rounded-sm overflow-hidden transition-colors;
+  @apply relative rounded-sm overflow-hidden transition-colors glass-card;
 }
 
 .epg-program::before {
@@ -165,9 +193,14 @@
 
 /* Current playing progress bar */
 .now-playing-progress {
-  @apply h-1 bg-primary/20 absolute bottom-0 left-0 right-0;
+  @apply h-1.5 bg-white/10 absolute bottom-0 left-0 right-0 rounded-full overflow-hidden;
 }
 
 .now-playing-progress-bar {
-  @apply h-full bg-primary;
+  @apply h-full bg-gradient-to-r from-primary/80 to-primary;
+}
+
+/* Shimmer effect for loading states */
+.shimmer {
+  @apply bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:1000px_100%] animate-shimmer;
 }

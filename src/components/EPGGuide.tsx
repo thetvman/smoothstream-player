@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Channel } from "@/lib/types";
-import { Clock, Calendar, Tv } from "lucide-react";
+import { Clock, Calendar, Tv, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EPGProgram {
@@ -21,19 +21,19 @@ interface EPGGuideProps {
 const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="mt-2 space-y-2">
-        <Skeleton className="h-5 w-1/3" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-12 w-3/4" />
+      <div className="space-y-3 mt-2">
+        <Skeleton className="h-6 w-1/3 rounded-lg bg-white/10" />
+        <Skeleton className="h-20 w-full rounded-lg bg-white/10" />
+        <Skeleton className="h-16 w-3/4 rounded-lg bg-white/10" />
       </div>
     );
   }
 
   if (!channel || !channel.epg_channel_id) {
     return (
-      <div className="mt-1 py-2 text-sm text-white/70">
-        <div className="flex items-center gap-2">
-          <Tv className="w-4 h-4" />
+      <div className="mt-1 py-2 text-sm text-white/80 animate-fade-in">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-xl p-4 border border-white/10">
+          <Tv className="w-5 h-5 text-primary/90" />
           <p>No program information available for this channel.</p>
         </div>
       </div>
@@ -42,9 +42,9 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
   if (!epgData || epgData.length === 0) {
     return (
-      <div className="mt-1 py-2 text-sm text-white/70">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
+      <div className="mt-1 py-2 text-sm text-white/80 animate-fade-in">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-xl p-4 border border-white/10">
+          <Calendar className="w-5 h-5 text-primary/90" />
           <p>No current program information available.</p>
         </div>
       </div>
@@ -86,57 +86,65 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   };
 
   return (
-    <div className="space-y-3 text-white">
+    <div className="space-y-4 text-white animate-fade-in">
       {currentProgram && (
-        <div className="rounded-md bg-white/5 backdrop-blur-sm p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary/80" />
-              <span className="text-xs font-medium">
-                NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
+        <div className="backdrop-blur-xl bg-white/10 rounded-xl overflow-hidden border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+          <div className="p-4 relative">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <div className="bg-primary/20 p-2 rounded-full">
+                  <Clock className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-white/90">
+                  NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
+                </span>
+              </div>
+              <span className="text-xs py-1 px-2 rounded-full bg-white/20 text-white/90 backdrop-blur-md">
+                {calculateDuration(currentProgram.start, currentProgram.end)} min
               </span>
             </div>
-            <span className="text-xs text-white/60">
-              {calculateDuration(currentProgram.start, currentProgram.end)} min
-            </span>
-          </div>
-          <h3 className="font-medium mt-1">{currentProgram.title}</h3>
-          {currentProgram.description && (
-            <p className="text-sm text-white/70 mt-1 line-clamp-2">
-              {currentProgram.description}
-            </p>
-          )}
-          
-          {/* Progress bar */}
-          <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary/80"
-              style={{ width: `${calculateProgress(currentProgram.start, currentProgram.end)}%` }}
-            />
-          </div>
-          
-          <div className="text-xs text-white/60 mt-1">
-            {formatDate(currentProgram.start)}
+            <h3 className="font-semibold text-lg text-white">{currentProgram.title}</h3>
+            {currentProgram.description && (
+              <p className="text-sm text-white/80 mt-2 line-clamp-2">
+                {currentProgram.description}
+              </p>
+            )}
+            
+            {/* Progress bar with glassmorphic style */}
+            <div className="mt-3 h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
+              <div 
+                className="h-full bg-gradient-to-r from-primary/80 to-primary rounded-full"
+                style={{ width: `${calculateProgress(currentProgram.start, currentProgram.end)}%` }}
+              />
+            </div>
+            
+            <div className="text-xs text-white/60 mt-2 flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDate(currentProgram.start)}
+            </div>
           </div>
         </div>
       )}
 
       {nextPrograms.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-white/70 flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-white/90 flex items-center gap-1.5 pl-1">
+            <Calendar className="w-4 h-4 text-primary/90" />
             Up Next
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {nextPrograms.map((program, index) => (
-              <div key={index} className="text-sm bg-white/5 backdrop-blur-sm rounded p-2">
-                <div className="text-xs text-white/60 flex justify-between">
-                  <span>{formatTime(program.start)}</span>
-                  <span>{calculateDuration(program.start, program.end)} min</span>
+              <div 
+                key={index} 
+                className="backdrop-blur-md bg-white/5 rounded-xl p-3 border border-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+              >
+                <div className="text-xs flex justify-between mb-1.5">
+                  <span className="bg-white/10 rounded-full px-2 py-0.5">{formatTime(program.start)}</span>
+                  <span className="text-white/70">{calculateDuration(program.start, program.end)} min</span>
                 </div>
-                <div className="font-medium mt-0.5">{program.title}</div>
+                <div className="font-medium text-white/90">{program.title}</div>
                 {program.description && (
-                  <p className="text-xs text-white/70 line-clamp-1 mt-0.5">
+                  <p className="text-xs text-white/70 line-clamp-1 mt-1.5">
                     {program.description}
                   </p>
                 )}
