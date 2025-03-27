@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { UserProfile, UserPreferences } from '@/lib/types';
 import { getCurrentProfile, createProfile, saveProfile, updatePreferences } from '@/lib/profileService';
@@ -35,10 +36,15 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
             .single();
             
           if (data) {
-            // If we have a Supabase profile, convert it to our local format
-            // This is a temporary measure until we fully migrate to Supabase
-            // Validate the theme to ensure it's one of the allowed values
-            const themeValue = data.theme || 'system';
+            // Also try to fetch user preferences if they exist
+            const { data: preferencesData } = await supabase
+              .from('user_preferences')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle();
+              
+            // Get theme from preferences or use default
+            const themeValue = preferencesData?.theme || 'system';
             const validatedTheme = isValidTheme(themeValue) ? themeValue : 'system';
             
             const supabaseProfile: UserProfile = {
