@@ -2,7 +2,6 @@
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingSpinner from "./components/common/LoadingSpinner";
@@ -36,39 +35,37 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
       <ProfileProvider>
         <div className="min-h-screen bg-background text-foreground antialiased">
           <Toaster />
           <Sonner position="top-right" closeButton />
-          <BrowserRouter>
-            <Suspense fallback={
-              <div className="h-screen w-full flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                  <LoadingSpinner size="lg" />
-                  <p className="text-muted-foreground animate-pulse">Loading your entertainment...</p>
-                </div>
+          <Suspense fallback={
+            <div className="h-screen w-full flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <LoadingSpinner size="lg" />
+                <p className="text-muted-foreground animate-pulse">Loading your entertainment...</p>
               </div>
-            }>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/player/:channelId" element={<Player />} />
-                <Route path="/movies" element={<Movies />} />
-                <Route path="/movie/:movieId" element={<MoviePlayer />} />
-                <Route path="/series" element={<Series />} />
-                <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/favorites" element={<Favorites />} />
-                <Route path="/history" element={<History />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/player/:channelId" element={<Player />} />
+              <Route path="/movies" element={<Movies />} />
+              <Route path="/movie/:movieId" element={<MoviePlayer />} />
+              <Route path="/series" element={<Series />} />
+              <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/history" element={<History />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </div>
       </ProfileProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </BrowserRouter>
 );
 
 export default App;
