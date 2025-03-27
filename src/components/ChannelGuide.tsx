@@ -20,13 +20,15 @@ interface ChannelGuideProps {
   selectedChannel: Channel | null;
   onSelectChannel: (channel: Channel) => void;
   isLoading?: boolean;
+  compactMode?: boolean;
 }
 
 const ChannelGuide: React.FC<ChannelGuideProps> = ({
   playlist,
   selectedChannel,
   onSelectChannel,
-  isLoading = false
+  isLoading = false,
+  compactMode = false
 }) => {
   const [timeSlots, setTimeSlots] = useState<Date[]>([]);
   const [channelEPGs, setChannelEPGs] = useState<Map<string, EPGProgram[]>>(new Map());
@@ -122,7 +124,10 @@ const ChannelGuide: React.FC<ChannelGuideProps> = ({
   };
 
   // Get visible time slots based on current range
-  const visibleTimeSlots = timeSlots.slice(timeRange.start, timeRange.end + 1);
+  const visibleTimeSlots = timeSlots.slice(
+    timeRange.start, 
+    compactMode ? timeRange.start + 2 : timeRange.end + 1
+  );
 
   if (isLoading) {
     return (
@@ -147,6 +152,45 @@ const ChannelGuide: React.FC<ChannelGuideProps> = ({
     return (
       <div className="w-full flex justify-center py-8">
         <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  // Render compact view when in compact mode
+  if (compactMode) {
+    return (
+      <div className="channel-guide w-full border border-border rounded-md overflow-hidden bg-card">
+        <ScrollArea className="max-h-[calc(100vh-14rem)]">
+          {playlist.channels.slice(0, 15).map((channel) => (
+            <div 
+              key={channel.id} 
+              className={`flex items-center p-2 hover:bg-secondary/30 cursor-pointer ${
+                selectedChannel?.id === channel.id ? 'bg-secondary/40' : ''
+              }`}
+              onClick={() => onSelectChannel(channel)}
+            >
+              <div className="channel-logo w-8 h-8 rounded-md overflow-hidden flex items-center justify-center bg-black/20 mr-2">
+                {channel.logo ? (
+                  <img 
+                    src={channel.logo} 
+                    alt={channel.name} 
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                ) : (
+                  <Tv className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+              
+              {/* Live indicator */}
+              {selectedChannel?.id === channel.id && (
+                <div className="w-2 h-2 rounded-full bg-green-500 absolute left-1"></div>
+              )}
+            </div>
+          ))}
+        </ScrollArea>
       </div>
     );
   }
@@ -204,7 +248,7 @@ const ChannelGuide: React.FC<ChannelGuideProps> = ({
 
       {/* Channel rows */}
       <ScrollArea className="max-h-[500px]">
-        {playlist.channels.slice(0, 10).map((channel) => (
+        {playlist.channels.slice(0, 15).map((channel) => (
           <div 
             key={channel.id} 
             className={`grid grid-cols-[200px_1fr] border-b border-border hover:bg-secondary/30 cursor-pointer ${
