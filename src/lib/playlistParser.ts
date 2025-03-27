@@ -1,5 +1,5 @@
 
-import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
+import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream, XtreamSeries } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -272,7 +272,7 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
     const vodCategories = await vodCategoriesResponse.json() as XtreamCategory[];
     const vodStreams = await vodStreamsResponse.json() as XtreamStream[];
     const seriesCategories = await seriesCategoriesResponse.json() as XtreamCategory[];
-    const seriesStreams = await seriesStreamsResponse.json() as XtreamStream[];
+    const seriesStreams = await seriesStreamsResponse.json() as XtreamSeries[]; // Fix: Changed to XtreamSeries[]
     
     if (!Array.isArray(liveStreams)) {
       throw new Error("Invalid response from Xtream server for live streams");
@@ -405,16 +405,16 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
     });
     
     // Create channels from Series streams
-    const seriesChannels: Channel[] = seriesStreams.map((stream) => {
+    const seriesChannels: Channel[] = seriesStreams.map((series) => {
       // For series, we're just creating a reference - actual episodes will be loaded separately
       return {
-        id: `series-${stream.series_id}`,
-        name: stream.name || `Series ${stream.series_id}`,
-        url: `${baseUrl}/series/${username}/${password}/${stream.series_id}`,
-        logo: stream.cover || stream.backdrop_path || undefined,
-        group: stream.category_id ? categoryMaps.series[stream.category_id] : undefined,
+        id: `series-${series.series_id}`,
+        name: series.name || `Series ${series.series_id}`,
+        url: `${baseUrl}/series/${username}/${password}/${series.series_id}`,
+        logo: series.cover || series.backdrop_path || undefined,
+        group: series.category_id ? categoryMaps.series[series.category_id] : undefined,
         stream_type: "series",
-        epg_channel_id: String(stream.series_id) // Store series_id for later use
+        epg_channel_id: String(series.series_id) // Store series_id for later use
       };
     });
     
