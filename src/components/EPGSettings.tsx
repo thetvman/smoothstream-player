@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Cog, LinkIcon, X, AlertTriangle } from "lucide-react";
-import { setCustomEpgUrl, getCustomEpgUrl } from '@/lib/epgService';
+import { setCustomEpgUrl, getCustomEpgUrl, clearCache } from '@/lib/epg';
 import { useToast } from '@/hooks/use-toast';
 
 const EPGSettings = () => {
@@ -52,7 +52,12 @@ const EPGSettings = () => {
       return; // Don't proceed if validation fails
     }
     
-    setCustomEpgUrl(epgUrl);
+    const result = setCustomEpgUrl(epgUrl);
+    if (result.isChanged) {
+      // Clear cache when URL changes
+      clearCache();
+    }
+    
     setHasSavedUrl(true);
     toast({
       title: "EPG source updated",

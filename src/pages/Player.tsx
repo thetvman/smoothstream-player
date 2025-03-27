@@ -15,7 +15,7 @@ import {
   EPGProgram, 
   getEPGLoadingProgress, 
   hasValidCachedEPG 
-} from "@/lib/epgService";
+} from "@/lib/epg";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();

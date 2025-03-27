@@ -2,16 +2,10 @@
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import LoadingSpinner from "./common/LoadingSpinner";
+import { EPGProgressInfo } from "@/lib/epg";
 
-interface EPGLoadingProgressProps {
-  isLoading: boolean;
-  progress: number;
-  total: number;
-  processed: number;
-  message?: string;
+interface EPGLoadingProgressProps extends EPGProgressInfo {
   cachedCount?: number;
-  parsingSpeed?: number;
-  estimatedTimeRemaining?: string;
 }
 
 const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({

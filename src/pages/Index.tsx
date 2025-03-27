@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -18,19 +17,7 @@ import {
   getEPGLoadingProgress,
   EPGProgressInfo,
   hasValidCachedEPG
-} from "@/lib/epgService";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle
-} from "@/components/ui/navigation-menu";
-import { Film, Moon, Settings, Sun, Tv } from "lucide-react";
-import { Button } from "@/components/ui/button";
+} from "@/lib/epg";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -50,7 +37,6 @@ const Index = () => {
   });
   const [cachedChannelCount, setCachedChannelCount] = useState(0);
   
-  // Load saved playlist and selected channel from localStorage
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
     if (savedPlaylist) {
@@ -58,17 +44,14 @@ const Index = () => {
       if (parsedPlaylist) {
         setPlaylist(parsedPlaylist);
         
-        // Try to load last selected channel
         const savedChannelId = localStorage.getItem("iptv-last-channel");
         if (savedChannelId) {
           const channel = parsedPlaylist.channels.find(c => c.id === savedChannelId) || null;
           setSelectedChannel(channel);
         }
         
-        // Start prefetching EPG data in the background
         const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
         if (channelsWithEpg.length > 0) {
-          // Count channels with cached EPG data
           const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
           setCachedChannelCount(cachedCount);
           
@@ -82,12 +65,10 @@ const Index = () => {
       }
     }
 
-    // Check for saved dark mode preference
     const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
     setIsDarkMode(darkModePreference);
   }, []);
   
-  // Update cached channel count when EPG progress updates
   useEffect(() => {
     if (playlist && playlist.channels) {
       const channelsWithEpg = playlist.channels.filter(c => c.epg_channel_id);
@@ -96,7 +77,6 @@ const Index = () => {
     }
   }, [epgProgress, playlist]);
   
-  // Apply dark mode class
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -104,11 +84,9 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
     
-    // Save preference to localStorage
     localStorage.setItem("iptv-dark-mode", isDarkMode.toString());
   }, [isDarkMode]);
   
-  // Update paginated channels when playlist or page changes
   useEffect(() => {
     if (playlist) {
       setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
@@ -117,7 +95,6 @@ const Index = () => {
     }
   }, [playlist, currentPage]);
   
-  // Save playlist and selected channel to localStorage
   useEffect(() => {
     if (playlist) {
       localStorage.setItem("iptv-playlist", JSON.stringify(playlist));
@@ -128,7 +105,6 @@ const Index = () => {
     }
   }, [playlist, selectedChannel]);
   
-  // Fetch EPG data when selected channel changes
   useEffect(() => {
     const getEPGData = async () => {
       if (!selectedChannel || !selectedChannel.epg_channel_id) {
@@ -154,22 +130,18 @@ const Index = () => {
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
     
-    // Use setTimeout to prevent UI from freezing during large playlist processing
     setTimeout(() => {
       setPlaylist(newPlaylist);
       setCurrentPage(1);
       
-      // Select first channel by default
       if (newPlaylist.channels.length > 0) {
         setSelectedChannel(newPlaylist.channels[0]);
       }
       
       setIsLoading(false);
       
-      // Start EPG prefetch with progress tracking
       const channelsWithEpg = newPlaylist.channels.filter(c => c.epg_channel_id);
       if (channelsWithEpg.length > 0) {
-        // Count channels with cached EPG data
         const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
         setCachedChannelCount(cachedCount);
         
@@ -187,7 +159,6 @@ const Index = () => {
     setSelectedChannel(channel);
   };
   
-  // Open fullscreen player page
   const openFullscreenPlayer = () => {
     if (selectedChannel) {
       navigate(`/player/${selectedChannel.id}`);
@@ -203,14 +174,12 @@ const Index = () => {
     setIsDarkMode(!isDarkMode);
   };
   
-  // Generate pagination links
   const renderPaginationLinks = () => {
     if (!paginatedChannels || paginatedChannels.totalPages <= 1) return null;
     
     const { currentPage, totalPages } = paginatedChannels;
     const pageItems = [];
     
-    // Add current page and surrounding pages
     const pageRange = 2;
     const startPage = Math.max(1, currentPage - pageRange);
     const endPage = Math.min(totalPages, currentPage + pageRange);
@@ -311,9 +280,7 @@ const Index = () => {
         </header>
       
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
-          {/* Video player section */}
           <div className="lg:col-span-2 flex flex-col space-y-4">
-            {/* EPG loading progress indicator */}
             {epgProgress.isLoading && (
               <EPGLoadingProgress 
                 isLoading={epgProgress.isLoading}
@@ -342,7 +309,6 @@ const Index = () => {
               )}
             </div>
             
-            {/* EPG Guide */}
             {selectedChannel && (
               <EPGGuide 
                 channel={selectedChannel} 
@@ -358,7 +324,6 @@ const Index = () => {
             )}
           </div>
           
-          {/* Channel list section */}
           <div className="h-full flex flex-col overflow-hidden">
             <ChannelList
               playlist={playlist}
