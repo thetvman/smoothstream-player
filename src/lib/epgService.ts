@@ -1,4 +1,3 @@
-
 import { Channel } from "./types";
 
 interface EPGProgram {
@@ -12,6 +11,47 @@ interface EPGProgram {
 // Cache EPG data to reduce API calls
 const EPG_CACHE: Record<string, { data: EPGProgram[], timestamp: number }> = {};
 const CACHE_EXPIRY = 15 * 60 * 1000; // 15 minutes cache expiry
+const PREFETCH_CONCURRENCY = 5; // Number of concurrent prefetch requests
+
+/**
+ * Prefetch EPG data for multiple channels
+ */
+export const prefetchEPGDataForChannels = async (channels: Channel[]) => {
+  const channelsWithEpg = channels.filter(c => c.epg_channel_id);
+  
+  if (channelsWithEpg.length === 0) {
+    console.log("No channels with EPG IDs to prefetch");
+    return;
+  }
+  
+  console.log(`Starting EPG prefetch for ${channelsWithEpg.length} channels`);
+  
+  // Process in batches to avoid overwhelming the network
+  const processBatch = async (batch: Channel[]) => {
+    const promises = batch.map(channel => {
+      // Skip if we already have cached data
+      if (EPG_CACHE[channel.epg_channel_id!] && 
+          Date.now() - EPG_CACHE[channel.epg_channel_id!].timestamp < CACHE_EXPIRY) {
+        console.log(`Using cached EPG for ${channel.name}`);
+        return Promise.resolve();
+      }
+      
+      return fetchEPGData(channel)
+        .then(() => console.log(`Prefetched EPG for ${channel.name}`))
+        .catch(err => console.warn(`Failed to prefetch EPG for ${channel.name}:`, err));
+    });
+    
+    await Promise.all(promises);
+  };
+  
+  // Split channels into batches
+  for (let i = 0; i < channelsWithEpg.length; i += PREFETCH_CONCURRENCY) {
+    const batch = channelsWithEpg.slice(i, i + PREFETCH_CONCURRENCY);
+    await processBatch(batch);
+  }
+  
+  console.log("EPG prefetch completed");
+};
 
 /**
  * Fetch EPG data from a real EPG service

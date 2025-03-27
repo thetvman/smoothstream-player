@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { prefetchEPGDataForChannels } from "@/lib/epgService";
 
 interface PlaylistInputProps {
   onPlaylistLoaded: (playlist: Playlist) => void;
@@ -19,12 +20,23 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [urlInput, setUrlInput] = useState("");
   
-  // Xtream credentials
   const [xtreamCredentials, setXtreamCredentials] = useState<XtreamCredentials>({
     server: "",
     username: "",
     password: ""
   });
+  
+  const handlePlaylistProcessed = (playlist: Playlist) => {
+    if (playlist.channels.length > 0) {
+      const channelsWithEpg = playlist.channels.filter(c => c.epg_channel_id);
+      if (channelsWithEpg.length > 0) {
+        toast.info(`Starting EPG data prefetch for ${channelsWithEpg.length} channels`, { duration: 3000 });
+        prefetchEPGDataForChannels(channelsWithEpg);
+      }
+    }
+    
+    onPlaylistLoaded(playlist);
+  };
   
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,7 +46,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     setLoadingProgress(10);
     
     try {
-      // Simulate progress for better UX
       const progressInterval = setInterval(() => {
         setLoadingProgress(prev => {
           const newProgress = prev + Math.floor(Math.random() * 10);
@@ -50,7 +61,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       if (playlist.channels.length === 0) {
         toast.error("No channels found in playlist file");
       } else {
-        onPlaylistLoaded(playlist);
+        handlePlaylistProcessed(playlist);
         toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`);
       }
     } catch (error) {
@@ -61,9 +72,8 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       setTimeout(() => {
         setLoading(false);
         setLoadingProgress(0);
-      }, 500); // Keep progress at 100% briefly before resetting
+      }, 500);
       
-      // Reset file input
       e.target.value = "";
     }
   };
@@ -77,7 +87,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       return;
     }
     
-    // Validate URL format
     try {
       new URL(trimmedUrl);
     } catch (e) {
@@ -88,7 +97,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     setLoading(true);
     setLoadingProgress(10);
     
-    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       setLoadingProgress(prev => {
         const newProgress = prev + Math.floor(Math.random() * 8);
@@ -107,7 +115,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       if (playlist.channels.length === 0) {
         toast.error("No channels found in playlist");
       } else {
-        onPlaylistLoaded(playlist);
+        handlePlaylistProcessed(playlist);
         toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`, { id: "playlist-loading" });
         setUrlInput("");
       }
@@ -127,13 +135,11 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   const handleXtreamSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs
     if (!xtreamCredentials.server || !xtreamCredentials.username || !xtreamCredentials.password) {
       toast.error("Please fill in all Xtream fields");
       return;
     }
     
-    // Validate server URL
     try {
       new URL(xtreamCredentials.server);
     } catch (e) {
@@ -144,7 +150,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     setLoading(true);
     setLoadingProgress(10);
     
-    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       setLoadingProgress(prev => {
         const newProgress = prev + Math.floor(Math.random() * 5);
@@ -163,10 +168,9 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       if (playlist.channels.length === 0) {
         toast.error("No channels found from Xtream server");
       } else {
-        onPlaylistLoaded(playlist);
+        handlePlaylistProcessed(playlist);
         toast.success(`Loaded ${playlist.channels.length} channels from Xtream server`, { id: "xtream-loading" });
         
-        // Reset form
         setXtreamCredentials({
           server: "",
           username: "",
@@ -198,7 +202,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     setLoading(true);
     setLoadingProgress(10);
     
-    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       setLoadingProgress(prev => {
         const newProgress = prev + Math.floor(Math.random() * 8);
@@ -217,7 +220,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       if (playlist.channels.length === 0) {
         toast.error("No channels found in sample playlist");
       } else {
-        onPlaylistLoaded(playlist);
+        handlePlaylistProcessed(playlist);
         toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`, { id: "sample-loading" });
       }
     } catch (error) {
@@ -282,7 +285,6 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
             </label>
           </div>
           
-          {/* Sample playlists */}
           <div>
             <p className="text-sm text-muted-foreground mb-2">Sample Playlists</p>
             <div className="flex flex-wrap gap-2">

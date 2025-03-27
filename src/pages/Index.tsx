@@ -9,7 +9,7 @@ import EPGGuide from "@/components/EPGGuide";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
-import { fetchEPGData, EPGProgram } from "@/lib/epgService";
+import { fetchEPGData, EPGProgram, prefetchEPGDataForChannels } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { 
   NavigationMenu,
@@ -47,6 +47,13 @@ const Index = () => {
         if (savedChannelId) {
           const channel = parsedPlaylist.channels.find(c => c.id === savedChannelId) || null;
           setSelectedChannel(channel);
+        }
+        
+        // Start prefetching EPG data in the background
+        const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
+        if (channelsWithEpg.length > 0) {
+          console.log(`Starting background EPG prefetch for ${channelsWithEpg.length} channels`);
+          prefetchEPGDataForChannels(channelsWithEpg);
         }
       }
     }
