@@ -2,7 +2,7 @@
 // Main EPG service module that exports all functionality
 
 // Re-export from modules
-export type { EPGProgram, EPGProgressInfo } from './types';
+export type { EPGProgram, EPGProgressInfo, EPGParsingOptions } from './types';
 export { getEPGLoadingProgress } from './progress';
 export { hasValidCachedEPG, saveCache, clearCache } from './cache';
 export { getCustomEpgUrl, setCustomEpgUrl } from './settings';

@@ -1,16 +1,8 @@
-
 import React from "react";
 import { Channel } from "@/lib/types";
 import { Clock, Calendar, Tv } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface EPGProgram {
-  title: string;
-  description?: string;
-  start: Date;
-  end: Date;
-  channelId: string;
-}
+import { EPGProgram } from "@/lib/epg";
 
 interface EPGGuideProps {
   channel: Channel | null;

@@ -94,12 +94,16 @@ const Player = () => {
       setIsEpgLoading(true);
       try {
         const data = await fetchEPGData(channel);
-        if (data) {
+        
+        if (data && data.length > 0) {
           console.log(`Loaded ${data.length} EPG programs for ${channel.name}`);
+          setEpgData(data);
+        } else {
+          console.log(`No EPG data found for ${channel.name}`);
+          setEpgData(null);
         }
-        setEpgData(data);
       } catch (error) {
-        console.error("Error fetching EPG data:", error);
+        console.error(`Error fetching EPG data for ${channel.name}:`, error);
         setEpgData(null);
       } finally {
         setIsEpgLoading(false);

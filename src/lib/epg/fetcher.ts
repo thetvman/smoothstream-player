@@ -8,7 +8,7 @@ import { cacheEPGPrograms, getCachedEPGPrograms } from './cache';
 const FETCH_TIMEOUT = 30000; // 30 seconds timeout for fetch
 
 /**
- * Fetch EPG data from the custom EPG service
+ * Fetch EPG data from the custom EPG service for a single channel
  */
 export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[] | null> => {
   if (!channel || !channel.epg_channel_id) {
@@ -18,6 +18,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
   // Check cache first
   const cachedData = getCachedEPGPrograms(channel.epg_channel_id);
   if (cachedData) {
+    console.log(`Using cached EPG data for ${channel.name} (${channel.epg_channel_id})`);
     return cachedData;
   }
 
@@ -26,7 +27,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     const userEpgUrl = getCustomEpgUrl();
     
     if (!userEpgUrl) {
-      console.log("No custom EPG URL set, returning demo data");
+      console.log(`No custom EPG URL set, returning demo data for ${channel.name}`);
       const demoData = generateDemoEPG(channel.epg_channel_id);
       
       // Cache the demo data
@@ -35,7 +36,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
       return demoData;
     }
     
-    console.log(`Fetching EPG from custom URL: ${userEpgUrl}`);
+    console.log(`Fetching EPG data for ${channel.name} (${channel.epg_channel_id}) from: ${userEpgUrl}`);
     
     // Use fetch with cache control and timeout
     const controller = new AbortController();
@@ -52,12 +53,16 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
       
       if (response.ok) {
         const xmlText = await response.text();
-        const programs = parseXmltvData(xmlText, channel.epg_channel_id);
+        // Only parse EPG data for the current channel ID to save resources
+        const programs = parseXmltvData(xmlText, channel.epg_channel_id, true); // Added single channel mode
         
         if (programs && programs.length > 0) {
+          console.log(`Successfully loaded ${programs.length} EPG entries for ${channel.name}`);
           // Cache the results
           cacheEPGPrograms(channel.epg_channel_id, programs);
           return programs;
+        } else {
+          console.log(`No EPG data found for ${channel.name} in the XMLTV file`);
         }
       } else {
         console.error(`Failed to fetch EPG from ${userEpgUrl}: ${response.status} ${response.statusText}`);
@@ -68,7 +73,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     }
     
     // If we reach here, we couldn't get data from the custom URL
-    console.warn(`No EPG data found for channel ID: ${channel.epg_channel_id}`);
+    console.warn(`No EPG data found for channel ID: ${channel.epg_channel_id}, using demo data`);
     const demoData = generateDemoEPG(channel.epg_channel_id);
     
     // Cache even demo data to prevent repeated fetching
@@ -76,7 +81,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     
     return demoData;
   } catch (error) {
-    console.error("Error fetching EPG data:", error);
+    console.error(`Error fetching EPG data for ${channel.name}:`, error);
     
     // Fall back to demo data if the API fails
     const demoData = generateDemoEPG(channel.epg_channel_id);

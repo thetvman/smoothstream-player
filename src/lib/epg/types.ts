@@ -19,3 +19,9 @@ export interface EPGProgressInfo {
   estimatedTimeRemaining?: string;
   startTime?: number;
 }
+
+// Add interface for single channel parsing option
+export interface EPGParsingOptions {
+  singleChannelMode?: boolean;
+  channelId?: string;
+}
