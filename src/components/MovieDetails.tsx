@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Movie } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,8 @@ import {
   Film, 
   Play,
   Users,
-  Youtube
+  Youtube,
+  AlertCircle
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +18,17 @@ interface MovieDetailsProps {
   movie: Movie | null;
   onPlay: (movie: Movie) => void;
   isLoading?: boolean;
+  onFindMatch?: () => void;
+  hasPlaylists?: boolean;
 }
 
-const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = false }) => {
+const MovieDetails: React.FC<MovieDetailsProps> = ({ 
+  movie, 
+  onPlay, 
+  isLoading = false,
+  onFindMatch,
+  hasPlaylists = false
+}) => {
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
@@ -49,6 +57,9 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
       </div>
     );
   }
+
+  const canPlayMovie = movie.url || movie.matchedUrl;
+  const showMatchButton = !canPlayMovie && hasPlaylists;
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -159,14 +170,35 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
       )}
 
       <div className="mt-auto flex flex-col sm:flex-row gap-2 justify-center">
-        <Button 
-          className="w-full sm:w-auto"
-          size="lg"
-          onClick={() => onPlay(movie)}
-        >
-          <Play className="mr-2 h-4 w-4" />
-          Play Movie
-        </Button>
+        {canPlayMovie ? (
+          <Button 
+            className="w-full sm:w-auto"
+            size="lg"
+            onClick={() => onPlay(movie)}
+          >
+            <Play className="mr-2 h-4 w-4" />
+            Play Movie
+          </Button>
+        ) : (
+          <div className="w-full flex flex-col space-y-2 items-center justify-center">
+            {showMatchButton && (
+              <Button 
+                className="w-full sm:w-auto"
+                size="lg"
+                onClick={onFindMatch}
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Find Match in Playlist
+              </Button>
+            )}
+            {!hasPlaylists && (
+              <div className="flex items-center text-amber-500 text-sm">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                <p>TMDB preview only. Please load an IPTV playlist to stream.</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {movie.trailer && (
           <Button 

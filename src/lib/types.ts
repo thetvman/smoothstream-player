@@ -87,7 +87,7 @@ export interface XtreamMovie {
 export interface Movie {
   id: string;
   name: string;
-  url: string;
+  url?: string;  // Made optional to handle TMDB movies without URLs
   logo?: string;
   backdrop?: string;
   group?: string;
@@ -101,6 +101,7 @@ export interface Movie {
   tmdb_id?: number; // TMDB ID
   cast?: string; // Added for TMDB
   trailer?: string; // Added for TMDB
+  matchedUrl?: string; // URL matched from playlist
 }
 
 export interface MovieCategory {

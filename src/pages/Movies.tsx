@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Movie, MovieCategory } from "@/lib/types";
-import { storeMovieForPlayback, clearOldMovieData } from "@/lib/mediaService";
+import type { Movie, MovieCategory, Playlist } from "@/lib/types";
+import { storeMovieForPlayback, clearOldMovieData, findMatchingMovieUrl } from "@/lib/mediaService";
 import MovieList from "@/components/MovieList";
 import MovieDetails from "@/components/MovieDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,8 +17,19 @@ const Movies = () => {
   const [activeTab, setActiveTab] = useState<string>("browse");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [movieCategories, setMovieCategories] = useState<MovieCategory[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   
-  // Fetch movie categories
+  useEffect(() => {
+    try {
+      const storedPlaylists = localStorage.getItem('playlists');
+      if (storedPlaylists) {
+        setPlaylists(JSON.parse(storedPlaylists));
+      }
+    } catch (error) {
+      console.error("Error loading playlists from localStorage:", error);
+    }
+  }, []);
+  
   const { isLoading: isLoadingPopular } = useQuery({
     queryKey: ["movies", "popular"],
     queryFn: async () => {
@@ -26,7 +37,6 @@ const Movies = () => {
       
       if (popularMovies.length > 0) {
         setMovieCategories(prev => {
-          // Check if this category already exists
           const exists = prev.some(cat => cat.name === "Popular");
           if (exists) {
             return prev.map(cat => 
@@ -40,10 +50,9 @@ const Movies = () => {
       
       return popularMovies;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
   
-  // Fetch top rated movies
   const { isLoading: isLoadingTopRated } = useQuery({
     queryKey: ["movies", "top-rated"],
     queryFn: async () => {
@@ -64,10 +73,9 @@ const Movies = () => {
       
       return topRatedMovies;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
   
-  // Fetch now playing movies
   const { isLoading: isLoadingNowPlaying } = useQuery({
     queryKey: ["movies", "now-playing"],
     queryFn: async () => {
@@ -88,10 +96,9 @@ const Movies = () => {
       
       return nowPlayingMovies;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
   
-  // Fetch upcoming movies
   const { isLoading: isLoadingUpcoming } = useQuery({
     queryKey: ["movies", "upcoming"],
     queryFn: async () => {
@@ -112,10 +119,9 @@ const Movies = () => {
       
       return upcomingMovies;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
   
-  // Search movies
   const { refetch: searchMoviesRefetch, isLoading: isSearching } = useQuery({
     queryKey: ["movies", "search", searchQuery],
     queryFn: async () => {
@@ -138,18 +144,16 @@ const Movies = () => {
       
       return results;
     },
-    enabled: false, // Don't run automatically
-    staleTime: 1 * 60 * 1000, // 1 minute
+    enabled: false,
+    staleTime: 1 * 60 * 1000,
   });
   
-  // Fetch movie details
   const { refetch: fetchMovieDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ["movie-details", selectedMovie?.id],
     queryFn: async () => {
       if (selectedMovie?.tmdb_id) {
         const details = await getMovieDetails(selectedMovie.tmdb_id);
         if (details) {
-          // Keep the original URL if it exists
           if (selectedMovie.url) {
             details.url = selectedMovie.url;
           }
@@ -159,56 +163,76 @@ const Movies = () => {
       }
       return null;
     },
-    enabled: false, // Don't run automatically
+    enabled: false,
   });
   
-  // Effect to search when query changes
   useEffect(() => {
     if (searchQuery) {
       const timer = setTimeout(() => {
         searchMoviesRefetch();
-      }, 500); // Debounce
+      }, 500);
       
       return () => clearTimeout(timer);
     }
   }, [searchQuery, searchMoviesRefetch]);
   
-  // Effect to fetch details when movie is selected
   useEffect(() => {
     if (selectedMovie?.tmdb_id) {
       fetchMovieDetails();
     }
-  }, [selectedMovie?.id]); // Only run when the ID changes
+  }, [selectedMovie?.id]);
   
-  // Clean up storage on component mount
   useEffect(() => {
     clearOldMovieData();
   }, []);
   
-  // Handle movie selection
   const handleSelectMovie = (movie: Movie) => {
+    if (playlists.length > 0 && !movie.url) {
+      const matchedUrl = findMatchingMovieUrl(movie, playlists);
+      if (matchedUrl) {
+        movie = { ...movie, matchedUrl };
+        toast.success("Found a matching movie in your playlist!");
+      }
+    }
+    
     setSelectedMovie(movie);
     setActiveTab("details");
   };
   
-  // Handle play button
+  const handleFindMatch = () => {
+    if (!selectedMovie) return;
+    
+    if (playlists.length === 0) {
+      toast.error("No playlists loaded. Please load an IPTV playlist first.");
+      return;
+    }
+    
+    const matchedUrl = findMatchingMovieUrl(selectedMovie, playlists);
+    if (matchedUrl) {
+      setSelectedMovie({ ...selectedMovie, matchedUrl });
+      toast.success("Found a matching movie in your playlist!");
+    } else {
+      toast.error("No matching movie found in your playlists.");
+    }
+  };
+  
   const handlePlayMovie = (movie: Movie) => {
     if (!movie) {
       toast.error("No movie selected");
       return;
     }
     
-    // For TMDB movies without a URL, show a message
-    if (!movie.url) {
-      toast.info("This is a TMDB preview. Please load your IPTV playlist to stream movies.");
+    const movieUrl = movie.url || movie.matchedUrl;
+    
+    if (!movieUrl) {
+      toast.info("This is a TMDB preview. No matching movie found in your playlist.");
       return;
     }
     
     try {
-      // Store just this specific movie for playback
-      storeMovieForPlayback(movie);
+      const movieToPlay = { ...movie, url: movieUrl };
+      storeMovieForPlayback(movieToPlay);
       
-      // Navigate to movie player
       navigate(`/movie/${movie.id}`);
     } catch (error) {
       console.error("Error preparing movie for playback:", error);
@@ -287,6 +311,8 @@ const Movies = () => {
                 movie={selectedMovie}
                 onPlay={handlePlayMovie}
                 isLoading={isLoadingDetails && !!selectedMovie}
+                onFindMatch={handleFindMatch}
+                hasPlaylists={playlists.length > 0}
               />
             </TabsContent>
           </Tabs>
@@ -297,6 +323,8 @@ const Movies = () => {
             movie={selectedMovie}
             onPlay={handlePlayMovie}
             isLoading={isLoadingDetails && !!selectedMovie}
+            onFindMatch={handleFindMatch}
+            hasPlaylists={playlists.length > 0}
           />
         </div>
       </div>
