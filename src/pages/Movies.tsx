@@ -43,7 +43,7 @@ const Movies = () => {
     },
     enabled: !!credentials,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000, // Cache for 30 minutes
+    gcTime: 30 * 60 * 1000, // Previously cacheTime, now gcTime (garbage collection time)
     retry: 2
   });
   
