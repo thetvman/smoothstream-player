@@ -29,38 +29,72 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
   }
 
   try {
+    console.log(`Fetching EPG data for channel: ${channel.name}, EPG ID: ${channel.epg_channel_id}`);
+    
     // Use the XMLTV EPG API from iptv-org
     // This is an open source EPG service that provides guide data
     const epgChannelId = encodeURIComponent(channel.epg_channel_id);
-    const response = await fetch(`https://iptv-org.github.io/epg/guides/${epgChannelId}.json`);
     
-    if (!response.ok) {
-      // Try alternative format, some EPG IDs might be country-specific
+    // Try to fetch from iptv-org EPG API
+    try {
+      const response = await fetch(`https://iptv-org.github.io/epg/guides/${epgChannelId}.json`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const programs = processEPGData(data, channel.epg_channel_id);
+        
+        // Cache the successful result
+        EPG_CACHE[channel.epg_channel_id] = {
+          data: programs,
+          timestamp: now
+        };
+        
+        return programs;
+      }
+    } catch (err) {
+      console.warn("Failed primary EPG fetch:", err);
+    }
+    
+    // Try alternative format, some EPG IDs might be country-specific
+    try {
       const countryParts = epgChannelId.split('.');
       if (countryParts.length > 1) {
         const countryCode = countryParts[0];
         const channelId = countryParts[1];
         const altResponse = await fetch(`https://iptv-org.github.io/epg/guides/${countryCode}/${channelId}.json`);
         
-        if (!altResponse.ok) {
-          console.error(`EPG API error: ${response.status} - Channel ID: ${channel.epg_channel_id}`);
-          return null;
+        if (altResponse.ok) {
+          const data = await altResponse.json();
+          const programs = processEPGData(data, channel.epg_channel_id);
+          
+          // Cache the successful result
+          EPG_CACHE[channel.epg_channel_id] = {
+            data: programs,
+            timestamp: now
+          };
+          
+          return programs;
         }
-        
-        const data = await altResponse.json();
-        return processEPGData(data, channel.epg_channel_id);
       }
-      
-      console.error(`EPG API error: ${response.status} - Channel ID: ${channel.epg_channel_id}`);
-      return null;
+    } catch (err) {
+      console.warn("Failed alternative EPG fetch:", err);
     }
     
-    const data = await response.json();
-    return processEPGData(data, channel.epg_channel_id);
+    // If we reach here, both attempts failed
+    console.error(`Failed to fetch EPG data for: ${channel.epg_channel_id}`);
+    
+    // Fall back to demo data
+    const demoData = generateDemoEPG(channel.epg_channel_id);
+    
+    // Cache the demo result but with shorter expiry
+    EPG_CACHE[channel.epg_channel_id] = {
+      data: demoData,
+      timestamp: now - (CACHE_EXPIRY / 2) // Set to half expired to try again sooner
+    };
+    
+    return demoData;
   } catch (error) {
     console.error("Error fetching EPG data:", error);
-    
-    // Fall back to demo data if the API fails
     return generateDemoEPG(channel.epg_channel_id);
   }
 };
@@ -86,12 +120,6 @@ const processEPGData = (data: any, channelId: string): EPGProgram[] => {
     
     // Sort by start time
     programs.sort((a: EPGProgram, b: EPGProgram) => a.start.getTime() - b.start.getTime());
-    
-    // Cache the results
-    EPG_CACHE[channelId] = {
-      data: programs,
-      timestamp: Date.now()
-    };
     
     return programs;
   } catch (e) {

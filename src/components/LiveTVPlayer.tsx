@@ -5,11 +5,14 @@ import { Channel, Playlist } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import { safeJsonParse } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight, PlayCircle, ListFilter, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChannelList from "./ChannelList";
+import ChannelGuide from "./ChannelGuide";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import PlaylistInput from "./PlaylistInput";
+import EPGGuide from "./EPGGuide";
+import { fetchEPGData } from "@/lib/epgService";
 
 const LiveTVPlayer = () => {
   const navigate = useNavigate();
@@ -18,6 +21,9 @@ const LiveTVPlayer = () => {
   const [paginatedChannels, setPaginatedChannels] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'guide'>('guide');
+  const [epgData, setEpgData] = useState(null);
+  const [loadingEPG, setLoadingEPG] = useState(false);
 
   // Load last used playlist from localStorage
   useEffect(() => {
@@ -45,6 +51,20 @@ const LiveTVPlayer = () => {
     
     setIsLoading(false);
   }, [currentPage]);
+
+  // Fetch EPG data when channel changes
+  useEffect(() => {
+    if (!selectedChannel) return;
+    
+    const getEPGData = async () => {
+      setLoadingEPG(true);
+      const data = await fetchEPGData(selectedChannel);
+      setEpgData(data);
+      setLoadingEPG(false);
+    };
+    
+    getEPGData();
+  }, [selectedChannel]);
 
   const handleSelectChannel = (channel: Channel) => {
     setSelectedChannel(channel);
@@ -80,7 +100,7 @@ const LiveTVPlayer = () => {
       <Tabs defaultValue="player" className="w-full">
         <TabsList className="w-full grid grid-cols-3 rounded-none">
           <TabsTrigger value="player">Live TV</TabsTrigger>
-          <TabsTrigger value="channels">Channel List</TabsTrigger>
+          <TabsTrigger value="channels">Channel Browser</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         
@@ -116,22 +136,71 @@ const LiveTVPlayer = () => {
               </div>
             )}
           </div>
+          
+          {/* Current program info */}
+          {selectedChannel && (
+            <div className="p-4 border-t border-border">
+              <EPGGuide 
+                channel={selectedChannel} 
+                epgData={epgData} 
+                isLoading={loadingEPG} 
+              />
+            </div>
+          )}
         </TabsContent>
         
-        <TabsContent value="channels" className="m-0 max-h-[400px]">
-          <div className="h-[400px]">
-            <ChannelList 
-              playlist={playlist}
-              paginatedChannels={paginatedChannels}
-              selectedChannel={selectedChannel}
-              onSelectChannel={handleSelectChannel}
-              isLoading={isLoading}
-            />
+        <TabsContent value="channels" className="m-0">
+          <div className="border-b border-border flex justify-between items-center bg-muted/30 px-4 py-2">
+            <h3 className="font-medium">
+              {playlist?.name || "Channels"}
+              <span className="ml-2 text-sm text-muted-foreground">
+                {playlist?.channels.length || 0} channels
+              </span>
+            </h3>
+            <div className="flex space-x-2">
+              <Button 
+                variant={viewMode === 'list' ? "secondary" : "ghost"} 
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8"
+              >
+                <ListFilter className="h-4 w-4 mr-1" />
+                List
+              </Button>
+              <Button 
+                variant={viewMode === 'guide' ? "secondary" : "ghost"} 
+                size="sm"
+                onClick={() => setViewMode('guide')}
+                className="h-8"
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Guide
+              </Button>
+            </div>
+          </div>
+          
+          <div className="p-4">
+            {viewMode === 'guide' ? (
+              <ChannelGuide 
+                playlist={playlist}
+                selectedChannel={selectedChannel}
+                onSelectChannel={handleSelectChannel}
+                isLoading={isLoading}
+              />
+            ) : (
+              <ChannelList 
+                playlist={playlist}
+                paginatedChannels={paginatedChannels}
+                selectedChannel={selectedChannel}
+                onSelectChannel={handleSelectChannel}
+                isLoading={isLoading}
+              />
+            )}
           </div>
         </TabsContent>
         
-        <TabsContent value="settings" className="m-0 max-h-[400px]">
-          <div className="p-4 h-[400px] overflow-y-auto">
+        <TabsContent value="settings" className="m-0">
+          <div className="p-4 h-[500px] overflow-y-auto">
             <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
           </div>
         </TabsContent>

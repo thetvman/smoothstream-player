@@ -101,3 +101,73 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Channel items in list */
+.channel-item {
+  @apply flex items-center space-x-3 p-2 rounded-md cursor-pointer transition-colors;
+  @apply hover:bg-secondary;
+}
+
+.channel-item-active {
+  @apply bg-primary/10 hover:bg-primary/20;
+}
+
+/* Hulu-like guide styling */
+.channel-guide {
+  @apply shadow-md;
+}
+
+.channel-guide .channel-logo img {
+  @apply bg-black/30 p-1;
+}
+
+/* Live indicator */
+.live-indicator {
+  @apply relative;
+}
+
+.live-indicator::before {
+  content: "";
+  @apply absolute w-2 h-2 bg-green-500 rounded-full;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  }
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
+  }
+  
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+/* EPG styling */
+.epg-program {
+  @apply relative rounded-sm overflow-hidden transition-colors;
+}
+
+.epg-program::before {
+  content: "";
+  @apply absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent z-0;
+}
+
+.epg-program-title {
+  @apply relative z-10;
+}
+
+/* Current playing progress bar */
+.now-playing-progress {
+  @apply h-1 bg-primary/20 absolute bottom-0 left-0 right-0;
+}
+
+.now-playing-progress-bar {
+  @apply h-full bg-primary;
+}
