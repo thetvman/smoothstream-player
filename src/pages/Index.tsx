@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
+import GridChannelList from "@/components/GridChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
@@ -20,7 +20,9 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film, Tv } from "lucide-react";
+import { Film, Grid, List, Tv } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,8 +33,8 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  // Load saved playlist and selected channel from localStorage
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
     if (savedPlaylist) {
@@ -40,7 +42,6 @@ const Index = () => {
       if (parsedPlaylist) {
         setPlaylist(parsedPlaylist);
         
-        // Try to load last selected channel
         const savedChannelId = localStorage.getItem("iptv-last-channel");
         if (savedChannelId) {
           const channel = parsedPlaylist.channels.find(c => c.id === savedChannelId) || null;
@@ -50,7 +51,6 @@ const Index = () => {
     }
   }, []);
   
-  // Update paginated channels when playlist or page changes
   useEffect(() => {
     if (playlist) {
       setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
@@ -59,7 +59,6 @@ const Index = () => {
     }
   }, [playlist, currentPage]);
   
-  // Save playlist and selected channel to localStorage
   useEffect(() => {
     if (playlist) {
       localStorage.setItem("iptv-playlist", JSON.stringify(playlist));
@@ -70,7 +69,6 @@ const Index = () => {
     }
   }, [playlist, selectedChannel]);
   
-  // Fetch EPG data when selected channel changes
   useEffect(() => {
     const getEPGData = async () => {
       if (!selectedChannel || !selectedChannel.epg_channel_id) {
@@ -96,12 +94,10 @@ const Index = () => {
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
     
-    // Use setTimeout to prevent UI from freezing during large playlist processing
     setTimeout(() => {
       setPlaylist(newPlaylist);
       setCurrentPage(1);
       
-      // Select first channel by default
       if (newPlaylist.channels.length > 0) {
         setSelectedChannel(newPlaylist.channels[0]);
       }
@@ -114,7 +110,6 @@ const Index = () => {
     setSelectedChannel(channel);
   };
   
-  // Open fullscreen player page
   const openFullscreenPlayer = () => {
     if (selectedChannel) {
       navigate(`/player/${selectedChannel.id}`);
@@ -126,14 +121,12 @@ const Index = () => {
     window.scrollTo(0, 0);
   };
   
-  // Generate pagination links
   const renderPaginationLinks = () => {
     if (!paginatedChannels || paginatedChannels.totalPages <= 1) return null;
     
     const { currentPage, totalPages } = paginatedChannels;
     const pageItems = [];
     
-    // Add current page and surrounding pages
     const pageRange = 2;
     const startPage = Math.max(1, currentPage - pageRange);
     const endPage = Math.min(totalPages, currentPage + pageRange);
@@ -193,93 +186,122 @@ const Index = () => {
         <header className="flex flex-col space-y-1">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink 
-                    className={navigationMenuTriggerStyle()}
-                    onClick={() => navigate('/movies')}
-                  >
-                    <Film className="mr-2 h-4 w-4" />
-                    Movies
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink 
-                    className={navigationMenuTriggerStyle()}
-                    onClick={() => navigate('/series')}
-                  >
-                    <Tv className="mr-2 h-4 w-4" />
-                    Series
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center border border-border rounded-md overflow-hidden">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setViewMode('grid')}
+                  className={viewMode === 'grid' ? 'bg-muted' : ''}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' ? 'bg-muted' : ''}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/movies')}
+                    >
+                      <Film className="mr-2 h-4 w-4" />
+                      Movies
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/series')}
+                    >
+                      <Tv className="mr-2 h-4 w-4" />
+                      Series
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
           </div>
           <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
         </header>
       
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
-          {/* Video player section */}
-          <div className="lg:col-span-2 flex flex-col space-y-4">
-            <div className="animate-fade-in">
-              <VideoPlayer channel={selectedChannel} />
-            </div>
-            
-            {/* EPG Guide - New component */}
-            {selectedChannel && (
-              <EPGGuide 
-                channel={selectedChannel} 
-                epgData={epgData} 
-                isLoading={isEpgLoading} 
+        {!playlist ? (
+          <div className="flex-1">
+            <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
+          </div>
+        ) : (
+          viewMode === 'grid' ? (
+            <div className="flex-1 overflow-hidden">
+              <GridChannelList
+                playlist={playlist}
+                channels={playlist.channels}
+                selectedChannel={selectedChannel}
+                onSelectChannel={handleSelectChannel}
+                isLoading={isLoading}
               />
-            )}
-            
-            {!playlist && (
-              <div className="flex-1">
-                <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
-              </div>
-            )}
-          </div>
-          
-          {/* Channel list section */}
-          <div className="h-full flex flex-col overflow-hidden">
-            <ChannelList
-              playlist={playlist}
-              paginatedChannels={paginatedChannels}
-              selectedChannel={selectedChannel}
-              onSelectChannel={handleSelectChannel}
-              isLoading={isLoading}
-            />
-            
-            {paginatedChannels && paginatedChannels.totalPages > 1 && (
-              <div className="py-4 border-t">
-                <Pagination>
-                  <PaginationContent>
-                    {currentPage > 1 && (
-                      <PaginationItem>
-                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
-                      </PaginationItem>
-                    )}
-                    
-                    {renderPaginationLinks()}
-                    
-                    {currentPage < paginatedChannels.totalPages && (
-                      <PaginationItem>
-                        <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
-                      </PaginationItem>
-                    )}
-                  </PaginationContent>
-                </Pagination>
-                
-                <div className="text-xs text-center text-muted-foreground mt-2">
-                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
-                  {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
+            </div>
+          ) : (
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+              <div className="lg:col-span-2 flex flex-col space-y-4">
+                <div className="animate-fade-in">
+                  <VideoPlayer channel={selectedChannel} />
                 </div>
+                
+                {selectedChannel && (
+                  <EPGGuide 
+                    channel={selectedChannel} 
+                    epgData={epgData} 
+                    isLoading={isEpgLoading} 
+                  />
+                )}
               </div>
-            )}
-          </div>
-        </div>
+              
+              <div className="h-full flex flex-col overflow-hidden">
+                <ChannelList
+                  playlist={playlist}
+                  paginatedChannels={paginatedChannels}
+                  selectedChannel={selectedChannel}
+                  onSelectChannel={handleSelectChannel}
+                  isLoading={isLoading}
+                />
+                
+                {paginatedChannels && paginatedChannels.totalPages > 1 && (
+                  <div className="py-4 border-t">
+                    <Pagination>
+                      <PaginationContent>
+                        {currentPage > 1 && (
+                          <PaginationItem>
+                            <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
+                          </PaginationItem>
+                        )}
+                        
+                        {renderPaginationLinks()}
+                        
+                        {currentPage < paginatedChannels.totalPages && (
+                          <PaginationItem>
+                            <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
+                          </PaginationItem>
+                        )}
+                      </PaginationContent>
+                    </Pagination>
+                    
+                    <div className="text-xs text-center text-muted-foreground mt-2">
+                      Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                      {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        )}
       </div>
     </Layout>
   );

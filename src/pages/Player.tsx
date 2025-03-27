@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
 import { Channel, Playlist } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Grid, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Player = () => {
@@ -57,6 +57,14 @@ const Player = () => {
           aria-label="Back to home"
         >
           <ArrowLeft className="w-5 h-5" />
+        </button>
+        
+        <button 
+          className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-colors backdrop-blur-md"
+          onClick={() => navigate("/")}
+          aria-label="Show all channels"
+        >
+          <Grid className="w-5 h-5" />
         </button>
         
         {!showChannelInfo && (

@@ -175,7 +175,28 @@
     @apply opacity-100;
   }
   
-  /* New movie website specific styles */
+  /* TV channel grid styles */
+  .channel-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4;
+  }
+  
+  .channel-card {
+    @apply aspect-video bg-black/20 flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden;
+  }
+  
+  .channel-card-selected {
+    @apply ring-2 ring-primary;
+  }
+  
+  .channel-logo {
+    @apply max-w-full max-h-full object-contain;
+  }
+  
+  .channel-fallback {
+    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-primary/10;
+  }
+  
+  /* Movie website specific styles */
   .movie-card {
     @apply relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
