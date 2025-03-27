@@ -40,20 +40,36 @@ const Player = () => {
           setChannel(foundChannel);
           
           if (!foundChannel) {
-            toast.error("Channel not found");
+            toast({
+              title: "Error",
+              description: "Channel not found",
+              variant: "destructive"
+            });
             navigate("/");
           }
         } else {
-          toast.error("Invalid playlist data");
+          toast({
+            title: "Error",
+            description: "Invalid playlist data",
+            variant: "destructive"
+          });
           navigate("/");
         }
       } else {
-        toast.error("No playlist found");
+        toast({
+          title: "Error",
+          description: "No playlist found",
+          variant: "destructive"
+        });
         navigate("/");
       }
     } catch (error) {
       console.error("Error loading channel:", error);
-      toast.error("Error loading channel");
+      toast({
+        title: "Error",
+        description: "Error loading channel",
+        variant: "destructive"
+      });
       navigate("/");
     }
   }, [channelId, navigate]);
