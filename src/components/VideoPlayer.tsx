@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
@@ -8,9 +7,14 @@ import LoadingSpinner from "./common/LoadingSpinner";
 interface VideoPlayerProps {
   channel: Channel | null;
   autoPlay?: boolean;
+  onProgressUpdate?: (progress: number) => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
+  channel, 
+  autoPlay = true,
+  onProgressUpdate 
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -194,11 +198,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     if (!video) return;
     
     const handleTimeUpdate = () => {
+      const currentTime = video.currentTime;
+      const duration = video.duration || 0;
+      
       setPlayerState(prev => ({
         ...prev,
-        currentTime: video.currentTime,
-        duration: video.duration || 0
+        currentTime,
+        duration
       }));
+      
+      if (onProgressUpdate && duration > 0) {
+        const progress = Math.round((currentTime / duration) * 100);
+        onProgressUpdate(progress);
+      }
     };
     
     const handlePlay = () => {
@@ -249,7 +261,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
     };
-  }, []);
+  }, [onProgressUpdate]);
   
   const handlePlayPause = () => {
     const video = videoRef.current;

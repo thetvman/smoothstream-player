@@ -22,38 +22,22 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [currentProgress, setCurrentProgress] = useState(0);
   
-  // Track playback progress every 10 seconds
-  useEffect(() => {
-    if (!channel) return;
+  const handleProgressUpdate = (progress: number) => {
+    setCurrentProgress(progress);
     
-    const intervalId = setInterval(() => {
-      const videoElement = document.querySelector('video');
-      if (videoElement && !videoElement.paused) {
-        const duration = videoElement.duration;
-        const currentTime = videoElement.currentTime;
-        
-        if (duration && !isNaN(duration) && duration > 0) {
-          const progress = Math.round((currentTime / duration) * 100);
-          setCurrentProgress(progress);
-          
-          // Update watch history if it's been more than 10 seconds since last update
-          const now = Date.now();
-          if (now - lastUpdateTime > 10000) {
-            addToRecentlyWatched({
-              id: channel.id,
-              type: contentType,
-              title: title,
-              poster: posterUrl || channel.logo,
-              progress: progress
-            });
-            setLastUpdateTime(now);
-          }
-        }
-      }
-    }, 5000);
-    
-    return () => clearInterval(intervalId);
-  }, [channel, contentType, title, posterUrl, lastUpdateTime]);
+    // Update watch history if it's been more than 10 seconds since last update
+    const now = Date.now();
+    if (now - lastUpdateTime > 10000 && channel) {
+      addToRecentlyWatched({
+        id: channel.id,
+        type: contentType,
+        title: title,
+        poster: posterUrl || channel.logo,
+        progress: progress
+      });
+      setLastUpdateTime(now);
+    }
+  };
   
   // Save progress when component unmounts
   useEffect(() => {
@@ -71,7 +55,11 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
   }, [channel, contentType, title, posterUrl, currentProgress]);
 
   return (
-    <VideoPlayer channel={channel} autoPlay={autoPlay} />
+    <VideoPlayer 
+      channel={channel} 
+      autoPlay={autoPlay} 
+      onProgressUpdate={handleProgressUpdate}
+    />
   );
 };
 

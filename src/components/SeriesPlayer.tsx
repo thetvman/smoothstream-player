@@ -43,7 +43,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   }, [episode, series]);
   
-  // Update progress periodically
+  // Update progress handler
   const handleProgressUpdate = (currentProgress: number) => {
     setProgress(currentProgress);
     
