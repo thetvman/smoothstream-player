@@ -428,18 +428,21 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
       if (result.ok) {
         try {
           console.log(`Successfully fetched EPG from: ${result.url}`);
-          const xmlText = await result.response.text();
-          const programs = parseXmltvData(xmlText, channel.epg_channel_id);
-          
-          if (programs && programs.length > 0) {
-            // Cache the results
-            EPG_CACHE[channel.epg_channel_id] = {
-              data: programs,
-              timestamp: Date.now()
-            };
+          // Fix TypeScript error by checking for 'response' property
+          if ('response' in result) {
+            const xmlText = await result.response.text();
+            const programs = parseXmltvData(xmlText, channel.epg_channel_id);
             
-            saveCache();
-            return programs;
+            if (programs && programs.length > 0) {
+              // Cache the results
+              EPG_CACHE[channel.epg_channel_id] = {
+                data: programs,
+                timestamp: Date.now()
+              };
+              
+              saveCache();
+              return programs;
+            }
           }
         } catch (error) {
           console.log(`Failed to parse XMLTV EPG from ${result.url}:`, error);
