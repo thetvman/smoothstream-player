@@ -28,9 +28,23 @@ export const setCustomEpgUrl = (url: string | null) => {
  * Get the currently set custom EPG URL
  */
 export const getCustomEpgUrl = (): string | null => {
-  if (customEpgUrl === undefined) {
-    // Initialize from localStorage if not set yet
-    customEpgUrl = localStorage.getItem("iptv-epg-url");
+  // Initialize from localStorage if not set yet
+  if (customEpgUrl === null) {
+    try {
+      customEpgUrl = localStorage.getItem("iptv-epg-url");
+    } catch (error) {
+      console.error("Error accessing localStorage:", error);
+    }
   }
   return customEpgUrl;
 };
+
+// Initialize the URL from localStorage when the module loads
+try {
+  customEpgUrl = localStorage.getItem("iptv-epg-url");
+  if (customEpgUrl) {
+    console.log("Loaded EPG URL from localStorage:", customEpgUrl);
+  }
+} catch (error) {
+  console.error("Error initializing EPG URL from localStorage:", error);
+}
