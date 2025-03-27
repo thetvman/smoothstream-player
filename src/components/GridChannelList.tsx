@@ -152,14 +152,7 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
     );
   }
   
-  if (!playlist) {
-    return (
-      <div className="p-4 text-center bg-black min-h-screen">
-        <p className="text-gray-300">No playlist loaded</p>
-      </div>
-    );
-  }
-  
+  // Always render the component even if playlist is null
   return (
     <div className="flex flex-col h-full overflow-hidden bg-black">
       <div className="p-3 border-b border-gray-800 glossy-header sticky top-0 z-10 shadow-md">
@@ -253,9 +246,9 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
                     {channel.name}
                   </div>
                   
-                  {/* Channel info tooltip shown on hover - always visible, no timeout */}
+                  {/* Channel info tooltip shown on hover - always visible on hover */}
                   {hoveredChannel === channel.id && (
-                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 opacity-0 group-hover:opacity-100 animate-fade-in z-10">
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 group-hover:opacity-100 animate-fade-in z-10">
                       <div className="text-center">
                         <h3 className="font-bold text-white">{channel.name}</h3>
                         {channel.group && (
@@ -307,7 +300,7 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
       
       <div className="p-3 border-t border-gray-800 glossy-header shadow-inner">
         <div className="text-xs text-gray-400">
-          <span className="font-medium text-gray-300">{playlist.name}</span> • {playlist.channels.length} channels
+          <span className="font-medium text-gray-300">{playlist?.name}</span> • {playlist?.channels?.length || 0} channels
           {activeGroup && 
             ` • ${filteredChannels.length} in "${activeGroup}"`}
         </div>

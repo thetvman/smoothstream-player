@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -95,16 +96,18 @@ const Index = () => {
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
     
+    // Apply the new playlist immediately without the artificial delay
+    setPlaylist(newPlaylist);
+    setCurrentPage(1);
+    
+    if (newPlaylist.channels.length > 0) {
+      setSelectedChannel(newPlaylist.channels[0]);
+    }
+    
+    // Set loading to false after a short delay to ensure UI updates properly
     setTimeout(() => {
-      setPlaylist(newPlaylist);
-      setCurrentPage(1);
-      
-      if (newPlaylist.channels.length > 0) {
-        setSelectedChannel(newPlaylist.channels[0]);
-      }
-      
       setIsLoading(false);
-    }, 50);
+    }, 300);
   };
   
   const handleSelectChannel = (channel: Channel) => {
@@ -237,7 +240,7 @@ const Index = () => {
             </p>
           </header>
         
-          {!playlist ? (
+          {!playlist && !isLoading ? (
             <div className="flex-1">
               <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
             </div>
@@ -246,7 +249,7 @@ const Index = () => {
               <div className="flex-1 overflow-hidden animate-fade-in">
                 <GridChannelList
                   playlist={playlist}
-                  channels={playlist.channels}
+                  channels={playlist?.channels || []}
                   selectedChannel={selectedChannel}
                   onSelectChannel={handleSelectChannel}
                   isLoading={isLoading}
