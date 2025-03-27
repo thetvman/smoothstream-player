@@ -9,12 +9,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EPGGuide from "@/components/EPGGuide";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { fetchEPGData, EPGProgram } from "@/lib/epgService";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
   const navigate = useNavigate();
   const [channel, setChannel] = useState<Channel | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
+  const [isEpgLoading, setIsEpgLoading] = useState(false);
   const { toast } = useToast();
   
   // Load channel from localStorage
@@ -54,6 +57,29 @@ const Player = () => {
       }
     };
   }, []);
+  
+  // Fetch EPG data when channel changes
+  useEffect(() => {
+    const loadEpgData = async () => {
+      if (!channel || !channel.epg_channel_id) {
+        setEpgData(null);
+        return;
+      }
+      
+      setIsEpgLoading(true);
+      try {
+        const data = await fetchEPGData(channel);
+        setEpgData(data);
+      } catch (error) {
+        console.error("Error fetching EPG data:", error);
+        setEpgData(null);
+      } finally {
+        setIsEpgLoading(false);
+      }
+    };
+    
+    loadEpgData();
+  }, [channel]);
   
   if (!channel) {
     return null;
@@ -122,6 +148,9 @@ const Player = () => {
                   {channel.group && (
                     <div className="text-sm text-gray-400 mt-1">{channel.group}</div>
                   )}
+                  {channel.epg_channel_id && (
+                    <div className="text-xs text-gray-500 mt-1">EPG ID: {channel.epg_channel_id}</div>
+                  )}
                 </div>
 
                 {channel.logo && (
@@ -141,8 +170,8 @@ const Player = () => {
                   <h4 className="text-sm font-medium text-gray-300 mb-2">Program Guide</h4>
                   <EPGGuide 
                     channel={channel} 
-                    epgData={null} 
-                    isLoading={false}
+                    epgData={epgData} 
+                    isLoading={isEpgLoading}
                   />
                 </div>
               </div>

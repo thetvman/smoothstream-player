@@ -29,7 +29,18 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
     );
   }
 
-  if (!channel || !channel.epg_channel_id) {
+  if (!channel) {
+    return (
+      <div className="mt-2 py-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Tv className="w-4 h-4" />
+          <p>Select a channel to view program information.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!channel.epg_channel_id) {
     return (
       <div className="mt-2 py-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -45,7 +56,8 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
       <div className="mt-2 py-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          <p>No current program information available.</p>
+          <p>No current program information available for {channel.name}.</p>
+          <p className="text-xs ml-2">EPG ID: {channel.epg_channel_id}</p>
         </div>
       </div>
     );
