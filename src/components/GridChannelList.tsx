@@ -152,8 +152,11 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
                       alt={channel.name} 
                       className="w-full h-full object-contain p-4"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+                        const imgElement = e.target as HTMLImageElement;
+                        imgElement.style.display = 'none';
+                        if (imgElement.nextElementSibling) {
+                          (imgElement.nextElementSibling as HTMLElement).style.display = 'flex';
+                        }
                       }}
                     />
                   ) : null}
