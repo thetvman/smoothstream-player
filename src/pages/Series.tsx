@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Series, SeriesCategory, Episode, XtreamCredentials } from "@/lib/types";
+import type { Series, SeriesCategory, Episode, XtreamCredentials } from "@/lib/types";
 import { fetchAllSeries, fetchSeriesWithEpisodes, storeEpisodeForPlayback, clearOldSeriesData } from "@/lib/mediaService";
 import SeriesList from "@/components/SeriesList";
 import SeriesDetails from "@/components/SeriesDetails";
@@ -16,7 +15,6 @@ const Series = () => {
   const [selectedSeries, setSelectedSeries] = useState<Series | null>(null);
   const [activeTab, setActiveTab] = useState<string>("browse");
   
-  // Get credentials from localStorage
   const getCredentials = (): XtreamCredentials | null => {
     const playlist = localStorage.getItem("iptv-playlist");
     if (!playlist) return null;
@@ -27,7 +25,6 @@ const Series = () => {
   
   const credentials = getCredentials();
   
-  // Fetch series
   const { data: seriesCategories, isLoading, error } = useQuery({
     queryKey: ["series", credentials?.server],
     queryFn: async () => {
@@ -40,26 +37,21 @@ const Series = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast.error("Failed to load series: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   }, [error]);
   
-  // Handle series selection
   const handleSelectSeries = (series: Series) => {
     setSelectedSeries(series);
     setActiveTab("details");
   };
   
-  // Clean up storage on component mount
   useEffect(() => {
-    // Clear old series data to free up space
     clearOldSeriesData();
   }, []);
   
-  // Handle loading series details
   const handleLoadSeasons = async (series: Series) => {
     if (!credentials) {
       toast.error("No Xtream credentials found");
@@ -82,7 +74,6 @@ const Series = () => {
     }
   };
   
-  // Handle play episode
   const handlePlayEpisode = (episode: Episode, series: Series) => {
     if (!episode) {
       toast.error("No episode selected");
@@ -90,10 +81,7 @@ const Series = () => {
     }
     
     try {
-      // Store episode for playback
       storeEpisodeForPlayback(episode, series);
-      
-      // Navigate to episode player
       navigate(`/series/${series.id}/episode/${episode.id}`);
     } catch (error) {
       console.error("Error preparing episode for playback:", error);
