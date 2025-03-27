@@ -41,6 +41,16 @@ const Player = () => {
       navigate("/");
     }
   }, [channelId, navigate, toast]);
+
+  // Force dark mode by adding 'dark' class to html when component mounts
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    
+    // Clean up when component unmounts
+    return () => {
+      document.documentElement.classList.remove('dark');
+    };
+  }, []);
   
   if (!channel) {
     return null;
