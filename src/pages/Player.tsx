@@ -36,10 +36,10 @@ const Player = () => {
   }
   
   return (
-    <div className="fixed inset-0 bg-player-background">
+    <div className="fixed inset-0 bg-black">
       <div className="absolute top-6 left-6 z-10">
         <button 
-          className="btn-icon bg-black/50 hover:bg-black/70"
+          className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors"
           onClick={() => navigate("/")}
           aria-label="Back to home"
         >
@@ -54,7 +54,7 @@ const Player = () => {
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
             <h1 className="text-white text-2xl font-bold mb-2">{channel.name}</h1>
             {channel.group && (
-              <div className="inline-block bg-primary/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
+              <div className="inline-block bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
                 {channel.group}
               </div>
             )}

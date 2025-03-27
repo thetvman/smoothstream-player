@@ -8,6 +8,7 @@ interface LayoutProps {
   fullHeight?: boolean;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
   padded?: boolean;
+  withSidebar?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -16,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({
   fullHeight = false,
   maxWidth = "2xl",
   padded = true,
+  withSidebar = false,
 }) => {
   const maxWidthClasses = {
     sm: "max-w-screen-sm",
@@ -30,8 +32,9 @@ const Layout: React.FC<LayoutProps> = ({
     <div 
       className={cn(
         "mx-auto w-full",
-        maxWidthClasses[maxWidth],
-        padded ? "px-4 sm:px-6 md:px-8" : "",
+        withSidebar ? "flex" : "",
+        maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
+        padded && !withSidebar ? "px-4 sm:px-6 md:px-8" : "",
         fullHeight ? "min-h-screen flex flex-col" : "",
         className
       )}
