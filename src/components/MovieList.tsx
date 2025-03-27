@@ -4,7 +4,15 @@ import { Movie, MovieCategory } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import MovieGrid from "./MovieGrid";
-import { useMovieFiltering } from "@/hooks/useMovieFiltering";
+import { useMoviePagination } from "@/hooks/useMoviePagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 interface MovieListProps {
   movieCategories: MovieCategory[] | null;
@@ -21,17 +29,13 @@ const MovieList = memo(({
 }: MovieListProps) => {
   const {
     searchQuery,
-    setSearchQuery,
+    handleSearchChange,
     currentCategory,
-    setCurrentCategory,
-    filteredMovies
-  } = useMovieFiltering(movieCategories);
-
-  // Handle category change
-  const handleCategoryChange = (categoryId: string) => {
-    setCurrentCategory(categoryId);
-    setSearchQuery("");
-  };
+    handleCategoryChange,
+    paginatedMovies,
+    currentPage,
+    handlePageChange
+  } = useMoviePagination(movieCategories);
 
   // Create categories tabs
   const renderCategoryTabs = () => {
@@ -61,6 +65,63 @@ const MovieList = memo(({
     );
   };
 
+  // Render pagination controls
+  const renderPagination = () => {
+    if (!paginatedMovies || paginatedMovies.totalPages <= 1) {
+      return null;
+    }
+
+    return (
+      <Pagination className="mt-6">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => handlePageChange(currentPage - 1)}
+              className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+          
+          {/* Show max 5 page numbers */}
+          {Array.from({ length: Math.min(5, paginatedMovies.totalPages) }, (_, i) => {
+            // Start page calculation
+            let startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(startPage + 4, paginatedMovies.totalPages);
+            
+            // Adjust startPage if we're near the end
+            if (endPage - startPage < 4) {
+              startPage = Math.max(1, endPage - 4);
+            }
+            
+            const pageNum = startPage + i;
+            
+            // Don't render beyond total pages
+            if (pageNum > paginatedMovies.totalPages) {
+              return null;
+            }
+            
+            return (
+              <PaginationItem key={pageNum}>
+                <PaginationLink 
+                  isActive={currentPage === pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                >
+                  {pageNum}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          })}
+          
+          <PaginationItem>
+            <PaginationNext 
+              onClick={() => handlePageChange(currentPage + 1)}
+              className={currentPage >= paginatedMovies.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Search bar */}
@@ -70,19 +131,22 @@ const MovieList = memo(({
           className="pl-10 bg-card border-secondary focus:border-primary py-6"
           placeholder="Search movies..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
       
       {/* Category tabs */}
       {renderCategoryTabs()}
       
-      {/* Movies grid */}
+      {/* Movies grid with paginated results */}
       <MovieGrid 
-        movies={filteredMovies}
+        movies={paginatedMovies?.items || []}
         onSelectMovie={onSelectMovie}
         isLoading={isLoading}
       />
+      
+      {/* Pagination controls */}
+      {renderPagination()}
     </div>
   );
 });

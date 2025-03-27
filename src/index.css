@@ -5,41 +5,65 @@
 
 @layer base {
   :root {
-    --background: 225 25% 7%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 228 22% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 228 22% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221 83% 53%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 228 22% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 228 22% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 221 83% 53%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 228 22% 18%;
-    --input: 228 22% 18%;
-    --ring: 228 22% 28%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
+  }
 
-    --player-background: 225 25% 7%;
-    --player-foreground: 210 40% 98%;
-    --player-control: 210 40% 98%;
-    --player-control-hover: 221 83% 53%;
-    --player-overlay: 225 25% 4% / 80%;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -47,80 +71,33 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
-  }
-
-  /* Hide video controls by default */
-  video::-webkit-media-controls {
-    display: none !important;
-  }
-  
-  video::-webkit-media-controls-enclosure {
-    display: none !important;
+    @apply bg-background text-foreground;
   }
 }
 
-@layer components {
-  .glass-morphism {
-    @apply bg-black/20 backdrop-blur-lg border border-white/10 shadow-lg;
-  }
-  
-  .player-controls {
-    @apply transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100;
-  }
-  
-  .channel-item {
-    @apply relative flex items-center gap-3 p-3 rounded-lg transition-all duration-200 hover:bg-secondary cursor-pointer;
-  }
-  
-  .channel-item-active {
-    @apply bg-secondary border-l-4 border-primary;
-  }
-  
-  .btn-icon {
-    @apply flex items-center justify-center rounded-md bg-secondary/80 text-foreground transition-all duration-200 hover:bg-primary hover:text-white;
-  }
-  
-  .nav-link {
-    @apply flex items-center gap-2 py-2 px-4 rounded-md text-sm font-medium text-muted-foreground hover:text-white hover:bg-secondary/80 transition-all;
-  }
-  
-  .nav-link-active {
-    @apply bg-primary text-white hover:bg-primary/90 hover:text-white;
-  }
-  
-  .movie-card {
-    @apply relative overflow-hidden rounded-lg bg-card shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer;
-  }
-  
-  .movie-card-overlay {
-    @apply absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-300 flex flex-col justify-end p-4 hover:opacity-100;
-  }
-  
-  .category-tab {
-    @apply px-4 py-2 text-sm font-medium rounded-full text-muted-foreground hover:text-white hover:bg-secondary/80 transition-all whitespace-nowrap;
-  }
-  
-  .category-tab-active {
-    @apply bg-primary text-white hover:bg-primary/90;
-  }
-  
-  .player-progress {
-    @apply h-1 bg-white/20 relative overflow-hidden rounded-full cursor-pointer transition-all duration-200 hover:h-1.5;
-  }
-  
-  .player-progress-fill {
-    @apply absolute top-0 left-0 h-full bg-primary rounded-full transition-all;
-  }
-  
-  .player-progress-handle {
-    @apply absolute top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 rounded-full bg-primary opacity-0 transition-opacity cursor-pointer;
-  }
-  
-  .player-progress:hover .player-progress-handle {
-    @apply opacity-100;
-  }
+/* Category tabs styling */
+.category-tab {
+  @apply px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors;
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.category-tab-active {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+/* Button with icon styling */
+.btn-icon {
+  @apply flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors;
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+/* Scrollbar hiding for horizontal scrolls */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
