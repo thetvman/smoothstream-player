@@ -1,5 +1,5 @@
 
-import { EPGProgram } from './types';
+import { EPGProgram, EPGParsingOptions } from './types';
 
 // Use a faster XML parsing method
 const parser = new DOMParser();
@@ -7,7 +7,11 @@ const parser = new DOMParser();
 /**
  * Parse XMLTV data format with optimized approach
  */
-export const parseXmltvData = (xmlText: string, channelId: string): EPGProgram[] => {
+export const parseXmltvData = (
+  xmlText: string, 
+  channelId: string, 
+  singleChannelMode: boolean = false
+): EPGProgram[] => {
   try {
     const xmlDoc = parser.parseFromString(xmlText, "text/xml");
     
@@ -38,7 +42,11 @@ export const parseXmltvData = (xmlText: string, channelId: string): EPGProgram[]
       return [];
     }
     
-    console.log(`Found ${programmeElements.length} programmes for channel ${channelId}`);
+    if (singleChannelMode) {
+      console.log(`Single channel mode: Found ${programmeElements.length} programmes for channel ${channelId}`);
+    } else {
+      console.log(`Found ${programmeElements.length} programmes for channel ${channelId}`);
+    }
     
     // Pre-allocate array size for better performance
     const programCount = programmeElements.length;
