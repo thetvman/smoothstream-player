@@ -34,6 +34,13 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    /* Player colors */
+    --player-background: 0 0% 0%;
+    --player-foreground: 0 0% 100%;
+    --player-control: 0 0% 100%;
+    --player-control-hover: 0 0% 80%;
+    --player-overlay: 0 0% 0% / 0.5;
   }
 
   .dark {
@@ -64,6 +71,13 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Player colors */
+    --player-background: 0 0% 0%;
+    --player-foreground: 0 0% 100%;
+    --player-control: 0 0% 100%;
+    --player-control-hover: 0 0% 80%;
+    --player-overlay: 0 0% 0% / 0.7;
   }
 }
 

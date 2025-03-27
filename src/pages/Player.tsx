@@ -6,6 +6,7 @@ import { Channel, Playlist } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -37,7 +38,7 @@ const Player = () => {
   }
   
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-background">
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
         <button 
           className="btn-icon bg-black/40 hover:bg-black/60 text-white"
@@ -66,6 +67,10 @@ const Player = () => {
             </Tooltip>
           </TooltipProvider>
         )}
+      </div>
+      
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
       </div>
       
       <div className="h-full flex items-center justify-center">

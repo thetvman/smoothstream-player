@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 
@@ -28,7 +28,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       <VideoPlayer channel={channel} autoPlay={autoPlay} />
       
       {series && episode && (
-        <div className="mt-4 p-4 bg-card rounded-lg">
+        <div className="mt-4 p-4 bg-card rounded-lg border border-border">
           <h3 className="font-medium mb-1">{series.name} - Season {episode.season_number}</h3>
           <h4 className="text-lg font-bold mb-2">Episode {episode.episode_number}: {episode.name}</h4>
           
