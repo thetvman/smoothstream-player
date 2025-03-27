@@ -33,29 +33,48 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   // Add to recently watched when episode is played
   useEffect(() => {
     if (episode && series) {
-      addToRecentlyWatched({
-        id: `${series.id}_${episode.season_number}_${episode.episode_number}`,
-        type: 'episode',
+      console.log(`[SeriesPlayer] Initializing episode: ${series.name} - ${episode.name}`);
+      
+      const episodeId = `${series.id}_${episode.season_number}_${episode.episode_number}`;
+      console.log(`[SeriesPlayer] Generated episode ID: ${episodeId}`);
+      
+      const watchItem = {
+        id: episodeId,
+        type: 'episode' as const,
         title: `${series.name} - ${episode.name}`,
         poster: episode.logo || series.logo,
         progress: 0 // Initial progress
-      });
+      };
+      console.log('[SeriesPlayer] Initial watch item data:', watchItem);
+      
+      addToRecentlyWatched(watchItem)
+        .then(() => console.log('[SeriesPlayer] Successfully added episode to watch history'))
+        .catch(err => console.error('[SeriesPlayer] Error adding episode to watch history:', err));
     }
   }, [episode, series]);
   
   // Update progress handler
   const handleProgressUpdate = (currentProgress: number) => {
     setProgress(currentProgress);
+    console.log(`[SeriesPlayer] Progress update: ${currentProgress}%`);
     
     // Save progress every 10 seconds
     if (episode && series && Math.abs(currentProgress - progress) > 5) {
-      addToRecentlyWatched({
-        id: `${series.id}_${episode.season_number}_${episode.episode_number}`,
-        type: 'episode',
+      console.log(`[SeriesPlayer] Significant progress change detected, saving to history`);
+      
+      const episodeId = `${series.id}_${episode.season_number}_${episode.episode_number}`;
+      const watchItem = {
+        id: episodeId,
+        type: 'episode' as const,
         title: `${series.name} - ${episode.name}`,
         poster: episode.logo || series.logo,
         progress: currentProgress
-      });
+      };
+      console.log('[SeriesPlayer] Updated watch item data:', watchItem);
+      
+      addToRecentlyWatched(watchItem)
+        .then(() => console.log('[SeriesPlayer] Successfully updated episode progress'))
+        .catch(err => console.error('[SeriesPlayer] Error updating episode progress:', err));
     }
   };
 
@@ -67,6 +86,8 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     logo: episode.logo,
     group: series?.group
   } : null;
+
+  console.log(`[SeriesPlayer] Rendering with channel:`, channel);
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">

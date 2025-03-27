@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
@@ -8,9 +7,14 @@ import LoadingSpinner from "./common/LoadingSpinner";
 interface MoviePlayerProps {
   movie: Movie | null;
   autoPlay?: boolean;
+  onProgressUpdate?: (progress: number) => void;
 }
 
-const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => {
+const MoviePlayer: React.FC<MoviePlayerProps> = ({ 
+  movie, 
+  autoPlay = true,
+  onProgressUpdate 
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -30,6 +34,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
   
   useEffect(() => {
     if (movie?.url) {
+      console.log(`[MoviePlayer] Setting stream URL: ${movie.url}`);
       setStreamUrl(movie.url);
       setError(null);
     }
@@ -42,14 +47,14 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
     
     if (currentUrl.endsWith('.mp4')) {
       const m3u8Url = currentUrl.replace(/\.mp4$/, '.m3u8');
-      console.log('Trying alternative format:', m3u8Url);
+      console.log('[MoviePlayer] Trying alternative format:', m3u8Url);
       setStreamUrl(m3u8Url);
       return true;
     }
     
     if (currentUrl.endsWith('.m3u8')) {
       const mp4Url = currentUrl.replace(/\.m3u8$/, '.mp4');
-      console.log('Trying alternative format:', mp4Url);
+      console.log('[MoviePlayer] Trying alternative format:', mp4Url);
       setStreamUrl(mp4Url);
       return true;
     }
@@ -178,11 +183,20 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
     if (!video) return;
     
     const handleTimeUpdate = () => {
+      const currentTime = video.currentTime;
+      const duration = video.duration || 0;
+      
       setPlayerState(prev => ({
         ...prev,
-        currentTime: video.currentTime,
-        duration: video.duration || 0
+        currentTime,
+        duration
       }));
+      
+      if (onProgressUpdate && duration > 0) {
+        const progress = Math.round((currentTime / duration) * 100);
+        console.log(`[MoviePlayer] Progress update: ${progress}%`);
+        onProgressUpdate(progress);
+      }
     };
     
     const handlePlay = () => {
@@ -233,7 +247,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
     };
-  }, []);
+  }, [onProgressUpdate]);
   
   const handlePlayPause = () => {
     const video = videoRef.current;
