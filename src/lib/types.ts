@@ -11,6 +11,7 @@ export interface Playlist {
   id: string;
   name: string;
   channels: Channel[];
+  source?: string;
 }
 
 export interface PlayerState {
@@ -22,3 +23,10 @@ export interface PlayerState {
   loading: boolean;
   fullscreen: boolean;
 }
+
+export interface XtreamCredentials {
+  server: string;
+  username: string;
+  password: string;
+}
+

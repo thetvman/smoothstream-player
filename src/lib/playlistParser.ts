@@ -1,5 +1,5 @@
 
-import { Channel, Playlist } from "./types";
+import { Channel, Playlist, XtreamCredentials } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -55,7 +55,8 @@ export const parseM3U8 = (content: string, playlistName = "My Playlist"): Playli
   return {
     id: uuidv4(),
     name: playlistName,
-    channels
+    channels,
+    source: "m3u8"
   };
 };
 
@@ -131,3 +132,87 @@ export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Prom
     throw new Error(`Failed to fetch playlist: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
+
+/**
+ * Fetch channels from Xtream Codes API
+ */
+export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<Playlist> => {
+  const { server, username, password } = credentials;
+  console.log("Connecting to Xtream server:", server);
+  
+  // Clean the server URL by removing trailing slashes
+  const baseUrl = server.replace(/\/$/, "");
+  
+  try {
+    // Validate credentials by fetching user info
+    const userInfoUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}`;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    
+    const infoResponse = await fetch(userInfoUrl, { signal: controller.signal });
+    
+    clearTimeout(timeoutId);
+    
+    if (!infoResponse.ok) {
+      throw new Error(`Authentication failed: ${infoResponse.statusText}`);
+    }
+    
+    const userInfo = await infoResponse.json();
+    
+    if (userInfo.user_info?.auth === 0) {
+      throw new Error("Invalid Xtream credentials");
+    }
+    
+    // Fetch live TV channels
+    console.log("Fetching Xtream live channels...");
+    const liveCategoriesUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_categories`;
+    const liveStreamsUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_streams`;
+    
+    const [categoriesResponse, streamsResponse] = await Promise.all([
+      fetch(liveCategoriesUrl),
+      fetch(liveStreamsUrl)
+    ]);
+    
+    const categories = await categoriesResponse.json();
+    const streams = await streamsResponse.json();
+    
+    if (!Array.isArray(streams)) {
+      throw new Error("Invalid response from Xtream server");
+    }
+    
+    console.log(`Found ${streams.length} channels from Xtream`);
+    
+    // Create category lookup
+    const categoryMap: Record<string, string> = {};
+    if (Array.isArray(categories)) {
+      categories.forEach((cat: any) => {
+        if (cat.category_id && cat.category_name) {
+          categoryMap[cat.category_id] = cat.category_name;
+        }
+      });
+    }
+    
+    // Create channels from streams
+    const channels: Channel[] = streams.map((stream: any) => ({
+      id: uuidv4(),
+      name: stream.name || `Channel ${stream.stream_id}`,
+      url: `${baseUrl}/${username}/${password}/${stream.stream_id}`,
+      logo: stream.stream_icon || undefined,
+      group: stream.category_id ? categoryMap[stream.category_id] : undefined
+    }));
+    
+    const serverName = new URL(baseUrl).hostname;
+    
+    return {
+      id: uuidv4(),
+      name: `${serverName} (Xtream)`,
+      channels,
+      source: "xtream"
+    };
+  } catch (error) {
+    console.error("Xtream API error:", error);
+    throw new Error(`Failed to connect to Xtream server: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
