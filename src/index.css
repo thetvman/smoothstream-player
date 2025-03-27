@@ -147,7 +147,7 @@
 
 @layer components {
   .glass-morphism {
-    @apply bg-black/20 backdrop-blur-lg border border-white/10 shadow-lg;
+    @apply bg-white/40 backdrop-blur-lg border border-white/20 shadow-lg;
   }
   
   .player-controls {
@@ -188,11 +188,11 @@
   }
   
   .channel-card {
-    @apply aspect-video bg-[hsl(0,73%,15%)] flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden border border-[hsl(0,60%,35%)];
+    @apply aspect-video bg-white/40 backdrop-blur-sm flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden border border-white/20 shadow-md;
   }
   
   .channel-card-selected {
-    @apply ring-2 ring-[hsl(0,83%,40%)];
+    @apply ring-2 ring-gray-400/60;
   }
   
   .channel-logo {
@@ -200,7 +200,7 @@
   }
   
   .channel-fallback {
-    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-[hsl(0,83%,35%)];
+    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700;
   }
   
   /* Movie website specific styles */
@@ -225,7 +225,7 @@
   }
   
   .section-title {
-    @apply text-2xl font-bold mb-6 border-l-4 border-[hsl(0,83%,40%)] pl-3;
+    @apply text-2xl font-bold mb-6 border-l-4 border-gray-300 pl-3;
   }
   
   .hero-section {
@@ -242,23 +242,23 @@
 
   /* TV theme styles */
   .tv-background {
-    @apply bg-gradient-to-br from-[hsl(0,83%,20%)] to-[hsl(0,83%,12%)];
+    @apply bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3];
   }
   
   .tv-card {
-    @apply bg-[hsl(0,73%,15%)] text-white border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
+    @apply bg-white/40 backdrop-blur-md text-gray-800 border border-white/20 rounded-lg overflow-hidden shadow-md;
   }
   
   .tv-section {
-    @apply bg-[hsl(0,73%,25%)] text-white p-3 font-medium;
+    @apply bg-white/60 backdrop-blur-md text-gray-800 p-3 font-medium border-b border-white/20;
   }
   
   .tv-content {
-    @apply p-4 bg-[hsl(0,73%,15%)] text-white;
+    @apply p-4 bg-white/30 backdrop-blur-sm text-gray-800;
   }
   
   .tv-info-row {
-    @apply border-t border-[hsl(0,60%,35%)] mt-2 pt-2 text-sm text-[hsl(0,30%,85%)];
+    @apply border-t border-white/20 mt-2 pt-2 text-sm text-gray-700;
   }
 
   /* Custom ScrollArea styling */
@@ -278,22 +278,22 @@
   
   /* UHF-inspired styles */
   .uhf-header {
-    @apply bg-[hsl(0,83%,25%)] text-white font-bold p-4 shadow-md;
+    @apply bg-white/60 backdrop-blur-md text-gray-800 font-bold p-4 shadow-md border-b border-white/20;
   }
   
   .uhf-card {
-    @apply bg-[hsl(0,73%,15%)] border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
+    @apply bg-white/40 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden shadow-md;
   }
   
   .uhf-category-pill {
-    @apply px-3 py-1 text-xs rounded-full bg-[hsl(0,83%,40%)] text-white;
+    @apply px-3 py-1 text-xs rounded-full bg-white/60 backdrop-blur-sm text-gray-700 shadow-sm;
   }
   
   .uhf-nav-button {
-    @apply bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-md transition-colors text-white;
+    @apply bg-white/40 hover:bg-white/60 backdrop-blur-sm p-2 rounded-md transition-colors text-gray-700 shadow-sm;
   }
   
   .uhf-channel-title {
-    @apply bg-[hsl(0,83%,30%)] p-2 text-white font-medium text-sm truncate;
+    @apply bg-white/60 backdrop-blur-md p-2 text-gray-800 font-medium text-sm truncate border-t border-white/20;
   }
 }

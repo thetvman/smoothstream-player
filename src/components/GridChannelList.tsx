@@ -61,12 +61,12 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
   
   if (isLoading) {
     return (
-      <div className="tv-background min-h-screen">
+      <div className="bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3] min-h-screen">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
           {Array.from({ length: 24 }).map((_, index) => (
-            <Card key={index} className="aspect-video animate-pulse bg-[hsl(0,73%,22%)] border-[hsl(0,60%,35%)]">
+            <Card key={index} className="aspect-video animate-pulse bg-white/40 border-white/20">
               <CardContent className="p-0 h-full flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-[hsl(0,73%,30%)]"></div>
+                <div className="w-12 h-12 rounded-full bg-white/60"></div>
               </CardContent>
             </Card>
           ))}
@@ -77,24 +77,24 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
   
   if (!playlist) {
     return (
-      <div className="p-4 text-center tv-background min-h-screen">
-        <p className="text-white">No playlist loaded</p>
+      <div className="p-4 text-center bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3] min-h-screen">
+        <p className="text-gray-800">No playlist loaded</p>
       </div>
     );
   }
   
   return (
-    <div className="flex flex-col h-full overflow-hidden tv-background">
-      <div className="p-3 border-b border-[hsl(0,60%,35%)] bg-[hsl(0,73%,22%)] sticky top-0 z-10">
+    <div className="flex flex-col h-full overflow-hidden bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3]">
+      <div className="p-3 border-b border-white/20 bg-white/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between gap-4 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="text"
               placeholder="Search channels..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[hsl(0,73%,15%)] border border-[hsl(0,60%,35%)] rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(0,73%,40%)] text-white"
+              className="w-full bg-white/60 backdrop-blur-sm border border-white/40 rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 text-gray-800 shadow-sm"
             />
           </div>
         </div>
@@ -103,10 +103,10 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
           <ScrollArea className="w-full whitespace-nowrap pb-1">
             <div className="flex items-center gap-1">
               <button
-                className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors shadow-sm ${
                   activeGroup === null 
-                    ? "bg-[hsl(0,83%,40%)] text-white" 
-                    : "bg-[hsl(0,73%,15%)] text-white hover:bg-[hsl(0,73%,20%)]"
+                    ? "bg-white/80 text-gray-800 backdrop-blur-md" 
+                    : "bg-white/40 text-gray-700 hover:bg-white/60 backdrop-blur-sm"
                 }`}
                 onClick={() => setActiveGroup(null)}
               >
@@ -116,10 +116,10 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
               {groups.map(group => (
                 <button
                   key={group}
-                  className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors shadow-sm ${
                     activeGroup === group 
-                      ? "bg-[hsl(0,83%,40%)] text-white" 
-                      : "bg-[hsl(0,73%,15%)] text-white hover:bg-[hsl(0,73%,20%)]"
+                      ? "bg-white/80 text-gray-800 backdrop-blur-md" 
+                      : "bg-white/40 text-gray-700 hover:bg-white/60 backdrop-blur-sm"
                   }`}
                   onClick={() => setActiveGroup(group)}
                 >
@@ -134,7 +134,7 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
       <ScrollArea className="flex-1">
         {filteredChannels.length === 0 ? (
           <div className="p-4 text-center">
-            <p className="text-white">No channels found</p>
+            <p className="text-gray-800">No channels found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
@@ -142,12 +142,12 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
               <Card 
                 key={channel.id} 
                 className={cn(
-                  "cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden bg-[hsl(0,73%,22%)] border-[hsl(0,60%,35%)] rounded-lg shadow-md", 
-                  selectedChannel?.id === channel.id ? "ring-2 ring-[hsl(0,83%,50%)]" : ""
+                  "cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden bg-white/40 backdrop-blur-sm border-white/20 rounded-lg shadow-md", 
+                  selectedChannel?.id === channel.id ? "ring-2 ring-gray-400/60" : ""
                 )}
                 onClick={() => handleChannelClick(channel)}
               >
-                <CardContent className="p-0 h-full flex flex-col bg-[hsl(0,73%,18%)] aspect-video">
+                <CardContent className="p-0 h-full flex flex-col bg-white/20 backdrop-blur-sm aspect-video">
                   <div className="flex-1 flex items-center justify-center p-3">
                     {channel.logo ? (
                       <img 
@@ -164,13 +164,13 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
                       />
                     ) : null}
                     <div className={cn(
-                      "w-full h-full flex items-center justify-center text-lg font-bold bg-[hsl(0,73%,25%)]",
+                      "w-full h-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700",
                       channel.logo ? "hidden" : ""
                     )}>
                       {channel.name.substring(0, 2).toUpperCase()}
                     </div>
                   </div>
-                  <div className="bg-[hsl(0,83%,30%)] p-2 text-center text-xs font-medium text-white truncate">
+                  <div className="bg-white/60 backdrop-blur-md p-2 text-center text-xs font-medium text-gray-800 truncate border-t border-white/20">
                     {channel.name}
                   </div>
                 </CardContent>
@@ -180,8 +180,8 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
         )}
       </ScrollArea>
       
-      <div className="p-3 border-t border-[hsl(0,60%,35%)] bg-[hsl(0,73%,22%)]">
-        <div className="text-xs text-[hsl(0,30%,85%)]">
+      <div className="p-3 border-t border-white/20 bg-white/40 backdrop-blur-md shadow-inner">
+        <div className="text-xs text-gray-700">
           <span className="font-medium">{playlist.name}</span> • {playlist.channels.length} channels
           {activeGroup && 
             ` • ${filteredChannels.length} in "${activeGroup}"`}

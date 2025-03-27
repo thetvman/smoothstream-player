@@ -76,31 +76,31 @@ const Player = () => {
   }
   
   return (
-    <div className="fixed inset-0 tv-background text-tv-foreground">
+    <div className="fixed inset-0 bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3] text-gray-800">
       <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
         <button 
-          className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
+          className="bg-white/40 hover:bg-white/60 backdrop-blur-md p-2 rounded-full transition-colors shadow-md"
           onClick={() => navigate("/")}
           aria-label="Back to home"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         
         <button 
-          className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
+          className="bg-white/40 hover:bg-white/60 backdrop-blur-md p-2 rounded-full transition-colors shadow-md"
           onClick={() => navigate("/")}
           aria-label="Show all channels"
         >
-          <Grid className="w-5 h-5" />
+          <Grid className="w-5 h-5 text-gray-700" />
         </button>
         
         {!showChannelInfo && (
           <button 
-            className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
+            className="bg-white/40 hover:bg-white/60 backdrop-blur-md p-2 rounded-full transition-colors shadow-md"
             onClick={() => setShowChannelInfo(true)}
             aria-label="Show channel information"
           >
-            <Info className="w-5 h-5" />
+            <Info className="w-5 h-5 text-gray-700" />
           </button>
         )}
       </div>
@@ -112,32 +112,32 @@ const Player = () => {
           {/* Channel info panel - shown conditionally */}
           {showChannelInfo && (
             <div className="absolute top-0 right-0 m-6 max-w-sm z-20 animate-fade-in">
-              <div className="tv-card shadow-xl rounded-lg overflow-hidden">
-                <div className="flex items-start justify-between p-4 bg-[hsl(0,73%,25%)]">
+              <div className="glass-morphism rounded-lg overflow-hidden shadow-xl">
+                <div className="flex items-start justify-between p-4 bg-white/60 backdrop-blur-md border-b border-white/20">
                   <div className="flex items-center gap-3">
                     {channel.logo ? (
                       <img 
                         src={channel.logo} 
                         alt={channel.name} 
-                        className="w-12 h-12 object-contain rounded bg-black/20 p-1"
+                        className="w-12 h-12 object-contain rounded bg-white/40 p-1 shadow-sm"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-[hsl(0,83%,35%)] rounded flex items-center justify-center text-lg font-bold">
+                      <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded flex items-center justify-center text-lg font-bold text-gray-700 shadow-sm">
                         {channel.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
                     <div>
-                      <h1 className="text-xl font-bold">{channel.name}</h1>
+                      <h1 className="text-xl font-bold text-gray-800">{channel.name}</h1>
                       {channel.group && (
-                        <div className="text-sm text-[hsl(0,30%,90%)]">{channel.group}</div>
+                        <div className="text-sm text-gray-600">{channel.group}</div>
                       )}
                     </div>
                   </div>
                   <button 
-                    className="text-white hover:text-white/80"
+                    className="text-gray-600 hover:text-gray-800"
                     onClick={() => setShowChannelInfo(false)}
                     aria-label="Hide channel information"
                   >
@@ -145,16 +145,16 @@ const Player = () => {
                   </button>
                 </div>
                 
-                {/* Channel details section with red theme */}
+                {/* Channel details section with light theme */}
                 <ScrollArea className="max-h-[60vh]">
-                  <div className="p-4 pt-0 bg-[hsl(0,73%,18%)]">
+                  <div className="p-4 pt-0 bg-white/30 backdrop-blur-md">
                     <EPGGuide
                       channel={channel}
                       epgData={epgData}
                       isLoading={isEpgLoading}
                     />
                     
-                    <div className="tv-info-row mt-4">
+                    <div className="border-t border-white/20 mt-4 pt-2 text-sm text-gray-700">
                       Stream Type: {channel.stream_type || "m3u8"}
                     </div>
                   </div>
