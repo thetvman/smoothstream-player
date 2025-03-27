@@ -1,126 +1,130 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import PlaylistInput from "@/components/PlaylistInput";
-import { Playlist } from "@/lib/types";
-import { safeJsonParse } from "@/lib/utils";
-import { toast } from "sonner";
-import { Film, Tv, Clapperboard } from "lucide-react";
-import NavBar from "@/components/NavBar";
+import Layout from "@/components/Layout";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlayCircle, Film, Tv2 } from "lucide-react";
+import LiveTVPlayer from "@/components/LiveTVPlayer";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
   
-  // Load playlist from localStorage on component mount
-  useEffect(() => {
-    const savedPlaylist = localStorage.getItem("iptv-playlist");
-    
-    if (savedPlaylist) {
-      try {
-        const parsedPlaylist = safeJsonParse(savedPlaylist, null);
-        
-        if (parsedPlaylist && parsedPlaylist.channels) {
-          setPlaylist(parsedPlaylist);
-        }
-      } catch (error) {
-        console.error("Error parsing saved playlist:", error);
-        toast.error("Failed to load saved playlist");
-      }
-    }
-  }, []);
-  
-  // Handle playlist loaded
-  const handlePlaylistLoaded = (newPlaylist: Playlist) => {
-    setPlaylist(newPlaylist);
+  const goToMovies = () => {
+    navigate("/movies");
   };
-
-  // Handle logout/clear playlist
-  const handleLogout = () => {
-    localStorage.removeItem("iptv-playlist");
-    setPlaylist(null);
-    toast.success("Playlist cleared");
+  
+  const goToSeries = () => {
+    navigate("/series");
   };
   
   return (
-    <>
-      <NavBar onLogout={handleLogout} />
-      
-      <div className="container mx-auto p-4 max-w-7xl min-h-[calc(100vh-128px)] flex flex-col">
-        {!playlist ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="w-full max-w-md p-6 bg-card rounded-lg shadow-lg border border-border">
-              <h1 className="text-2xl font-bold mb-6 text-center">Welcome to HarmonyIPTV</h1>
-              <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col">
-            <h1 className="text-3xl font-bold mb-6">Welcome to HarmonyIPTV</h1>
+    <Layout>
+      <div className="container mx-auto p-4 max-w-7xl">
+        <section className="space-y-4 mb-8">
+          <h1 className="text-3xl font-bold text-primary mb-2">Welcome to Harmony</h1>
+          
+          <Tabs defaultValue="live" className="w-full">
+            <TabsList className="w-full max-w-md grid grid-cols-3">
+              <TabsTrigger value="live">
+                <Tv2 className="mr-2 h-4 w-4" />
+                Live TV
+              </TabsTrigger>
+              <TabsTrigger value="movies">
+                <Film className="mr-2 h-4 w-4" />
+                Movies
+              </TabsTrigger>
+              <TabsTrigger value="series">
+                <PlayCircle className="mr-2 h-4 w-4" />
+                Series
+              </TabsTrigger>
+            </TabsList>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div 
-                className="bg-card border border-border hover:border-primary rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => navigate("/")}
-              >
-                <div className="p-6 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Tv className="w-8 h-8 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-semibold mb-2">Live TV</h2>
-                  <p className="text-muted-foreground">
-                    Watch live TV channels from your playlist
+            <TabsContent value="live" className="mt-4">
+              <Card className="border-none shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-2xl">Live TV</CardTitle>
+                  <CardDescription>Watch your favorite live TV channels</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-1">
+                  <LiveTVPlayer />
+                </CardContent>
+                <CardFooter className="pt-3">
+                  <p className="text-sm text-muted-foreground">
+                    Browse channels, or add your custom playlist to get started.
                   </p>
-                  <p className="mt-4 text-sm font-medium text-primary">
-                    {playlist.channels.length} Channels
-                  </p>
-                </div>
-              </div>
-              
-              <div 
-                className="bg-card border border-border hover:border-primary rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => navigate("/movies")}
-              >
-                <div className="p-6 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Film className="w-8 h-8 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-semibold mb-2">Movies</h2>
-                  <p className="text-muted-foreground">
-                    Browse and watch movies on demand
-                  </p>
-                  <p className="mt-4 text-sm font-medium text-primary">
-                    VOD Movies
-                  </p>
-                </div>
-              </div>
-              
-              <div 
-                className="bg-card border border-border hover:border-primary rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer group"
-                onClick={() => navigate("/series")}
-              >
-                <div className="p-6 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Clapperboard className="w-8 h-8 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-semibold mb-2">TV Series</h2>
-                  <p className="text-muted-foreground">
-                    Enjoy series and episodes on demand
-                  </p>
-                  <p className="mt-4 text-sm font-medium text-primary">
-                    VOD Series
-                  </p>
-                </div>
-              </div>
-            </div>
+                </CardFooter>
+              </Card>
+            </TabsContent>
             
-            <div className="mt-auto text-center text-sm text-muted-foreground py-4">
-              <p>HarmonyIPTV - Your Personal IPTV Experience</p>
-            </div>
-          </div>
-        )}
+            <TabsContent value="movies" className="mt-4">
+              <Card className="border-none shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-2xl">Movies Library</CardTitle>
+                  <CardDescription>Browse and watch movies on demand</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-1">
+                  <div className="aspect-[21/9] bg-card rounded-xl overflow-hidden border border-border flex items-center justify-center">
+                    <div className="text-center p-6">
+                      <Film className="h-16 w-16 text-primary mx-auto mb-4" />
+                      <h3 className="text-xl font-medium mb-2">Discover Movies</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Browse our collection of movies from different genres
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="bg-primary text-white hover:bg-primary/90"
+                        onClick={goToMovies}
+                      >
+                        Explore Movies
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-3">
+                  <p className="text-sm text-muted-foreground">
+                    Your on-demand movie watching experience starts here.
+                  </p>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="series" className="mt-4">
+              <Card className="border-none shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-2xl">TV Series</CardTitle>
+                  <CardDescription>Watch your favorite TV shows</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-1">
+                  <div className="aspect-[21/9] bg-card rounded-xl overflow-hidden border border-border flex items-center justify-center">
+                    <div className="text-center p-6">
+                      <PlayCircle className="h-16 w-16 text-primary mx-auto mb-4" />
+                      <h3 className="text-xl font-medium mb-2">Discover TV Series</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Watch episodes from your favorite TV shows
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="bg-primary text-white hover:bg-primary/90"
+                        onClick={goToSeries}
+                      >
+                        Explore Series
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-3">
+                  <p className="text-sm text-muted-foreground">
+                    Binge-watch your favorite TV series with ease.
+                  </p>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </section>
       </div>
-    </>
+    </Layout>
   );
 };
 
