@@ -11,8 +11,11 @@ export { prefetchEPGDataForChannels } from './prefetch';
 
 // Register event listeners for cache management
 if (typeof window !== 'undefined') {
-  // Save cache before page unload
-  window.addEventListener('beforeunload', () => {
-    saveCache();
+  // Import saveCache from the cache module for use in the event listener
+  import('./cache').then(({ saveCache }) => {
+    // Save cache before page unload
+    window.addEventListener('beforeunload', () => {
+      saveCache();
+    });
   });
 }
