@@ -50,7 +50,7 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
           <img
             src={movie.backdrop}
             alt=""
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-40"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/placeholder.svg";
             }}
@@ -58,53 +58,15 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-card to-card/20" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/60" />
       </div>
 
       {/* Content */}
-      <div className="flex flex-col p-6 h-full z-10">
-        {/* Header with movie title */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">{movie.name}</h1>
-          
-          {/* Movie metadata in pills */}
-          <div className="flex flex-wrap gap-3 mb-4">
-            {movie.year && (
-              <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
-                <CalendarIcon className="mr-1 h-4 w-4" />
-                <span>{movie.year}</span>
-              </div>
-            )}
-            {movie.duration && (
-              <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
-                <Clock className="mr-1 h-4 w-4" />
-                <span>{movie.duration} min</span>
-              </div>
-            )}
-            {movie.rating && (
-              <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
-                <Star className="mr-1 h-4 w-4" />
-                <span>{movie.rating}</span>
-              </div>
-            )}
-            {movie.genre && (
-              <div className="flex items-center text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                {movie.genre}
-              </div>
-            )}
-            {movie.group && (
-              <div className="flex items-center text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                {movie.group}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Movie poster and description section */}
-        <div className="flex-1 overflow-auto mb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Movie poster/logo */}
+      <div className="flex flex-col md:flex-row gap-8 p-6 md:p-8 h-full z-10">
+        {/* Movie poster */}
+        <div className="w-full md:w-1/3 max-w-[300px] mx-auto md:mx-0">
           <div className={cn(
-            "relative rounded-lg overflow-hidden bg-card shadow-lg h-64 md:h-auto",
+            "relative rounded-lg overflow-hidden bg-card shadow-lg aspect-[2/3]",
             !movie.logo && !movie.backdrop ? "flex items-center justify-center" : ""
           )}>
             {movie.backdrop ? (
@@ -130,30 +92,88 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
             )}
           </div>
           
-          {/* Movie details */}
-          <div className="md:col-span-2 space-y-4">
-            {movie.description && (
-              <div>
-                <h3 className="text-lg font-medium mb-2">Synopsis</h3>
-                <p className="text-muted-foreground leading-relaxed">{movie.description}</p>
-              </div>
-            )}
+          {/* Play button (mobile only) */}
+          <div className="md:hidden mt-4">
+            <Button 
+              className="w-full group relative overflow-hidden"
+              size="lg"
+              onClick={() => onPlay(movie)}
+            >
+              <span className="flex items-center justify-center">
+                <Play className="w-5 h-5 mr-2" />
+                Play Movie
+              </span>
+              <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Button>
           </div>
         </div>
         
-        {/* Play button */}
-        <div className="mt-auto">
-          <Button 
-            className="w-full sm:w-auto group relative overflow-hidden"
-            size="lg"
-            onClick={() => onPlay(movie)}
-          >
-            <span className="flex items-center justify-center">
-              <Play className="w-5 h-5 mr-2" />
-              Play Movie
-            </span>
-            <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Button>
+        {/* Movie details */}
+        <div className="flex-1 flex flex-col">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-3 text-foreground">{movie.name}</h1>
+            
+            {/* Movie metadata */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              {movie.year && (
+                <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
+                  <CalendarIcon className="mr-1 h-4 w-4" />
+                  <span>{movie.year}</span>
+                </div>
+              )}
+              {movie.duration && (
+                <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
+                  <Clock className="mr-1 h-4 w-4" />
+                  <span>{movie.duration} min</span>
+                </div>
+              )}
+              {movie.rating && (
+                <div className="flex items-center text-sm bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-full">
+                  <Star className="mr-1 h-4 w-4 text-yellow-400" />
+                  <span>{movie.rating}</span>
+                </div>
+              )}
+              {movie.genre && (
+                <div className="flex items-center text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
+                  {movie.genre}
+                </div>
+              )}
+              {movie.group && (
+                <div className="flex items-center text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
+                  {movie.group}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Synopsis */}
+          <div className="flex-1 mb-6">
+            {movie.description ? (
+              <div>
+                <h3 className="text-lg font-medium mb-3">Synopsis</h3>
+                <p className="text-muted-foreground leading-relaxed">{movie.description}</p>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">
+                No description available for this movie.
+              </div>
+            )}
+          </div>
+          
+          {/* Play button (desktop) */}
+          <div className="hidden md:block mt-auto">
+            <Button 
+              className="w-full sm:w-auto group relative overflow-hidden"
+              size="lg"
+              onClick={() => onPlay(movie)}
+            >
+              <span className="flex items-center justify-center">
+                <Play className="w-5 h-5 mr-2" />
+                Play Movie
+              </span>
+              <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
