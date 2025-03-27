@@ -28,8 +28,13 @@ const Player = () => {
             const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
             
             if (!foundChannel) {
-              toast.error("Content not found");
-              navigate("/");
+              // For VOD content, try to load directly from Xtream API
+              if (channelId.startsWith('vod-') || channelId.startsWith('series-')) {
+                await loadContentDirectly(channelId, parsedPlaylist);
+              } else {
+                toast.error("Content not found");
+                navigate("/");
+              }
               return;
             }
             
@@ -55,6 +60,116 @@ const Player = () => {
     
     loadContent();
   }, [channelId, navigate]);
+
+  // New function to load content directly from Xtream API
+  const loadContentDirectly = async (contentId: string, playlist: Playlist) => {
+    if (!playlist.credentials || playlist.source !== "xtream") {
+      toast.error("Content not found");
+      navigate("/");
+      return;
+    }
+
+    const { server, username, password } = playlist.credentials;
+    
+    try {
+      if (contentId.startsWith('vod-')) {
+        // It's a movie
+        const streamId = contentId.replace('vod-', '');
+        const movieChannel: Channel = {
+          id: contentId,
+          name: `Movie ${streamId}`, // Will be updated with actual title
+          url: `${server}/movie/${username}/${password}/${streamId}.mp4`,
+          stream_type: "mp4"
+        };
+        
+        // Try to fetch movie details to get the name
+        try {
+          const movieInfoUrl = `${server}/player_api.php?username=${username}&password=${password}&action=get_vod_info&vod_id=${streamId}`;
+          const response = await fetch(movieInfoUrl);
+          const data = await response.json();
+          
+          if (data && data.info) {
+            movieChannel.name = data.info.name || movieChannel.name;
+            movieChannel.logo = data.info.movie_image || undefined;
+            movieChannel.group = data.info.category_name || undefined;
+          }
+        } catch (error) {
+          console.error("Error fetching movie details:", error);
+        }
+        
+        setChannel(movieChannel);
+      } 
+      else if (contentId.startsWith('series-')) {
+        // It's a series
+        const seriesId = contentId.replace('series-', '');
+        const seriesChannel: Channel = {
+          id: contentId,
+          name: `Series ${seriesId}`, // Will be updated with actual title
+          url: `${server}/series/${username}/${password}/${seriesId}`,
+          stream_type: "series",
+          epg_channel_id: seriesId
+        };
+        
+        // Try to fetch series details to get the name
+        try {
+          const seriesInfoUrl = `${server}/player_api.php?username=${username}&password=${password}&action=get_series_info&series_id=${seriesId}`;
+          const response = await fetch(seriesInfoUrl);
+          const data = await response.json();
+          
+          if (data && data.info) {
+            seriesChannel.name = data.info.name || seriesChannel.name;
+            seriesChannel.logo = data.info.cover || data.info.backdrop_path || undefined;
+            seriesChannel.group = data.info.category_name || undefined;
+          }
+          
+          setChannel(seriesChannel);
+          
+          // Load episodes
+          if (data && data.episodes) {
+            await loadSeriesEpisodesFromData(data.episodes, server, username, password);
+          }
+        } catch (error) {
+          console.error("Error fetching series details:", error);
+        }
+      } else {
+        toast.error("Content not found");
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Error loading content directly:", error);
+      toast.error("Failed to load content");
+      navigate("/");
+    }
+  };
+  
+  // Function to load episodes from series data
+  const loadSeriesEpisodesFromData = async (episodesData: any, server: string, username: string, password: string) => {
+    try {
+      // Flatten the episodes from all seasons
+      const allEpisodes: XtreamEpisode[] = [];
+      
+      Object.entries(episodesData).forEach(([seasonNum, episodes]: [string, any]) => {
+        if (Array.isArray(episodes)) {
+          episodes.forEach((episode: any) => {
+            allEpisodes.push({
+              ...episode,
+              season: seasonNum,
+              url: `${server}/series/${username}/${password}/${episode.id}.${episode.container_extension}`
+            });
+          });
+        }
+      });
+      
+      setEpisodes(allEpisodes);
+      
+      // Select the first episode by default
+      if (allEpisodes.length > 0) {
+        setSelectedEpisode(allEpisodes[0]);
+      }
+    } catch (error) {
+      console.error("Error processing series episodes:", error);
+    }
+  };
   
   const loadSeriesEpisodes = async (seriesChannel: Channel, credentials: XtreamCredentials) => {
     try {
@@ -73,27 +188,7 @@ const Player = () => {
       const data = await response.json();
       
       if (data && data.episodes) {
-        // Flatten the episodes from all seasons
-        const allEpisodes: XtreamEpisode[] = [];
-        
-        Object.entries(data.episodes).forEach(([seasonNum, episodes]: [string, any]) => {
-          if (Array.isArray(episodes)) {
-            episodes.forEach((episode: any) => {
-              allEpisodes.push({
-                ...episode,
-                season: seasonNum,
-                url: `${server}/series/${username}/${password}/${episode.id}.${episode.container_extension}`
-              });
-            });
-          }
-        });
-        
-        setEpisodes(allEpisodes);
-        
-        // Select the first episode by default
-        if (allEpisodes.length > 0) {
-          setSelectedEpisode(allEpisodes[0]);
-        }
+        await loadSeriesEpisodesFromData(data.episodes, server, username, password);
       }
     } catch (error) {
       console.error("Error loading series episodes:", error);

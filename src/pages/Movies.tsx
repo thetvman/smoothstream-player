@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Tv } from "lucide-react";
@@ -101,29 +100,12 @@ const Movies = () => {
         }
       });
       
-      // Find existing channels that match the VOD streams
-      const existingChannels = new Map<string, Channel>();
-      playlist.channels.forEach(channel => {
-        existingChannels.set(channel.name.toLowerCase(), channel);
-      });
-      
-      // Match Xtream VOD streams with existing channels or create new ones
+      // Create movie channels from VOD streams
       const movieChannels: Channel[] = streams.map((stream: any) => {
-        const streamName = stream.name || `Movie ${stream.stream_id}`;
-        const existingChannel = existingChannels.get(streamName.toLowerCase());
-        
-        // If we have this stream in our channels, use that
-        if (existingChannel) {
-          return {
-            ...existingChannel,
-            group: stream.category_id ? categoryMap[stream.category_id] : existingChannel.group
-          };
-        }
-        
-        // Otherwise create a new channel entry
         return {
           id: `vod-${stream.stream_id}`,
-          name: streamName,
+          name: stream.name || `Movie ${stream.stream_id}`,
+          // Not setting direct URL, it will be constructed in Player component when needed
           url: `${server}/movie/${username}/${password}/${stream.stream_id}.mp4`,
           logo: stream.stream_icon || undefined,
           group: stream.category_id ? categoryMap[stream.category_id] : "Movies",

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Film } from "lucide-react";
@@ -101,30 +100,12 @@ const TvSeries = () => {
         }
       });
       
-      // Find existing channels that match the series
-      const existingChannels = new Map<string, Channel>();
-      playlist.channels.forEach(channel => {
-        existingChannels.set(channel.name.toLowerCase(), channel);
-      });
-      
-      // Match Xtream series with existing channels or create new ones
+      // Create series channels directly from API response
       const seriesChannels: Channel[] = seriesData.map((series: any) => {
-        const seriesName = series.name || `Series ${series.series_id}`;
-        const existingChannel = existingChannels.get(seriesName.toLowerCase());
-        
-        // If we have this series in our channels, use that
-        if (existingChannel) {
-          return {
-            ...existingChannel,
-            group: series.category_id ? categoryMap[series.category_id] : existingChannel.group
-          };
-        }
-        
-        // Otherwise create a new channel entry
-        // For series, we'll need to fetch episode info when the user selects it
         return {
           id: `series-${series.series_id}`,
-          name: seriesName,
+          name: series.name || `Series ${series.series_id}`,
+          // URL will be constructed in Player component when needed
           url: `${server}/series/${username}/${password}/${series.series_id}`,
           logo: series.cover || series.backdrop_path || undefined,
           group: series.category_id ? categoryMap[series.category_id] : "TV Series",
