@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -11,7 +10,12 @@ import EPGSettings from "@/components/EPGSettings";
 import EPGLoadingProgress from "@/components/EPGLoadingProgress";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { fetchEPGData, EPGProgram, getEPGLoadingProgress } from "@/lib/epgService";
+import { 
+  fetchEPGData, 
+  EPGProgram, 
+  getEPGLoadingProgress, 
+  hasValidCachedEPG 
+} from "@/lib/epgService";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -22,12 +26,25 @@ const Player = () => {
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const { toast } = useToast();
   const [epgProgress, setEpgProgress] = useState(getEPGLoadingProgress());
+  const [cachedChannelCount, setCachedChannelCount] = useState(0);
   
   // Periodically update EPG progress information
   useEffect(() => {
     if (epgProgress.isLoading) {
       const interval = setInterval(() => {
-        setEpgProgress(getEPGLoadingProgress());
+        const progress = getEPGLoadingProgress();
+        setEpgProgress(progress);
+        
+        // Calculate cached channel count if playlist is available
+        const savedPlaylist = localStorage.getItem("iptv-playlist");
+        if (savedPlaylist) {
+          const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
+          if (parsedPlaylist) {
+            const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
+            const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
+            setCachedChannelCount(cachedCount);
+          }
+        }
       }, 1000);
       
       return () => clearInterval(interval);
@@ -140,6 +157,7 @@ const Player = () => {
                   total={epgProgress.total}
                   processed={epgProgress.processed}
                   message={epgProgress.message}
+                  cachedCount={cachedChannelCount}
                 />
               </div>
             )}

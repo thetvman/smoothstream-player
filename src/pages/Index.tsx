@@ -16,7 +16,8 @@ import {
   EPGProgram, 
   prefetchEPGDataForChannels, 
   getEPGLoadingProgress,
-  EPGProgressInfo 
+  EPGProgressInfo,
+  hasValidCachedEPG
 } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { 
@@ -47,6 +48,7 @@ const Index = () => {
     progress: 0,
     isLoading: false
   });
+  const [cachedChannelCount, setCachedChannelCount] = useState(0);
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -66,8 +68,16 @@ const Index = () => {
         // Start prefetching EPG data in the background
         const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
         if (channelsWithEpg.length > 0) {
-          console.log(`Starting background EPG prefetch for ${channelsWithEpg.length} channels`);
-          prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
+          // Count channels with cached EPG data
+          const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
+          setCachedChannelCount(cachedCount);
+          
+          if (cachedCount < channelsWithEpg.length) {
+            console.log(`Starting background EPG prefetch for ${channelsWithEpg.length - cachedCount} channels (${cachedCount} from cache)`);
+            prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
+          } else {
+            console.log(`All ${cachedCount} channels have cached EPG data, skipping prefetch`);
+          }
         }
       }
     }
@@ -76,6 +86,15 @@ const Index = () => {
     const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
     setIsDarkMode(darkModePreference);
   }, []);
+  
+  // Update cached channel count when EPG progress updates
+  useEffect(() => {
+    if (playlist && playlist.channels) {
+      const channelsWithEpg = playlist.channels.filter(c => c.epg_channel_id);
+      const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
+      setCachedChannelCount(cachedCount);
+    }
+  }, [epgProgress, playlist]);
   
   // Apply dark mode class
   useEffect(() => {
@@ -150,7 +169,16 @@ const Index = () => {
       // Start EPG prefetch with progress tracking
       const channelsWithEpg = newPlaylist.channels.filter(c => c.epg_channel_id);
       if (channelsWithEpg.length > 0) {
-        prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
+        // Count channels with cached EPG data
+        const cachedCount = channelsWithEpg.filter(c => hasValidCachedEPG(c.epg_channel_id!)).length;
+        setCachedChannelCount(cachedCount);
+        
+        if (cachedCount < channelsWithEpg.length) {
+          console.log(`Starting EPG prefetch for ${channelsWithEpg.length - cachedCount} channels (${cachedCount} from cache)`);
+          prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
+        } else {
+          console.log(`All ${cachedCount} channels have cached EPG data, skipping prefetch`);
+        }
       }
     }, 50);
   };
@@ -293,6 +321,7 @@ const Index = () => {
                 total={epgProgress.total}
                 processed={epgProgress.processed}
                 message={epgProgress.message}
+                cachedCount={cachedChannelCount}
               />
             )}
           

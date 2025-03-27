@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Progress } from "@/components/ui/progress";
-import { Loader } from "lucide-react";
 import LoadingSpinner from "./common/LoadingSpinner";
 
 interface EPGLoadingProgressProps {
@@ -10,6 +9,7 @@ interface EPGLoadingProgressProps {
   total: number;
   processed: number;
   message?: string;
+  cachedCount?: number;
 }
 
 const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
@@ -17,7 +17,8 @@ const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
   progress,
   total,
   processed,
-  message = "Loading EPG data..."
+  message = "Loading EPG data...",
+  cachedCount = 0
 }) => {
   if (!isLoading) return null;
 
@@ -37,6 +38,12 @@ const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
         <span>{progressPercent}%</span>
         {total > 0 && <span>Total: {total} channels</span>}
       </div>
+      
+      {cachedCount > 0 && (
+        <div className="text-xs text-emerald-500 dark:text-emerald-400">
+          {cachedCount} channels loaded from cache
+        </div>
+      )}
     </div>
   );
 };

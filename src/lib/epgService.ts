@@ -19,7 +19,7 @@ interface EPGProgressInfo {
 
 // Cache EPG data to reduce API calls
 const EPG_CACHE: Record<string, { data: EPGProgram[], timestamp: number }> = {};
-const CACHE_EXPIRY = 15 * 60 * 1000; // 15 minutes cache expiry
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours cache expiry
 const PREFETCH_CONCURRENCY = 5; // Number of concurrent prefetch requests
 
 // Store custom EPG URL
@@ -32,6 +32,76 @@ let progressInfo: EPGProgressInfo = {
   progress: 0,
   isLoading: false
 };
+
+// Initialize cache from localStorage on module load
+const initializeCache = () => {
+  try {
+    const cachedData = localStorage.getItem("iptv-epg-cache");
+    if (cachedData) {
+      const parsedCache = JSON.parse(cachedData);
+      
+      // Convert date strings back to Date objects
+      Object.keys(parsedCache).forEach(key => {
+        if (parsedCache[key] && parsedCache[key].data) {
+          parsedCache[key].data = parsedCache[key].data.map((program: any) => ({
+            ...program,
+            start: new Date(program.start),
+            end: new Date(program.end)
+          }));
+        }
+      });
+      
+      // Merge with in-memory cache
+      Object.assign(EPG_CACHE, parsedCache);
+      console.log(`Loaded EPG cache from localStorage with ${Object.keys(parsedCache).length} channels`);
+    }
+  } catch (error) {
+    console.error("Error loading EPG cache from localStorage:", error);
+    // If there's an error loading the cache, we'll just continue with an empty cache
+  }
+};
+
+// Save cache to localStorage
+const saveCache = () => {
+  try {
+    localStorage.setItem("iptv-epg-cache", JSON.stringify(EPG_CACHE));
+  } catch (error) {
+    console.error("Error saving EPG cache to localStorage:", error);
+    
+    // If the error is likely due to localStorage size limits, try to trim the cache
+    if (error instanceof DOMException && (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
+      console.log("LocalStorage quota exceeded, trimming cache...");
+      trimCache();
+      try {
+        localStorage.setItem("iptv-epg-cache", JSON.stringify(EPG_CACHE));
+      } catch (e) {
+        console.error("Still unable to save cache after trimming:", e);
+      }
+    }
+  }
+};
+
+// Trim cache to reduce size if localStorage quota is exceeded
+const trimCache = () => {
+  const keys = Object.keys(EPG_CACHE);
+  if (keys.length <= 10) return; // Keep at least some channels
+  
+  // Remove oldest entries first
+  const keysToRemove = keys
+    .map(key => ({ key, timestamp: EPG_CACHE[key].timestamp }))
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .slice(0, Math.floor(keys.length / 2)) // Remove half of the cache
+    .map(item => item.key);
+  
+  keysToRemove.forEach(key => {
+    delete EPG_CACHE[key];
+  });
+  
+  console.log(`Trimmed EPG cache, removed ${keysToRemove.length} channels`);
+};
+
+// Call initialize on module load
+initializeCache();
 
 /**
  * Get current EPG loading progress
@@ -48,6 +118,7 @@ export const setCustomEpgUrl = (url: string | null) => {
     // Clear cache when changing EPG source
     Object.keys(EPG_CACHE).forEach(key => delete EPG_CACHE[key]);
     console.log("EPG cache cleared due to EPG URL change");
+    saveCache();
   }
   
   customEpgUrl = url;
@@ -74,6 +145,19 @@ export const getCustomEpgUrl = (): string | null => {
 };
 
 /**
+ * Check if we already have valid cached data for a channel
+ */
+export const hasValidCachedEPG = (channelId: string): boolean => {
+  if (!channelId) return false;
+  
+  const cacheEntry = EPG_CACHE[channelId];
+  if (!cacheEntry) return false;
+  
+  const now = Date.now();
+  return (now - cacheEntry.timestamp) < CACHE_EXPIRY && cacheEntry.data.length > 0;
+};
+
+/**
  * Prefetch EPG data for multiple channels
  */
 export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress?: (info: EPGProgressInfo) => void) => {
@@ -84,11 +168,19 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
     return;
   }
   
-  console.log(`Starting EPG prefetch for ${channelsWithEpg.length} channels`);
+  // Check for already cached channels to skip
+  const channelsToFetch = channelsWithEpg.filter(c => !hasValidCachedEPG(c.epg_channel_id!));
+  
+  if (channelsToFetch.length === 0) {
+    console.log("All channels already have valid cached EPG data");
+    return;
+  }
+  
+  console.log(`Starting EPG prefetch for ${channelsToFetch.length} channels (${channelsWithEpg.length - channelsToFetch.length} from cache)`);
   
   // Initialize progress tracking
   progressInfo = {
-    total: channelsWithEpg.length,
+    total: channelsToFetch.length,
     processed: 0,
     progress: 0,
     isLoading: true,
@@ -100,9 +192,8 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   // Create a batching queue with controlled concurrency
   const processBatch = async (batch: Channel[]) => {
     const promises = batch.map(channel => {
-      // Skip if we already have cached data
-      if (EPG_CACHE[channel.epg_channel_id!] && 
-          Date.now() - EPG_CACHE[channel.epg_channel_id!].timestamp < CACHE_EXPIRY) {
+      // Check cache again just to be sure
+      if (hasValidCachedEPG(channel.epg_channel_id!)) {
         console.log(`Using cached EPG for ${channel.name}`);
         progressInfo.processed++;
         progressInfo.progress = progressInfo.processed / progressInfo.total;
@@ -118,6 +209,11 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
           progressInfo.progress = progressInfo.processed / progressInfo.total;
           progressInfo.message = `Loading EPG: ${channel.name}`;
           if (onProgress) onProgress({ ...progressInfo });
+          
+          // Save cache periodically
+          if (progressInfo.processed % 10 === 0) {
+            saveCache();
+          }
         })
         .catch(err => {
           console.warn(`Failed to prefetch EPG for ${channel.name}:`, err);
@@ -132,8 +228,8 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   
   // Process in batches for better performance and memory usage
   const batchSize = PREFETCH_CONCURRENCY;
-  for (let i = 0; i < channelsWithEpg.length; i += batchSize) {
-    const batch = channelsWithEpg.slice(i, i + batchSize);
+  for (let i = 0; i < channelsToFetch.length; i += batchSize) {
+    const batch = channelsToFetch.slice(i, i + batchSize);
     await processBatch(batch);
     
     // Add a small delay between batches to prevent overwhelming the system
@@ -145,6 +241,9 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   progressInfo.isLoading = false;
   progressInfo.message = "EPG data loaded";
   if (onProgress) onProgress({ ...progressInfo });
+  
+  // Save complete cache
+  saveCache();
   
   console.log("EPG prefetch completed");
 };
@@ -158,10 +257,8 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
   }
 
   // Check cache first
-  const now = Date.now();
-  const cacheEntry = EPG_CACHE[channel.epg_channel_id];
-  if (cacheEntry && (now - cacheEntry.timestamp) < CACHE_EXPIRY) {
-    return cacheEntry.data;
+  if (hasValidCachedEPG(channel.epg_channel_id)) {
+    return EPG_CACHE[channel.epg_channel_id].data;
   }
 
   try {
@@ -184,6 +281,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
               timestamp: Date.now()
             };
             
+            saveCache();
             return programs;
           }
         }
@@ -220,6 +318,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
               timestamp: Date.now()
             };
             
+            saveCache();
             return programs;
           }
         }
@@ -237,7 +336,14 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
       
       if (response.ok) {
         const data = await response.json();
-        return processEPGData(data, channel.epg_channel_id);
+        const programs = processEPGData(data, channel.epg_channel_id);
+        
+        // Save to cache
+        if (programs && programs.length > 0) {
+          saveCache();
+        }
+        
+        return programs;
       }
       
       // Try alternative format, some EPG IDs might be country-specific
@@ -252,7 +358,14 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
         
         if (altResponse.ok) {
           const data = await altResponse.json();
-          return processEPGData(data, channel.epg_channel_id);
+          const programs = processEPGData(data, channel.epg_channel_id);
+          
+          // Save to cache
+          if (programs && programs.length > 0) {
+            saveCache();
+          }
+          
+          return programs;
         }
       }
     } catch (error) {
@@ -260,12 +373,30 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     }
     
     console.warn(`No EPG data found for channel ID: ${channel.epg_channel_id}`);
-    return generateDemoEPG(channel.epg_channel_id);
+    const demoData = generateDemoEPG(channel.epg_channel_id);
+    
+    // Cache even demo data to prevent repeated fetching
+    EPG_CACHE[channel.epg_channel_id] = {
+      data: demoData,
+      timestamp: Date.now()
+    };
+    saveCache();
+    
+    return demoData;
   } catch (error) {
     console.error("Error fetching EPG data:", error);
     
     // Fall back to demo data if the API fails
-    return generateDemoEPG(channel.epg_channel_id);
+    const demoData = generateDemoEPG(channel.epg_channel_id);
+    
+    // Cache the demo data
+    EPG_CACHE[channel.epg_channel_id] = {
+      data: demoData,
+      timestamp: Date.now()
+    };
+    saveCache();
+    
+    return demoData;
   }
 };
 
