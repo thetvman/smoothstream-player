@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MoviePlayerComponent from "@/components/MoviePlayer";
 import { Movie } from "@/lib/types";
-import { getMovieById } from "@/lib/movieService";
+import { getMovieById } from "@/lib/mediaService";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 

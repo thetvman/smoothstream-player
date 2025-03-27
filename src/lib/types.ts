@@ -62,7 +62,7 @@ export interface XtreamStream {
   tv_archive_duration: number;
 }
 
-// Add new interfaces for Movies
+// Movies
 export interface XtreamMovie {
   movie_id: number;
   stream_id: number;
@@ -108,6 +108,108 @@ export interface MovieCategory {
 
 export interface PaginatedMovies {
   items: Movie[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
+// Series
+export interface XtreamSeries {
+  series_id: number;
+  name: string;
+  cover: string;
+  category_id: string;
+  plot: string;
+  cast: string;
+  director: string;
+  genre: string;
+  release_date: string;
+  last_modified: string;
+  rating: string;
+  rating_5based: string;
+  backdrop_path?: string;
+  youtube_trailer?: string;
+  episode_run_time?: string;
+}
+
+export interface XtreamSeriesSeason {
+  id: string;
+  series_id: number;
+  name: string;
+  cover: string;
+  overview: string;
+  season_number: string;
+  air_date: string;
+}
+
+export interface XtreamSeriesEpisode {
+  id: string;
+  episode_num: number;
+  title: string;
+  container_extension: string;
+  stream_type: string;
+  info: {
+    movie_image: string;
+    plot: string;
+    releasedate: string;
+    duration: string;
+    season: string;
+    episode: string;
+    tmdb_id: string;
+  };
+  added: string;
+  season: string;
+  direct_source: string;
+}
+
+export interface Series {
+  id: string;
+  name: string;
+  logo?: string;
+  backdrop?: string;
+  group?: string;
+  description?: string;
+  rating?: string;
+  year?: string;
+  genre?: string;
+  series_id: number; // Original ID from Xtream
+  seasons?: Season[];
+}
+
+export interface Season {
+  id: string;
+  name: string;
+  series_id: number;
+  season_number: string;
+  overview?: string;
+  cover?: string;
+  air_date?: string;
+  episodes?: Episode[];
+}
+
+export interface Episode {
+  id: string;
+  name: string;
+  url: string;
+  logo?: string;
+  episode_number: string;
+  season_number: string;
+  description?: string;
+  duration?: string;
+  series_id: number;
+  stream_type?: string;
+  added?: string;
+}
+
+export interface SeriesCategory {
+  id: string;
+  name: string;
+  series: Series[];
+}
+
+export interface PaginatedSeries {
+  items: Series[];
   currentPage: number;
   totalPages: number;
   totalItems: number;

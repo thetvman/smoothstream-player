@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, MovieCategory, XtreamCredentials } from "@/lib/types";
-import { fetchAllMovies, storeMovieForPlayback, clearOldMovieData } from "@/lib/movieService";
+import { fetchAllMovies, storeMovieForPlayback, clearOldMovieData } from "@/lib/mediaService";
 import MovieList from "@/components/MovieList";
 import MovieDetails from "@/components/MovieDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -98,13 +98,23 @@ const Movies = () => {
           <h1 className="text-2xl font-bold">Movies</h1>
         </div>
         
-        <button 
-          onClick={() => navigate("/")}
-          className="btn-icon"
-        >
-          <Tv className="w-5 h-5" />
-          <span className="ml-2">Live TV</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => navigate("/series")}
+            className="btn-icon"
+          >
+            <Tv className="w-5 h-5" />
+            <span className="ml-2">TV Series</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate("/")}
+            className="btn-icon"
+          >
+            <Tv className="w-5 h-5" />
+            <span className="ml-2">Live TV</span>
+          </button>
+        </div>
       </div>
       
       {!credentials ? (

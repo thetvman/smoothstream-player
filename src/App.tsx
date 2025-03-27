@@ -15,7 +15,9 @@ const Index = lazy(() => {
 });
 const Player = lazy(() => import("./pages/Player"));
 const Movies = lazy(() => import("./pages/Movies"));
+const Series = lazy(() => import("./pages/Series"));
 const MoviePlayer = lazy(() => import("./pages/MoviePlayer"));
+const EpisodePlayer = lazy(() => import("./pages/EpisodePlayer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configure query client with faster stale time for better responsiveness
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/player/:channelId" element={<Player />} />
             <Route path="/movies" element={<Movies />} />
             <Route path="/movie/:movieId" element={<MoviePlayer />} />
+            <Route path="/series" element={<Series />} />
+            <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
