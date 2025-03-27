@@ -1,0 +1,98 @@
+
+import React, { useMemo } from "react";
+import { Playlist, Channel } from "@/lib/types";
+import TVChannelCard from "./TVChannelCard";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "./ui/skeleton";
+import { Input } from "./ui/input";
+import { Search } from "lucide-react";
+
+interface TVChannelGridProps {
+  playlist: Playlist | null;
+  selectedChannel: Channel | null;
+  onSelectChannel: (channel: Channel) => void;
+  isLoading?: boolean;
+  compactMode?: boolean;
+  className?: string;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+}
+
+const TVChannelGrid: React.FC<TVChannelGridProps> = ({
+  playlist,
+  selectedChannel,
+  onSelectChannel,
+  isLoading = false,
+  compactMode = false,
+  className,
+  searchQuery = "",
+  onSearchChange
+}) => {
+  const filteredChannels = useMemo(() => {
+    if (!playlist) return [];
+    
+    return playlist.channels.filter(channel => 
+      channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (channel.group && channel.group.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [playlist, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className={cn(
+        "tv-grid animate-pulse",
+        compactMode ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2" : "",
+        className
+      )}>
+        {Array.from({ length: 20 }).map((_, index) => (
+          <div key={index} className="aspect-square">
+            <Skeleton className="h-full w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!playlist || filteredChannels.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-white/70">No channels found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("space-y-4", className)}>
+      {onSearchChange && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search channels..."
+            className="pl-9 glass-input text-white"
+          />
+        </div>
+      )}
+      
+      <div className={cn(
+        compactMode 
+          ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2" 
+          : "tv-grid",
+      )}>
+        {filteredChannels.map(channel => (
+          <div key={channel.id} className="h-full">
+            <TVChannelCard
+              channel={channel}
+              isActive={selectedChannel?.id === channel.id}
+              onClick={() => onSelectChannel(channel)}
+              compactMode={compactMode}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default TVChannelGrid;

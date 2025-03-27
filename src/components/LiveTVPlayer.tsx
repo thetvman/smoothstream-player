@@ -4,16 +4,26 @@ import { useNavigate } from "react-router-dom";
 import { Channel, Playlist } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import { safeJsonParse } from "@/lib/utils";
-import { ArrowRight, PlayCircle, ListFilter, LayoutGrid, Maximize, ArrowLeftRight, Settings, ChevronRight } from "lucide-react";
+import { 
+  ArrowRight, 
+  PlayCircle, 
+  ListFilter, 
+  LayoutGrid, 
+  Maximize, 
+  ArrowLeftRight, 
+  Settings, 
+  ChevronRight,
+  Search,
+  Filter
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ChannelList from "./ChannelList";
-import ChannelGuide from "./ChannelGuide";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import PlaylistInput from "./PlaylistInput";
 import EPGGuide from "./EPGGuide";
 import { fetchEPGData } from "@/lib/epgService";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import TVChannelGrid from "./TVChannelGrid";
 
 const LiveTVPlayer = () => {
   const navigate = useNavigate();
@@ -22,11 +32,12 @@ const LiveTVPlayer = () => {
   const [paginatedChannels, setPaginatedChannels] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'guide'>('guide');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [epgData, setEpgData] = useState(null);
   const [loadingEPG, setLoadingEPG] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [guideSize, setGuideSize] = useState<'normal' | 'expanded' | 'minimized'>('normal');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load last used playlist from localStorage
   useEffect(() => {
@@ -110,7 +121,7 @@ const LiveTVPlayer = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-card to-background border border-border rounded-xl shadow-xl overflow-hidden h-[calc(100vh-8rem)] flex flex-col">
+    <div className="tv-guide-container rounded-xl overflow-hidden h-[calc(100vh-8rem)] flex flex-col">
       {/* Main Content Area - Flexible Layout */}
       <div className="flex flex-col md:flex-row h-full overflow-hidden">
         {/* Channel Guide - Left Side (Responsive Size) */}
@@ -119,15 +130,14 @@ const LiveTVPlayer = () => {
             ${guideSize === 'expanded' ? 'w-full md:w-3/5 lg:w-1/2' : ''}
             ${guideSize === 'normal' ? 'w-full md:w-2/5 lg:w-1/3' : ''}
             ${guideSize === 'minimized' ? 'w-full md:w-[120px]' : ''}
-            border-r border-border/40 transition-all duration-300 flex flex-col
-            backdrop-blur-sm bg-card/95
+            tv-sidebar transition-all duration-300 flex flex-col
           `}
         >
-          <div className="border-b border-border/40 flex justify-between items-center bg-primary/5 px-4 py-3">
-            <h3 className={`font-medium ${guideSize === 'minimized' ? 'hidden md:block' : ''}`}>
+          <div className="flex justify-between items-center bg-white/5 px-4 py-3">
+            <h3 className={`font-medium ${guideSize === 'minimized' ? 'hidden md:block text-xs' : ''}`}>
               {playlist?.name || "Channels"}
-              {playlist?.channels.length > 0 && (
-                <span className="ml-2 text-sm text-muted-foreground">
+              {playlist?.channels.length > 0 && guideSize !== 'minimized' && (
+                <span className="ml-2 text-sm text-white/70">
                   {playlist?.channels.length} channels
                 </span>
               )}
@@ -143,13 +153,13 @@ const LiveTVPlayer = () => {
                 {guideSize !== 'minimized' && <span>List</span>}
               </Button>
               <Button 
-                variant={viewMode === 'guide' ? "secondary" : "ghost"} 
+                variant={viewMode === 'grid' ? "secondary" : "ghost"} 
                 size="sm"
-                onClick={() => setViewMode('guide')}
+                onClick={() => setViewMode('grid')}
                 className={`h-8 ${guideSize === 'minimized' ? 'p-0 w-8' : ''}`}
               >
                 <LayoutGrid className="h-4 w-4 mr-1" />
-                {guideSize !== 'minimized' && <span>Guide</span>}
+                {guideSize !== 'minimized' && <span>Grid</span>}
               </Button>
               <Button 
                 variant="ghost" 
@@ -176,24 +186,16 @@ const LiveTVPlayer = () => {
             </div>
           </div>
           
-          <div className={`overflow-y-auto ${guideSize === 'minimized' ? 'p-2' : 'p-4'} flex-1 scrollbar-none`}>
-            {viewMode === 'guide' ? (
-              <ChannelGuide 
-                playlist={playlist}
-                selectedChannel={selectedChannel}
-                onSelectChannel={handleSelectChannel}
-                isLoading={isLoading}
-                compactMode={guideSize === 'minimized'}
-              />
-            ) : (
-              <ChannelList 
-                playlist={playlist}
-                paginatedChannels={paginatedChannels}
-                selectedChannel={selectedChannel}
-                onSelectChannel={handleSelectChannel}
-                isLoading={isLoading}
-              />
-            )}
+          <div className={`tv-content-area ${guideSize === 'minimized' ? 'p-2' : 'p-4'} scrollbar-none`}>
+            <TVChannelGrid
+              playlist={playlist}
+              selectedChannel={selectedChannel}
+              onSelectChannel={handleSelectChannel}
+              isLoading={isLoading}
+              compactMode={guideSize === 'minimized'}
+              searchQuery={searchQuery}
+              onSearchChange={guideSize !== 'minimized' ? setSearchQuery : undefined}
+            />
           </div>
         </div>
         
@@ -203,9 +205,9 @@ const LiveTVPlayer = () => {
           ${guideSize === 'normal' ? 'w-full md:w-3/5 lg:w-2/3' : ''}
           ${guideSize === 'minimized' ? 'w-full md:flex-1' : ''}
           flex flex-col h-full transition-all duration-300
-          bg-black
+          bg-gradient-to-br from-gray-900 to-black p-4
         `}>
-          <div className="flex-1 relative">
+          <div className="flex-1 relative tv-video-container">
             {selectedChannel ? (
               <div className="h-full">
                 <VideoPlayer 
@@ -215,7 +217,7 @@ const LiveTVPlayer = () => {
                 <div className="absolute bottom-4 right-4 z-10">
                   <Button
                     size="sm"
-                    className="bg-primary/80 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all"
+                    className="glass-button text-white shadow-lg hover:shadow-xl transition-all"
                     onClick={() => navigate(`/player/${selectedChannel.id}`)}
                   >
                     <Maximize className="mr-2 h-4 w-4" />
@@ -225,7 +227,7 @@ const LiveTVPlayer = () => {
                 
                 {/* Channel info overlay */}
                 <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
-                  <div className="flex items-center gap-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg max-w-[70%]">
+                  <div className="flex items-center gap-3 glass-dark px-3 py-1.5 rounded-lg max-w-[70%]">
                     {selectedChannel.logo && (
                       <img 
                         src={selectedChannel.logo} 
@@ -244,19 +246,19 @@ const LiveTVPlayer = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-green-500/80 text-white text-xs px-2 py-1 rounded font-medium flex items-center">
+                  <div className="bg-green-500/80 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center">
                     <PlayCircle className="w-3 h-3 mr-1 fill-current" />
                     LIVE
                   </div>
                 </div>
               </div>
             ) : playlist ? (
-              <div className="flex items-center justify-center h-full flex-col gap-4 p-4 bg-gradient-to-br from-card/20 to-background/20 text-white">
+              <div className="flex items-center justify-center h-full flex-col gap-4 p-4 glass-dark">
                 <PlayCircle className="h-16 w-16 text-primary/80 animate-pulse" />
                 <p className="text-lg">Select a channel to start watching</p>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full flex-col gap-5 p-6 bg-gradient-to-br from-card/20 to-background/20 text-white">
+              <div className="flex items-center justify-center h-full flex-col gap-5 p-6 glass-dark">
                 <div className="text-center">
                   <PlayCircle className="h-16 w-16 text-primary/80 mx-auto mb-4" />
                   <h3 className="text-xl font-medium mb-2">Add a playlist to start watching</h3>
@@ -267,7 +269,7 @@ const LiveTVPlayer = () => {
                 <Button 
                   variant="outline"
                   onClick={() => setShowSettings(true)}
-                  className="bg-primary/20 border-primary/30 text-white hover:bg-primary/30"
+                  className="glass-button text-white"
                   size="lg"
                 >
                   <Settings className="mr-2 h-4 w-4" />
@@ -279,7 +281,7 @@ const LiveTVPlayer = () => {
           
           {/* Current program info */}
           {selectedChannel && (
-            <div className="p-4 border-t border-border/10 bg-gradient-to-r from-black/90 to-black/80">
+            <div className="mt-4 glass-dark rounded-xl p-4">
               <EPGGuide 
                 channel={selectedChannel} 
                 epgData={epgData} 

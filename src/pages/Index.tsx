@@ -23,7 +23,7 @@ const Index = () => {
     <Layout>
       <div className="container mx-auto p-4 max-w-7xl">
         <section className="space-y-4 mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Welcome to Harmony</h1>
+          <h1 className="text-3xl font-bold tv-gradient-text mb-2">Welcome to Harmony</h1>
           
           <Tabs defaultValue="live" className="w-full">
             <TabsList className="w-full max-w-md grid grid-cols-3 mb-6">

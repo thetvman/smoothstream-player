@@ -29,7 +29,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       <VideoPlayer channel={channel} autoPlay={autoPlay} />
       
       {series && episode && (
-        <div className="mt-4 backdrop-blur-xl bg-white/10 rounded-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)] overflow-hidden">
+        <div className="mt-4 glass-card">
           <div className="p-5">
             <div className="flex flex-wrap items-center gap-3 mb-3">
               {series.logo && (
@@ -65,7 +65,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
               </div>
             </div>
             
-            <div className="mb-4 backdrop-blur-lg bg-white/5 rounded-lg p-3 border border-white/10">
+            <div className="mb-4 glass-dark p-3 rounded-lg">
               <h4 className="text-lg font-bold flex items-center gap-2">
                 <span className="bg-primary/20 text-primary rounded-full w-7 h-7 flex items-center justify-center text-sm">
                   {episode.episode_number}
@@ -84,7 +84,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
             {episode.description && (
               <div className="space-y-2">
                 <h5 className="text-sm font-medium">Description</h5>
-                <p className="text-sm text-muted-foreground bg-black/20 backdrop-blur-md p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground glass-dark p-3 rounded-lg">
                   {episode.description}
                 </p>
               </div>
