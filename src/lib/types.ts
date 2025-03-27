@@ -1,4 +1,3 @@
-
 export interface Channel {
   id: string;
   name: string;
@@ -60,4 +59,13 @@ export interface XtreamStream {
   tv_archive: number;
   direct_source: string;
   tv_archive_duration: number;
+}
+
+// Add new interface for ChannelList props
+export interface ChannelListProps {
+  playlist: Playlist | null;
+  paginatedChannels: PaginatedChannels | null;
+  selectedChannel: Channel | null;
+  onSelectChannel: (channel: Channel) => void;
+  isLoading?: boolean;
 }

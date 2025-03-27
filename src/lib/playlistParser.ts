@@ -1,3 +1,4 @@
+
 import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -174,6 +175,15 @@ const getXtreamStreamUrl = (
 };
 
 /**
+ * Get the M3U8 playlist URL from Xtream credentials
+ */
+const getXtreamM3UUrl = (credentials: XtreamCredentials): string => {
+  const { server, username, password } = credentials;
+  const baseUrl = server.replace(/\/$/, "");
+  return `${baseUrl}/get.php?username=${username}&password=${password}&type=m3u&output=m3u8`;
+};
+
+/**
  * Fetch channels from Xtream Codes API
  */
 export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<Playlist> => {
@@ -204,14 +214,24 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       throw new Error("Invalid Xtream credentials");
     }
     
-    // Fetch live TV channels
-    console.log("Fetching Xtream live channels...");
+    // Fetch both Xtream API data and M3U8 playlist
+    console.log("Fetching Xtream data and M3U8 playlist...");
+    
+    // M3U8 playlist URL
+    const m3u8Url = getXtreamM3UUrl(credentials);
+    
+    // Fetch live TV channels from API
     const liveCategoriesUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_categories`;
     const liveStreamsUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_streams`;
     
-    const [categoriesResponse, streamsResponse] = await Promise.all([
+    // Fetch both API data and M3U8 playlist in parallel
+    const [categoriesResponse, streamsResponse, m3u8Response] = await Promise.all([
       fetch(liveCategoriesUrl),
-      fetch(liveStreamsUrl)
+      fetch(liveStreamsUrl),
+      fetchPlaylist(m3u8Url, `${new URL(baseUrl).hostname} (M3U8)`).catch(err => {
+        console.warn("Failed to fetch M3U8 playlist:", err);
+        return null; // Continue without M3U8 if it fails
+      })
     ]);
     
     const categories = await categoriesResponse.json() as XtreamCategory[];
@@ -221,7 +241,7 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       throw new Error("Invalid response from Xtream server");
     }
     
-    console.log(`Found ${streams.length} channels from Xtream`);
+    console.log(`Found ${streams.length} channels from Xtream API`);
     
     // Create category lookup
     const categoryMap: Record<string, string> = {};
@@ -233,19 +253,43 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       });
     }
     
+    // Create a map from the M3U8 playlist if available
+    const m3u8ChannelMap: Record<string, Channel> = {};
+    
+    if (m3u8Response) {
+      // Map channels by name for easy lookup
+      m3u8Response.channels.forEach(channel => {
+        if (channel.name) {
+          m3u8ChannelMap[channel.name.toLowerCase()] = channel;
+        }
+      });
+      console.log(`Loaded ${Object.keys(m3u8ChannelMap).length} channels from M3U8 playlist`);
+    }
+    
     // Create channels from streams
     const channels: Channel[] = streams.map((stream) => {
-      // Generate both TS and M3U8 URLs for better compatibility
-      const streamUrl = getXtreamStreamUrl(baseUrl, username, password, stream.stream_id, "live");
+      // Generate URL using API format
+      const apiUrl = getXtreamStreamUrl(baseUrl, username, password, stream.stream_id, "live");
+      
+      // Check if we have this channel in the M3U8 playlist
+      let finalUrl = apiUrl;
+      let streamType = apiUrl.endsWith('.m3u8') ? 'm3u8' : 'ts';
+      
+      // Try to find a matching channel in the M3U8 playlist
+      const m3u8Channel = m3u8ChannelMap[stream.name.toLowerCase()];
+      if (m3u8Channel && m3u8Channel.url) {
+        finalUrl = m3u8Channel.url;
+        streamType = m3u8Channel.url.endsWith('.m3u8') ? 'm3u8' : 'ts';
+      }
       
       return {
         id: uuidv4(),
         name: stream.name || `Channel ${stream.stream_id}`,
-        url: streamUrl,
+        url: finalUrl,
         logo: stream.stream_icon || undefined,
         group: stream.category_id ? categoryMap[stream.category_id] : undefined,
         epg_channel_id: stream.epg_channel_id || undefined,
-        stream_type: streamUrl.endsWith('.m3u8') ? 'm3u8' : 'ts'
+        stream_type: streamType
       };
     });
     
