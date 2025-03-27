@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { Channel, ChannelListProps } from "@/lib/types";
-import { Search, Tv, Grid, List } from "lucide-react";
+import { Search, Tv, Grid, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "./ui/pagination";
+import { paginateItems } from "@/lib/paginationUtils";
 
 interface GridChannelListProps extends Omit<ChannelListProps, 'paginatedChannels'> {
   channels: Channel[];
@@ -24,6 +26,8 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [filteredChannels, setFilteredChannels] = useState<Channel[]>(channels);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(24); // Show more items per page in grid view
   
   const groups = useMemo(() => {
     if (!playlist?.channels) return [];
@@ -36,6 +40,7 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
     return uniqueGroups.sort();
   }, [playlist]);
   
+  // Filter channels based on search and group
   useEffect(() => {
     if (!channels) {
       setFilteredChannels([]);
@@ -52,11 +57,82 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
     });
     
     setFilteredChannels(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [channels, searchTerm, activeGroup]);
+  
+  // Calculate pagination
+  const paginatedChannels = useMemo(() => {
+    return paginateItems(filteredChannels, currentPage, itemsPerPage);
+  }, [filteredChannels, currentPage, itemsPerPage]);
   
   const handleChannelClick = (channel: Channel) => {
     onSelectChannel(channel);
     navigate(`/player/${channel.id}`);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+  
+  // Render pagination links
+  const renderPaginationLinks = () => {
+    if (!paginatedChannels || paginatedChannels.totalPages <= 1) return null;
+    
+    const { currentPage, totalPages } = paginatedChannels;
+    const pageItems = [];
+    
+    const pageRange = 2;
+    const startPage = Math.max(1, currentPage - pageRange);
+    const endPage = Math.min(totalPages, currentPage + pageRange);
+    
+    if (startPage > 1) {
+      pageItems.push(
+        <PaginationItem key="page-1">
+          <PaginationLink isActive={currentPage === 1} onClick={() => handlePageChange(1)}>
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      if (startPage > 2) {
+        pageItems.push(
+          <PaginationItem key="ellipsis-1">
+            <span className="flex h-9 w-9 items-center justify-center">...</span>
+          </PaginationItem>
+        );
+      }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageItems.push(
+        <PaginationItem key={`page-${i}`}>
+          <PaginationLink isActive={currentPage === i} onClick={() => handlePageChange(i)}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pageItems.push(
+          <PaginationItem key="ellipsis-2">
+            <span className="flex h-9 w-9 items-center justify-center">...</span>
+          </PaginationItem>
+        );
+      }
+      
+      pageItems.push(
+        <PaginationItem key={`page-${totalPages}`}>
+          <PaginationLink isActive={currentPage === totalPages} onClick={() => handlePageChange(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return pageItems;
   };
   
   if (isLoading) {
@@ -132,13 +208,13 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
       </div>
       
       <ScrollArea className="flex-1">
-        {filteredChannels.length === 0 ? (
+        {paginatedChannels.items.length === 0 ? (
           <div className="p-4 text-center">
             <p className="text-gray-300">No channels found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
-            {filteredChannels.map(channel => (
+            {paginatedChannels.items.map(channel => (
               <Card 
                 key={channel.id} 
                 className={cn(
@@ -179,6 +255,39 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
           </div>
         )}
       </ScrollArea>
+      
+      {paginatedChannels.totalPages > 1 && (
+        <div className="p-3 border-t border-gray-800 glossy-header shadow-inner">
+          <Pagination>
+            <PaginationContent className="flex justify-center">
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)} 
+                    className="text-white glossy-button hover:bg-gray-700/50" 
+                  />
+                </PaginationItem>
+              )}
+              
+              {renderPaginationLinks()}
+              
+              {currentPage < paginatedChannels.totalPages && (
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)} 
+                    className="text-white glossy-button hover:bg-gray-700/50" 
+                  />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+          
+          <div className="text-xs text-center text-gray-400 mt-2">
+            Showing {(currentPage - 1) * itemsPerPage + 1}-
+            {Math.min(currentPage * itemsPerPage, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
+          </div>
+        </div>
+      )}
       
       <div className="p-3 border-t border-gray-800 glossy-header shadow-inner">
         <div className="text-xs text-gray-400">

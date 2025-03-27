@@ -8,6 +8,7 @@ import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft, Grid, Info, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchEPGData } from "@/lib/epgService";
+import { toast } from "@/components/ui/sonner";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -30,20 +31,29 @@ const Player = () => {
   
   // Load channel from localStorage
   useEffect(() => {
-    const savedPlaylist = localStorage.getItem("iptv-playlist");
-    if (savedPlaylist && channelId) {
-      const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
-      if (parsedPlaylist) {
-        const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
-        setChannel(foundChannel);
-        
-        if (!foundChannel) {
+    try {
+      const savedPlaylist = localStorage.getItem("iptv-playlist");
+      if (savedPlaylist && channelId) {
+        const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
+        if (parsedPlaylist) {
+          const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
+          setChannel(foundChannel);
+          
+          if (!foundChannel) {
+            toast.error("Channel not found");
+            navigate("/");
+          }
+        } else {
+          toast.error("Invalid playlist data");
           navigate("/");
         }
       } else {
+        toast.error("No playlist found");
         navigate("/");
       }
-    } else {
+    } catch (error) {
+      console.error("Error loading channel:", error);
+      toast.error("Error loading channel");
       navigate("/");
     }
   }, [channelId, navigate]);
@@ -72,7 +82,14 @@ const Player = () => {
   }, [channel]);
   
   if (!channel) {
-    return null;
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading channel...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
