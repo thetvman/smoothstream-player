@@ -51,7 +51,7 @@ const ProfileHeader = () => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => navigate("/profile")}
+        onClick={() => navigate("/signin")}
         className="flex items-center gap-1"
       >
         <UserRound className="h-4 w-4 mr-1" />

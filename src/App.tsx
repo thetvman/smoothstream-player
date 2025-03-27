@@ -20,6 +20,7 @@ const MoviePlayer = lazy(() => import("./pages/MoviePlayer"));
 const EpisodePlayer = lazy(() => import("./pages/EpisodePlayer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
+const SignIn = lazy(() => import("./pages/SignIn"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const History = lazy(() => import("./pages/History"));
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/series" element={<Series />} />
               <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/signin" element={<SignIn />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/history" element={<History />} />
               <Route path="*" element={<NotFound />} />
