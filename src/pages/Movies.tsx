@@ -6,7 +6,7 @@ import { fetchAllMovies } from "@/lib/movieService";
 import MovieList from "@/components/MovieList";
 import MovieDetails from "@/components/MovieDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Tv } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { safeJsonParse } from "@/lib/utils";
@@ -60,16 +60,26 @@ const Movies = () => {
   
   return (
     <div className="container mx-auto p-4 max-w-7xl h-dvh flex flex-col">
-      <div className="flex items-center mb-4 gap-4">
+      <div className="flex items-center mb-4 gap-4 justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate("/")}
+            className="btn-icon"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="ml-2">Back</span>
+          </button>
+          
+          <h1 className="text-2xl font-bold">Movies</h1>
+        </div>
+        
         <button 
           onClick={() => navigate("/")}
           className="btn-icon"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="ml-2">Back</span>
+          <Tv className="w-5 h-5" />
+          <span className="ml-2">Live TV</span>
         </button>
-        
-        <h1 className="text-2xl font-bold">Movies</h1>
       </div>
       
       {!credentials ? (

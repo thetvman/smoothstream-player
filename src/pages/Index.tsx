@@ -11,6 +11,16 @@ import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { fetchEPGData, EPGProgram } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { 
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle
+} from "@/components/ui/navigation-menu";
+import { Film } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -181,7 +191,22 @@ const Index = () => {
     <Layout fullHeight className="py-6 md:py-8">
       <div className="flex flex-col h-full space-y-6">
         <header className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuLink 
+                    className={navigationMenuTriggerStyle()}
+                    onClick={() => navigate('/movies')}
+                  >
+                    <Film className="mr-2 h-4 w-4" />
+                    Movies
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
           <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
         </header>
       
