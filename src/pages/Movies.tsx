@@ -53,24 +53,39 @@ const Movies = () => {
     setActiveTab("details");
   };
   
+  // Store movies in localStorage whenever they're fetched
+  useEffect(() => {
+    if (movieCategories && movieCategories.length > 0) {
+      localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
+      console.log("Movies saved to localStorage:", movieCategories.length, "categories");
+    }
+  }, [movieCategories]);
+  
   // Handle play button
   const handlePlayMovie = (movie: Movie) => {
-    // Store movie data in local storage to make it available on the player page
+    if (!movie) {
+      toast.error("No movie selected");
+      return;
+    }
+    
     try {
-      // First, try to retrieve existing movie data
-      const existingData = localStorage.getItem("xtream-movies");
-      let movieCategories: MovieCategory[] = [];
-      
-      if (existingData) {
-        movieCategories = safeJsonParse<MovieCategory[]>(existingData, []);
-      } else if (movieCategories) {
-        // If there's no existing data, but we have fetched categories, use those
-        movieCategories = movieCategories;
-      }
-      
-      // Save to local storage if we have categories
-      if (movieCategories.length > 0) {
-        localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
+      // Make sure the current movie is available in localStorage before navigating
+      const storedData = localStorage.getItem("xtream-movies");
+      if (!storedData) {
+        // If no data in localStorage, save current movie categories
+        if (movieCategories && movieCategories.length > 0) {
+          localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
+          console.log("Movies saved to localStorage before playback");
+        } else {
+          // Create a temporary category with just this movie
+          const tempCategory: MovieCategory = {
+            id: "temp",
+            name: "Movies",
+            movies: [movie]
+          };
+          localStorage.setItem("xtream-movies", JSON.stringify([tempCategory]));
+          console.log("Single movie saved to localStorage for playback");
+        }
       }
       
       // Navigate to movie player

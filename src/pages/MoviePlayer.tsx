@@ -16,42 +16,51 @@ const MoviePlayer = () => {
   // Load movie from localStorage
   useEffect(() => {
     setIsLoading(true);
+    console.log("Looking for movie with ID:", movieId);
     
     if (!movieId) {
+      toast.error("No movie ID provided");
       navigate("/movies");
       return;
     }
     
     // Search for the movie in localStorage
-    const storageKeys = ['xtream-movies'];
-    let foundMovie: Movie | null = null;
+    const storedData = localStorage.getItem("xtream-movies");
+    console.log("Found stored movie data:", !!storedData);
     
-    for (const key of storageKeys) {
-      const storedData = localStorage.getItem(key);
-      if (storedData) {
+    if (storedData) {
+      try {
         const parsedData = safeJsonParse<MovieCategory[]>(storedData, []);
+        let foundMovie: Movie | null = null;
         
+        // Search through all categories and movies
         for (const category of parsedData) {
           const movie = category.movies.find(m => m.id === movieId);
           if (movie) {
             foundMovie = movie;
+            console.log("Found movie:", movie.name);
             break;
           }
         }
         
-        if (foundMovie) break;
+        if (foundMovie) {
+          setMovie(foundMovie);
+          setIsLoading(false);
+        } else {
+          console.error("Movie not found in stored data. Movie ID:", movieId);
+          toast.error("Movie not found in stored data");
+          navigate("/movies");
+        }
+      } catch (error) {
+        console.error("Error parsing stored movie data:", error);
+        toast.error("Error loading movie data");
+        navigate("/movies");
       }
-    }
-    
-    if (foundMovie) {
-      setMovie(foundMovie);
     } else {
-      // If we couldn't find the movie by ID, go back to the movies page
-      toast.error("Movie not found");
+      console.error("No movie data found in localStorage");
+      toast.error("No movie data available");
       navigate("/movies");
     }
-    
-    setIsLoading(false);
   }, [movieId, navigate]);
   
   // Use preventDefault to handle back button click
@@ -72,7 +81,11 @@ const MoviePlayer = () => {
       </div>
       
       <div className="h-full flex items-center justify-center">
-        <MoviePlayerComponent movie={movie} autoPlay />
+        {isLoading ? (
+          <div className="text-white">Loading movie...</div>
+        ) : (
+          <MoviePlayerComponent movie={movie} autoPlay />
+        )}
       </div>
     </div>
   );
