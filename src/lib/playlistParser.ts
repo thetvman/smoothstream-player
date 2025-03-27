@@ -1,5 +1,4 @@
-
-import { Channel, Playlist, XtreamCredentials } from "./types";
+import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -43,10 +42,22 @@ export const parseM3U8 = (content: string, playlistName = "My Playlist"): Playli
       if (groupMatch && groupMatch[1]) {
         currentChannel.group = groupMatch[1];
       }
+
+      // Extract EPG channel ID if available
+      const epgMatch = line.match(/tvg-id="([^"]+)"/);
+      if (epgMatch && epgMatch[1]) {
+        currentChannel.epg_channel_id = epgMatch[1];
+      }
     }
     // Parse URL line (any non-comment line after an EXTINF)
     else if (!line.startsWith("#") && currentChannel.name) {
       currentChannel.url = line;
+      // Determine stream type from URL
+      if (line.endsWith(".ts")) {
+        currentChannel.stream_type = "ts";
+      } else if (line.endsWith(".m3u8")) {
+        currentChannel.stream_type = "m3u8";
+      }
       channels.push(currentChannel as Channel);
       currentChannel = {};
     }
@@ -134,6 +145,29 @@ export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Prom
 };
 
 /**
+ * Get the proper URL format for an Xtream stream
+ * This function handles different stream types and formats the URL accordingly
+ */
+const getXtreamStreamUrl = (
+  baseUrl: string, 
+  username: string, 
+  password: string, 
+  streamId: number, 
+  streamType: string = ""
+): string => {
+  // Default container format
+  let container = "ts";
+  
+  // Use m3u8 container for live streams when possible for better compatibility
+  if (streamType === "live") {
+    container = "m3u8";
+  }
+  
+  // Build the appropriate URL format
+  return `${baseUrl}/live/${username}/${password}/${streamId}.${container}`;
+};
+
+/**
  * Fetch channels from Xtream Codes API
  */
 export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<Playlist> => {
@@ -174,8 +208,8 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       fetch(liveStreamsUrl)
     ]);
     
-    const categories = await categoriesResponse.json();
-    const streams = await streamsResponse.json();
+    const categories = await categoriesResponse.json() as XtreamCategory[];
+    const streams = await streamsResponse.json() as XtreamStream[];
     
     if (!Array.isArray(streams)) {
       throw new Error("Invalid response from Xtream server");
@@ -186,7 +220,7 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
     // Create category lookup
     const categoryMap: Record<string, string> = {};
     if (Array.isArray(categories)) {
-      categories.forEach((cat: any) => {
+      categories.forEach((cat) => {
         if (cat.category_id && cat.category_name) {
           categoryMap[cat.category_id] = cat.category_name;
         }
@@ -194,13 +228,20 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
     }
     
     // Create channels from streams
-    const channels: Channel[] = streams.map((stream: any) => ({
-      id: uuidv4(),
-      name: stream.name || `Channel ${stream.stream_id}`,
-      url: `${baseUrl}/${username}/${password}/${stream.stream_id}`,
-      logo: stream.stream_icon || undefined,
-      group: stream.category_id ? categoryMap[stream.category_id] : undefined
-    }));
+    const channels: Channel[] = streams.map((stream) => {
+      // Generate both TS and M3U8 URLs for better compatibility
+      const streamUrl = getXtreamStreamUrl(baseUrl, username, password, stream.stream_id, "live");
+      
+      return {
+        id: uuidv4(),
+        name: stream.name || `Channel ${stream.stream_id}`,
+        url: streamUrl,
+        logo: stream.stream_icon || undefined,
+        group: stream.category_id ? categoryMap[stream.category_id] : undefined,
+        epg_channel_id: stream.epg_channel_id || undefined,
+        stream_type: streamUrl.endsWith('.m3u8') ? 'm3u8' : 'ts'
+      };
+    });
     
     const serverName = new URL(baseUrl).hostname;
     
@@ -208,11 +249,11 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       id: uuidv4(),
       name: `${serverName} (Xtream)`,
       channels,
-      source: "xtream"
+      source: "xtream",
+      credentials // Store credentials for potential refresh
     };
   } catch (error) {
     console.error("Xtream API error:", error);
     throw new Error(`Failed to connect to Xtream server: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
-

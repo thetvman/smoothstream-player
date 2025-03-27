@@ -25,23 +25,54 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
   });
   
   const [error, setError] = useState<string | null>(null);
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
   
-  // Initialize HLS and load channel
+  useEffect(() => {
+    if (channel?.url) {
+      setStreamUrl(channel.url);
+      setError(null);
+    }
+  }, [channel]);
+  
+  const tryAlternativeFormat = () => {
+    if (!channel?.url) return false;
+    
+    const currentUrl = streamUrl || channel.url;
+    
+    if (currentUrl.endsWith('.ts')) {
+      const m3u8Url = currentUrl.replace(/\.ts$/, '.m3u8');
+      console.log('Trying alternative format:', m3u8Url);
+      setStreamUrl(m3u8Url);
+      return true;
+    }
+    
+    if (currentUrl.endsWith('.m3u8')) {
+      const tsUrl = currentUrl.replace(/\.m3u8$/, '.ts');
+      console.log('Trying alternative format:', tsUrl);
+      setStreamUrl(tsUrl);
+      return true;
+    }
+    
+    return false;
+  };
+  
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !channel?.url) return;
+    if (!video || !streamUrl) return;
     
     setError(null);
     setPlayerState(prev => ({ ...prev, loading: true }));
     
     const loadChannel = () => {
-      // Clean up previous HLS instance
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
       
-      if (Hls.isSupported()) {
+      const isHlsStream = streamUrl.endsWith('.m3u8');
+      
+      if (isHlsStream && Hls.isSupported()) {
+        console.log('Loading HLS stream:', streamUrl);
         const hls = new Hls({
           startLevel: -1,
           manifestLoadingMaxRetry: 5,
@@ -56,7 +87,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         
         hlsRef.current = hls;
         
-        hls.loadSource(channel.url);
+        hls.loadSource(streamUrl);
         hls.attachMedia(video);
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -74,7 +105,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
           }
         });
         
+        let errorCount = 0;
         hls.on(Hls.Events.ERROR, (_, data) => {
+          errorCount++;
+          console.warn(`HLS error (${errorCount}):`, data.type, data.details);
+          
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
@@ -87,14 +122,26 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
                 break;
               default:
                 hls.destroy();
-                setError("Failed to load stream: unrecoverable error");
+                hlsRef.current = null;
+                
+                if (tryAlternativeFormat()) {
+                  console.log("Trying alternative stream format after fatal error");
+                } else {
+                  setError("Failed to load stream: unrecoverable error");
+                }
                 break;
+            }
+          } else if (errorCount > 10) {
+            if (tryAlternativeFormat()) {
+              console.log("Trying alternative stream format after too many errors");
+              errorCount = 0;
             }
           }
         });
       } 
-      else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = channel.url;
+      else if (video.canPlayType("application/vnd.apple.mpegurl") && isHlsStream) {
+        console.log('Using native HLS support for:', streamUrl);
+        video.src = streamUrl;
         video.addEventListener("loadedmetadata", () => {
           if (autoPlay) {
             video.play()
@@ -109,7 +156,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
           }
         });
       } else {
-        setError("Your browser does not support HLS playback");
+        console.log('Using direct playback for:', streamUrl);
+        video.src = streamUrl;
+        
+        if (autoPlay) {
+          video.play()
+            .then(() => {
+              setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
+            })
+            .catch((e) => {
+              console.error("Direct playback failed:", e);
+              
+              if (tryAlternativeFormat()) {
+                console.log("Trying alternative stream format after direct playback failed");
+              } else {
+                setError("Your browser does not support this stream format");
+                setPlayerState(prev => ({ ...prev, loading: false }));
+              }
+            });
+        }
       }
     };
     
@@ -121,7 +186,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         hlsRef.current = null;
       }
     };
-  }, [channel, autoPlay]);
+  }, [streamUrl, autoPlay]);
   
   useEffect(() => {
     const video = videoRef.current;
@@ -281,14 +346,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
             <button
               className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
               onClick={() => {
-                setError(null);
-                const video = videoRef.current;
-                if (video) {
-                  video.load();
+                if (tryAlternativeFormat()) {
+                  setError(null);
+                } else {
+                  setError(null);
+                  const video = videoRef.current;
+                  if (video) {
+                    video.load();
+                  }
                 }
               }}
             >
-              Try Again
+              Try Alternative Format
             </button>
           )}
         </div>
