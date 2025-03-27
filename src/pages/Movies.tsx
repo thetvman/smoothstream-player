@@ -10,6 +10,7 @@ import { ArrowLeft, Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import MovieDetailModal from "@/components/MovieDetailModal";
 import {
   Pagination,
   PaginationContent,
@@ -24,6 +25,7 @@ import { paginateItems } from "@/lib/paginationUtils";
 const Movies = () => {
   const navigate = useNavigate();
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [allMoviesInCategory, setAllMoviesInCategory] = useState<Movie[]>([]);
@@ -169,6 +171,15 @@ const Movies = () => {
     }
   };
 
+  const handleMovieClick = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   if (!credentials) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center min-h-screen">
@@ -188,6 +199,13 @@ const Movies = () => {
   
   return (
     <Layout withSidebar fullHeight maxWidth="full" className="bg-black text-white">
+      <MovieDetailModal 
+        movie={selectedMovie}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onPlay={handlePlayMovie}
+      />
+      
       <div className="w-64 border-r border-gray-800 bg-black h-screen flex-shrink-0 overflow-y-auto">
         <div className="flex items-center mb-6 p-4">
           <button 
@@ -281,7 +299,7 @@ const Movies = () => {
                       <div 
                         key={movie.id} 
                         className="group cursor-pointer"
-                        onClick={() => handlePlayMovie(movie)}
+                        onClick={() => handleMovieClick(movie)}
                       >
                         <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 mx-auto w-full max-w-[280px]">
                           {movie.logo ? (
@@ -301,7 +319,7 @@ const Movies = () => {
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center">
                             <button className="bg-white text-black font-medium mb-4 py-2 px-6 text-sm rounded hover:bg-gray-200 transition-colors">
-                              Play
+                              Details
                             </button>
                           </div>
                         </div>
