@@ -207,40 +207,42 @@ const Movies = () => {
       />
       
       <div className="w-64 border-r border-gray-800 bg-black h-screen flex-shrink-0 overflow-y-auto">
-        <div className="flex items-center mb-6 p-4">
-          <button 
-            onClick={() => navigate("/")}
-            className="mr-2 p-2 hover:bg-gray-800 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-xl font-bold">All Movies</h2>
-        </div>
+        <div>
+          <div className="flex items-center mb-6 p-4">
+            <button 
+              onClick={() => navigate("/")}
+              className="mr-2 p-2 hover:bg-gray-800 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold">All Movies</h2>
+          </div>
 
-        <div className="px-4">
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <Skeleton key={i} className="h-6 w-full bg-gray-800" />
-              ))}
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {movieCategories?.map((category) => (
-                <li key={category.id}>
-                  <button
-                    onClick={() => handleCategoryChange(category.id)}
-                    className={cn(
-                      "w-full text-left py-2 px-3 rounded-md text-sm transition-colors hover:bg-gray-800",
-                      activeCategory === category.id ? "bg-gray-800 font-medium" : "text-gray-400"
-                    )}
-                  >
-                    {category.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="px-4">
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-full bg-gray-800" />
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {movieCategories?.map((category) => (
+                  <li key={category.id}>
+                    <button
+                      onClick={() => handleCategoryChange(category.id)}
+                      className={cn(
+                        "w-full text-left py-2 px-3 rounded-md text-sm transition-colors hover:bg-gray-800",
+                        activeCategory === category.id ? "bg-gray-800 font-medium" : "text-gray-400"
+                      )}
+                    >
+                      {category.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 
