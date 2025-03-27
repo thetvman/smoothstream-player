@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from "react";
-import { Channel, ChannelListProps, PaginatedChannels } from "@/lib/types";
+import React, { useState, useMemo, useEffect } from "react";
+import { Channel, ChannelListProps } from "@/lib/types";
 import { Search } from "lucide-react";
+import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 
 const ChannelList: React.FC<ChannelListProps> = ({
   playlist,
@@ -12,6 +13,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [filteredPagination, setFilteredPagination] = useState(paginatedChannels);
   
   // Extract unique groups from the playlist
   const groups = useMemo(() => {
@@ -25,13 +27,15 @@ const ChannelList: React.FC<ChannelListProps> = ({
     return uniqueGroups.sort();
   }, [playlist]);
   
-  // Filter channels based on search term and active group
-  const filteredChannels = useMemo(() => {
-    if (!paginatedChannels?.items) {
-      return [];
+  // Apply filtering and update pagination when search term or active group changes
+  useEffect(() => {
+    if (!playlist?.channels) {
+      setFilteredPagination(null);
+      return;
     }
     
-    return paginatedChannels.items.filter(channel => {
+    // Filter based on search term and active group
+    const filteredChannels = playlist.channels.filter(channel => {
       const matchesSearch = !searchTerm || 
         channel.name.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -39,7 +43,16 @@ const ChannelList: React.FC<ChannelListProps> = ({
       
       return matchesSearch && matchesGroup;
     });
-  }, [paginatedChannels, searchTerm, activeGroup]);
+    
+    // Create new pagination based on filtered channels
+    const newPagination = paginateChannels(
+      filteredChannels, 
+      paginatedChannels?.currentPage || 1,
+      ITEMS_PER_PAGE
+    );
+    
+    setFilteredPagination(newPagination);
+  }, [playlist, searchTerm, activeGroup, paginatedChannels?.currentPage]);
   
   if (isLoading) {
     return (
@@ -112,13 +125,13 @@ const ChannelList: React.FC<ChannelListProps> = ({
       
       {/* Channel list */}
       <div className="flex-1 overflow-y-auto p-1">
-        {filteredChannels.length === 0 ? (
+        {(!filteredPagination || filteredPagination.items.length === 0) ? (
           <div className="p-4 text-center">
             <p className="text-muted-foreground">No channels found</p>
           </div>
         ) : (
           <div className="space-y-1">
-            {filteredChannels.map(channel => (
+            {filteredPagination.items.map(channel => (
               <div
                 key={channel.id}
                 className={`channel-item ${selectedChannel?.id === channel.id ? "channel-item-active" : ""}`}
@@ -157,6 +170,8 @@ const ChannelList: React.FC<ChannelListProps> = ({
       <div className="p-3 border-t border-border bg-secondary/30">
         <div className="text-xs text-muted-foreground">
           <span className="font-medium">{playlist.name}</span> • {playlist.channels.length} channels
+          {activeGroup && 
+            ` • ${filteredPagination?.totalItems || 0} in "${activeGroup}"`}
         </div>
       </div>
     </div>
