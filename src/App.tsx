@@ -7,16 +7,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
-// Lazy load page components
-const Index = lazy(() => import("./pages/Index"));
+// Lazy load page components with proper preloading hints
+const Index = lazy(() => {
+  // Add preloading hint for main page components
+  const preloadPlaylistInput = import("./components/PlaylistInput");
+  return import("./pages/Index");
+});
 const Player = lazy(() => import("./pages/Player"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Configure query client with faster stale time for better responsiveness
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 60000,
+      staleTime: 30000, // Reduced stale time for more responsive updates
+      retry: 1, // Limit retries to avoid hanging on failures
     },
   },
 });

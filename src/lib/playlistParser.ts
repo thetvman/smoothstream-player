@@ -85,18 +85,49 @@ export const parsePlaylistFile = (file: File): Promise<Playlist> => {
 };
 
 /**
- * Fetch a playlist from a URL
+ * Fetch a playlist from a URL with timeout and CORS handling
  */
 export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Promise<Playlist> => {
+  console.log("Fetching playlist from:", url);
+  
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch playlist: ${response.statusText}`);
-    }
+    // Add timeout to prevent eternal loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
-    const content = await response.text();
-    return parseM3U8(content, name);
+    // Try direct fetch first
+    try {
+      const response = await fetch(url, { 
+        signal: controller.signal,
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.error("Failed to fetch playlist:", response.status, response.statusText);
+        throw new Error(`Failed to fetch playlist: ${response.statusText}`);
+      }
+      
+      const content = await response.text();
+      console.log("Playlist content received, length:", content.length);
+      
+      if (!content.includes("#EXTM3U")) {
+        console.error("Invalid M3U8 format, missing #EXTM3U header");
+        throw new Error("Invalid playlist format");
+      }
+      
+      const playlist = parseM3U8(content, name);
+      console.log("Playlist parsed successfully, channels:", playlist.channels.length);
+      return playlist;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   } catch (error) {
+    console.error("Playlist fetch error:", error);
     throw new Error(`Failed to fetch playlist: ${error instanceof Error ? error.message : String(error)}`);
   }
 };

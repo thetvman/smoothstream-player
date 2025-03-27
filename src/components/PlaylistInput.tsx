@@ -5,6 +5,7 @@ import Button from "./common/Button";
 import { parsePlaylistFile, fetchPlaylist } from "@/lib/playlistParser";
 import { Playlist } from "@/lib/types";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PlaylistInputProps {
   onPlaylistLoaded: (playlist: Playlist) => void;
@@ -23,11 +24,15 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     
     try {
       const playlist = await parsePlaylistFile(file);
-      onPlaylistLoaded(playlist);
-      toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`);
+      if (playlist.channels.length === 0) {
+        toast.error("No channels found in playlist file");
+      } else {
+        onPlaylistLoaded(playlist);
+        toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`);
+      }
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to parse playlist file");
+      console.error("File upload error:", error);
+      toast.error("Failed to parse playlist file. Please check format.");
     } finally {
       setLoading(false);
       // Reset file input
@@ -38,21 +43,57 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!urlInput.trim()) {
+    const trimmedUrl = urlInput.trim();
+    if (!trimmedUrl) {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+    
+    // Validate URL format
+    try {
+      new URL(trimmedUrl);
+    } catch (e) {
       toast.error("Please enter a valid URL");
       return;
     }
     
     setLoading(true);
+    toast.info("Loading playlist...", { duration: 10000, id: "playlist-loading" });
     
     try {
-      const playlist = await fetchPlaylist(urlInput);
-      onPlaylistLoaded(playlist);
-      toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`);
-      setUrlInput("");
+      const playlist = await fetchPlaylist(trimmedUrl);
+      
+      if (playlist.channels.length === 0) {
+        toast.error("No channels found in playlist");
+      } else {
+        onPlaylistLoaded(playlist);
+        toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`, { id: "playlist-loading" });
+        setUrlInput("");
+      }
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to load playlist from URL");
+      console.error("URL fetch error:", error);
+      toast.error(`Failed to load playlist from URL: ${error instanceof Error ? error.message : "Unknown error"}`, { id: "playlist-loading" });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const loadSamplePlaylist = async (url: string, name: string) => {
+    setLoading(true);
+    toast.info("Loading sample playlist...", { duration: 10000, id: "sample-loading" });
+    
+    try {
+      const playlist = await fetchPlaylist(url, name);
+      
+      if (playlist.channels.length === 0) {
+        toast.error("No channels found in sample playlist");
+      } else {
+        onPlaylistLoaded(playlist);
+        toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`, { id: "sample-loading" });
+      }
+    } catch (error) {
+      console.error("Sample playlist error:", error);
+      toast.error("Failed to load sample playlist", { id: "sample-loading" });
     } finally {
       setLoading(false);
     }
@@ -67,13 +108,20 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
         <div>
           <p className="text-sm text-muted-foreground mb-2">Upload a local M3U/M3U8 file</p>
           <label className="block">
-            <div className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors">
-              <div className="flex flex-col items-center space-y-2">
-                <Upload className="w-8 h-8 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Click to browse or drop file here
-                </span>
-              </div>
+            <div className={`flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer ${loading ? 'opacity-50' : 'hover:bg-secondary/50'} transition-colors`}>
+              {loading ? (
+                <div className="flex flex-col items-center space-y-2">
+                  <Skeleton className="w-8 h-8 rounded-full bg-muted" />
+                  <span className="text-sm text-muted-foreground">Processing...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center space-y-2">
+                  <Upload className="w-8 h-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Click to browse or drop file here
+                  </span>
+                </div>
+              )}
             </div>
             <input
               type="file"
@@ -127,21 +175,17 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
               variant="secondary" 
               size="sm"
               disabled={loading}
-              onClick={() => {
-                setLoading(true);
-                fetchPlaylist("https://iptv-org.github.io/iptv/index.m3u", "IPTV.org Sample")
-                  .then(playlist => {
-                    onPlaylistLoaded(playlist);
-                    toast.success(`Loaded ${playlist.channels.length} channels from "${playlist.name}"`);
-                  })
-                  .catch(error => {
-                    console.error(error);
-                    toast.error("Failed to load sample playlist");
-                  })
-                  .finally(() => setLoading(false));
-              }}
+              onClick={() => loadSamplePlaylist("https://iptv-org.github.io/iptv/index.m3u", "IPTV.org Sample")}
             >
               IPTV.org Sample
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              disabled={loading}
+              onClick={() => loadSamplePlaylist("https://iptv-org.github.io/iptv/categories/documentary.m3u", "Documentaries")}
+            >
+              Documentaries
             </Button>
           </div>
         </div>
