@@ -3,7 +3,7 @@ import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
 import PlayerControls from "./PlayerControls";
 import LoadingSpinner from "./common/LoadingSpinner";
-import Tv from "@/components/icons/Tv";
+import { Tv } from "lucide-react";
 
 interface VideoPlayerProps {
   channel: Channel | null;
