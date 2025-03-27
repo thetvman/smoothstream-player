@@ -9,7 +9,7 @@ import EPGGuide from "@/components/EPGGuide";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
-import { fetchEPGData, EPGProgram } from "@/lib/epgService";
+import { fetchEPGData } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { 
   NavigationMenu,
@@ -31,7 +31,7 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginatedChannels, setPaginatedChannels] = useState<PaginatedChannels | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
+  const [epgData, setEpgData] = useState<any[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -185,15 +185,15 @@ const Index = () => {
       <Layout fullHeight className="py-6 md:py-8">
         <div className="flex flex-col h-full space-y-6">
           <header className="flex flex-col space-y-1">
-            <div className="flex justify-between items-center">
-              <h1 className={`text-2xl font-bold tracking-tight ${playlist ? 'text-white' : ''}`}>Stream Player</h1>
+            <div className="flex justify-between items-center bg-[hsl(0,83%,25%)] p-4 rounded-lg mb-2 shadow-md">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Stream Player</h1>
               <div className="flex items-center gap-4">
-                <div className="flex items-center border border-border rounded-md overflow-hidden">
+                <div className="flex items-center overflow-hidden rounded-md">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setViewMode('grid')}
-                    className={`${viewMode === 'grid' ? 'bg-muted' : ''} ${playlist ? 'text-white hover:text-white hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                    className={`${viewMode === 'grid' ? 'bg-[hsl(0,83%,30%)]' : ''} text-white hover:text-white hover:bg-[hsl(0,73%,30%)]`}
                   >
                     <Grid className="h-4 w-4" />
                   </Button>
@@ -201,7 +201,7 @@ const Index = () => {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setViewMode('list')}
-                    className={`${viewMode === 'list' ? 'bg-muted' : ''} ${playlist ? 'text-white hover:text-white hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                    className={`${viewMode === 'list' ? 'bg-[hsl(0,83%,30%)]' : ''} text-white hover:text-white hover:bg-[hsl(0,73%,30%)]`}
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -210,7 +210,7 @@ const Index = () => {
                   <NavigationMenuList>
                     <NavigationMenuItem>
                       <NavigationMenuLink 
-                        className={`${navigationMenuTriggerStyle()} ${playlist ? 'text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                        className={`${navigationMenuTriggerStyle()} text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]`}
                         onClick={() => navigate('/movies')}
                       >
                         <Film className="mr-2 h-4 w-4" />
@@ -219,7 +219,7 @@ const Index = () => {
                     </NavigationMenuItem>
                     <NavigationMenuItem>
                       <NavigationMenuLink 
-                        className={`${navigationMenuTriggerStyle()} ${playlist ? 'text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]' : ''}`}
+                        className={`${navigationMenuTriggerStyle()} text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]`}
                         onClick={() => navigate('/series')}
                       >
                         <Tv className="mr-2 h-4 w-4" />
@@ -230,8 +230,8 @@ const Index = () => {
                 </NavigationMenu>
               </div>
             </div>
-            <p className={`${playlist ? 'text-[hsl(0,30%,85%)]' : 'text-muted-foreground'}`}>
-              Watch your IPTV streams with a premium experience
+            <p className="text-[hsl(0,30%,85%)] text-center pb-2 border-b border-[hsl(0,60%,35%)]">
+              {playlist ? "Browse channels or search to find your favorites" : "Load your IPTV playlist to get started"}
             </p>
           </header>
         
@@ -241,7 +241,7 @@ const Index = () => {
             </div>
           ) : (
             viewMode === 'grid' ? (
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-hidden animate-fade-in">
                 <GridChannelList
                   playlist={playlist}
                   channels={playlist.channels}
@@ -255,32 +255,39 @@ const Index = () => {
                 <div className="lg:col-span-2 flex flex-col space-y-4">
                   <div className="animate-fade-in">
                     <VideoPlayer channel={selectedChannel} />
+                    
+                    {selectedChannel && (
+                      <Button 
+                        className="mt-3 w-full bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] text-white font-medium"
+                        onClick={openFullscreenPlayer}
+                      >
+                        Watch Full Screen
+                      </Button>
+                    )}
                   </div>
                   
                   {selectedChannel && (
-                    <div className="tv-card shadow-lg">
-                      <div className="tv-section">
-                        <div className="flex items-center gap-2">
-                          {selectedChannel.logo ? (
-                            <img 
-                              src={selectedChannel.logo} 
-                              alt={selectedChannel.name} 
-                              className="w-8 h-8 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-[hsl(0,73%,25%)] flex items-center justify-center">
-                              {selectedChannel.name.substring(0, 2).toUpperCase()}
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-bold">{selectedChannel.name}</h3>
-                            {selectedChannel.group && (
-                              <p className="text-xs text-[hsl(0,30%,85%)]">{selectedChannel.group}</p>
-                            )}
+                    <div className="tv-card shadow-lg animate-fade-in">
+                      <div className="tv-section flex items-center gap-2">
+                        {selectedChannel.logo ? (
+                          <img 
+                            src={selectedChannel.logo} 
+                            alt={selectedChannel.name} 
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-[hsl(0,73%,30%)] flex items-center justify-center">
+                            {selectedChannel.name.substring(0, 2).toUpperCase()}
                           </div>
+                        )}
+                        <div>
+                          <h3 className="font-bold">{selectedChannel.name}</h3>
+                          {selectedChannel.group && (
+                            <p className="text-xs text-[hsl(0,30%,85%)]">{selectedChannel.group}</p>
+                          )}
                         </div>
                       </div>
                       <div className="tv-content">
@@ -297,7 +304,7 @@ const Index = () => {
                   )}
                 </div>
                 
-                <div className="h-full flex flex-col overflow-hidden tv-card">
+                <div className="h-full flex flex-col overflow-hidden tv-card animate-fade-in">
                   <ChannelList
                     playlist={playlist}
                     paginatedChannels={paginatedChannels}

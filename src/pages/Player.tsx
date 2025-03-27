@@ -2,16 +2,20 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
+import EPGGuide from "@/components/EPGGuide";
 import { Channel, Playlist } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft, Grid, Info, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { fetchEPGData } from "@/lib/epgService";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
   const navigate = useNavigate();
   const [channel, setChannel] = useState<Channel | null>(null);
   const [showChannelInfo, setShowChannelInfo] = useState(true);
+  const [epgData, setEpgData] = useState<any[] | null>(null);
+  const [isEpgLoading, setIsEpgLoading] = useState(false);
   
   // Auto-hide channel info after 5 seconds
   useEffect(() => {
@@ -44,6 +48,29 @@ const Player = () => {
     }
   }, [channelId, navigate]);
   
+  // Fetch EPG data for the selected channel
+  useEffect(() => {
+    const getEPGData = async () => {
+      if (!channel || !channel.epg_channel_id) {
+        setEpgData(null);
+        return;
+      }
+      
+      setIsEpgLoading(true);
+      try {
+        const data = await fetchEPGData(channel);
+        setEpgData(data);
+      } catch (error) {
+        console.error("Error fetching EPG data:", error);
+        setEpgData(null);
+      } finally {
+        setIsEpgLoading(false);
+      }
+    };
+    
+    getEPGData();
+  }, [channel]);
+  
   if (!channel) {
     return null;
   }
@@ -52,7 +79,7 @@ const Player = () => {
     <div className="fixed inset-0 tv-background text-tv-foreground">
       <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
         <button 
-          className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-colors backdrop-blur-md"
+          className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
           onClick={() => navigate("/")}
           aria-label="Back to home"
         >
@@ -60,7 +87,7 @@ const Player = () => {
         </button>
         
         <button 
-          className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-colors backdrop-blur-md"
+          className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
           onClick={() => navigate("/")}
           aria-label="Show all channels"
         >
@@ -69,7 +96,7 @@ const Player = () => {
         
         {!showChannelInfo && (
           <button 
-            className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-colors backdrop-blur-md"
+            className="bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-full transition-colors"
             onClick={() => setShowChannelInfo(true)}
             aria-label="Show channel information"
           >
@@ -84,9 +111,9 @@ const Player = () => {
           
           {/* Channel info panel - shown conditionally */}
           {showChannelInfo && (
-            <div className="absolute top-0 right-0 m-6 max-w-sm z-20 transition-all duration-300 ease-in-out">
-              <div className="tv-card shadow-xl">
-                <div className="flex items-start justify-between p-4">
+            <div className="absolute top-0 right-0 m-6 max-w-sm z-20 animate-fade-in">
+              <div className="tv-card shadow-xl rounded-lg overflow-hidden">
+                <div className="flex items-start justify-between p-4 bg-[hsl(0,73%,25%)]">
                   <div className="flex items-center gap-3">
                     {channel.logo ? (
                       <img 
@@ -98,14 +125,14 @@ const Player = () => {
                         }}
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-[hsl(0,73%,25%)] rounded flex items-center justify-center text-lg font-bold">
+                      <div className="w-12 h-12 bg-[hsl(0,83%,35%)] rounded flex items-center justify-center text-lg font-bold">
                         {channel.name.substring(0, 2).toUpperCase()}
                       </div>
                     )}
                     <div>
                       <h1 className="text-xl font-bold">{channel.name}</h1>
                       {channel.group && (
-                        <div className="text-sm text-[hsl(0,30%,85%)]">{channel.group}</div>
+                        <div className="text-sm text-[hsl(0,30%,90%)]">{channel.group}</div>
                       )}
                     </div>
                   </div>
@@ -120,15 +147,14 @@ const Player = () => {
                 
                 {/* Channel details section with red theme */}
                 <ScrollArea className="max-h-[60vh]">
-                  <div className="p-4 pt-0">
-                    <div className="mt-2 p-3 bg-[hsl(0,73%,25%)] rounded-md">
-                      <div className="text-sm font-medium">Current Program</div>
-                      <div className="text-xs text-[hsl(0,30%,85%)] mt-1">
-                        Program information will appear here when available
-                      </div>
-                    </div>
+                  <div className="p-4 pt-0 bg-[hsl(0,73%,18%)]">
+                    <EPGGuide
+                      channel={channel}
+                      epgData={epgData}
+                      isLoading={isEpgLoading}
+                    />
                     
-                    <div className="tv-info-row">
+                    <div className="tv-info-row mt-4">
                       Stream Type: {channel.stream_type || "m3u8"}
                     </div>
                   </div>

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -187,11 +188,11 @@
   }
   
   .channel-card {
-    @apply aspect-video bg-black/20 flex items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden;
+    @apply aspect-video bg-[hsl(0,73%,15%)] flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden border border-[hsl(0,60%,35%)];
   }
   
   .channel-card-selected {
-    @apply ring-2 ring-primary;
+    @apply ring-2 ring-[hsl(0,83%,40%)];
   }
   
   .channel-logo {
@@ -199,7 +200,7 @@
   }
   
   .channel-fallback {
-    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-primary/10;
+    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-[hsl(0,83%,35%)];
   }
   
   /* Movie website specific styles */
@@ -224,7 +225,7 @@
   }
   
   .section-title {
-    @apply text-2xl font-bold mb-6 border-l-4 border-primary pl-3;
+    @apply text-2xl font-bold mb-6 border-l-4 border-[hsl(0,83%,40%)] pl-3;
   }
   
   .hero-section {
@@ -241,19 +242,19 @@
 
   /* TV theme styles */
   .tv-background {
-    @apply bg-gradient-to-br from-[hsl(0,83%,28%)] to-[hsl(0,83%,18%)];
+    @apply bg-gradient-to-br from-[hsl(0,83%,20%)] to-[hsl(0,83%,12%)];
   }
   
   .tv-card {
-    @apply bg-[hsl(0,73%,18%)] text-white border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
+    @apply bg-[hsl(0,73%,15%)] text-white border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
   }
   
   .tv-section {
-    @apply bg-[hsl(0,73%,25%)] text-white p-3 font-medium border-b border-[hsl(0,60%,35%)];
+    @apply bg-[hsl(0,73%,25%)] text-white p-3 font-medium;
   }
   
   .tv-content {
-    @apply p-4 bg-[hsl(0,73%,18%)] text-white;
+    @apply p-4 bg-[hsl(0,73%,15%)] text-white;
   }
   
   .tv-info-row {
@@ -273,5 +274,26 @@
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+  
+  /* UHF-inspired styles */
+  .uhf-header {
+    @apply bg-[hsl(0,83%,25%)] text-white font-bold p-4 shadow-md;
+  }
+  
+  .uhf-card {
+    @apply bg-[hsl(0,73%,15%)] border border-[hsl(0,60%,35%)] rounded-lg overflow-hidden;
+  }
+  
+  .uhf-category-pill {
+    @apply px-3 py-1 text-xs rounded-full bg-[hsl(0,83%,40%)] text-white;
+  }
+  
+  .uhf-nav-button {
+    @apply bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] p-2 rounded-md transition-colors text-white;
+  }
+  
+  .uhf-channel-title {
+    @apply bg-[hsl(0,83%,30%)] p-2 text-white font-medium text-sm truncate;
   }
 }

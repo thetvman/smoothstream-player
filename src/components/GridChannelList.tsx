@@ -142,31 +142,36 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
               <Card 
                 key={channel.id} 
                 className={cn(
-                  "cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg overflow-hidden bg-[hsl(0,73%,22%)] border-[hsl(0,60%,35%)]", 
+                  "cursor-pointer transition-all duration-200 hover:scale-105 overflow-hidden bg-[hsl(0,73%,22%)] border-[hsl(0,60%,35%)] rounded-lg shadow-md", 
                   selectedChannel?.id === channel.id ? "ring-2 ring-[hsl(0,83%,50%)]" : ""
                 )}
                 onClick={() => handleChannelClick(channel)}
               >
-                <CardContent className="p-0 h-full flex items-center justify-center bg-[hsl(0,73%,18%)] aspect-video">
-                  {channel.logo ? (
-                    <img 
-                      src={channel.logo} 
-                      alt={channel.name} 
-                      className="w-full h-full object-contain p-4"
-                      onError={(e) => {
-                        const imgElement = e.target as HTMLImageElement;
-                        imgElement.style.display = 'none';
-                        if (imgElement.nextElementSibling) {
-                          (imgElement.nextElementSibling as HTMLElement).style.display = 'flex';
-                        }
-                      }}
-                    />
-                  ) : null}
-                  <div className={cn(
-                    "w-full h-full flex items-center justify-center text-lg font-bold bg-[hsl(0,73%,25%)]",
-                    channel.logo ? "hidden" : ""
-                  )}>
-                    {channel.name.substring(0, 2).toUpperCase()}
+                <CardContent className="p-0 h-full flex flex-col bg-[hsl(0,73%,18%)] aspect-video">
+                  <div className="flex-1 flex items-center justify-center p-3">
+                    {channel.logo ? (
+                      <img 
+                        src={channel.logo} 
+                        alt={channel.name} 
+                        className="w-full h-full object-contain p-2 max-h-16"
+                        onError={(e) => {
+                          const imgElement = e.target as HTMLImageElement;
+                          imgElement.style.display = 'none';
+                          if (imgElement.nextElementSibling) {
+                            (imgElement.nextElementSibling as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div className={cn(
+                      "w-full h-full flex items-center justify-center text-lg font-bold bg-[hsl(0,73%,25%)]",
+                      channel.logo ? "hidden" : ""
+                    )}>
+                      {channel.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="bg-[hsl(0,83%,30%)] p-2 text-center text-xs font-medium text-white truncate">
+                    {channel.name}
                   </div>
                 </CardContent>
               </Card>
