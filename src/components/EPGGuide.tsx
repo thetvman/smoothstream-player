@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Channel } from "@/lib/types";
-import { Clock } from "lucide-react";
+import { Clock, Calendar, Tv } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EPGProgram {
   title: string;
@@ -20,9 +21,10 @@ interface EPGGuideProps {
 const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="mt-2 animate-pulse space-y-2">
-        <div className="h-5 bg-muted rounded w-1/3"></div>
-        <div className="h-16 bg-muted rounded w-full"></div>
+      <div className="mt-2 space-y-2">
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-12 w-3/4" />
       </div>
     );
   }
@@ -30,7 +32,10 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   if (!channel || !channel.epg_channel_id) {
     return (
       <div className="mt-2 py-2 text-sm text-muted-foreground">
-        <p>No program information available for this channel.</p>
+        <div className="flex items-center gap-2">
+          <Tv className="w-4 h-4" />
+          <p>No program information available for this channel.</p>
+        </div>
       </div>
     );
   }
@@ -38,7 +43,10 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   if (!epgData || epgData.length === 0) {
     return (
       <div className="mt-2 py-2 text-sm text-muted-foreground">
-        <p>No current program information available.</p>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          <p>No current program information available.</p>
+        </div>
       </div>
     );
   }
@@ -52,11 +60,22 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   const nextPrograms = epgData
     .filter(program => program.start > now)
     .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .slice(0, 2); // Just show the next 2 upcoming programs
+    .slice(0, 3); // Show the next 3 upcoming programs
 
   // Format time function
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Format date function
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  // Calculate program duration in minutes
+  const calculateDuration = (start: Date, end: Date) => {
+    const durationMs = end.getTime() - start.getTime();
+    return Math.round(durationMs / 60000); // Convert to minutes
   };
 
   return (
@@ -67,6 +86,9 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
             <Clock className="w-4 h-4 text-primary" />
             <span className="text-xs font-medium">
               NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
+              <span className="ml-2 text-muted-foreground">
+                ({calculateDuration(currentProgram.start, currentProgram.end)} min)
+              </span>
             </span>
           </div>
           <h3 className="font-medium mt-1">{currentProgram.title}</h3>
@@ -75,18 +97,32 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
               {currentProgram.description}
             </p>
           )}
+          <div className="text-xs text-muted-foreground mt-1">
+            {formatDate(currentProgram.start)}
+          </div>
         </div>
       )}
 
       {nextPrograms.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Up Next</h4>
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5" />
+            Up Next
+          </h4>
           {nextPrograms.map((program, index) => (
             <div key={index} className="text-sm border-l-2 border-primary/30 pl-2">
-              <div className="text-xs text-muted-foreground">
-                {formatTime(program.start)} - {formatTime(program.end)}
+              <div className="text-xs text-muted-foreground flex justify-between">
+                <span>{formatTime(program.start)} - {formatTime(program.end)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {calculateDuration(program.start, program.end)} min
+                </span>
               </div>
               <div className="font-medium">{program.title}</div>
+              {program.description && (
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  {program.description}
+                </p>
+              )}
             </div>
           ))}
         </div>
