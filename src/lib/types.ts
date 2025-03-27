@@ -1,4 +1,3 @@
-
 export interface Channel {
   id: string;
   name: string;
@@ -84,6 +83,8 @@ export interface XtreamEpisode {
   episode_num: number;
   title: string;
   container_extension: string;
+  season?: string; // Added season field
+  url?: string; // Added URL field for direct access
   info: {
     movie_image: string;
     plot: string;
