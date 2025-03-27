@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, MovieCategory, XtreamCredentials } from "@/lib/types";
@@ -259,7 +258,7 @@ const Movies = () => {
 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {Array.from({ length: 24 }).map((_, i) => (
                 <div key={i} className="space-y-2">
                   <Skeleton className="aspect-[2/3] w-full rounded-md bg-gray-800" />
@@ -277,14 +276,14 @@ const Movies = () => {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {paginatedMovies.items.map((movie) => (
                       <div 
                         key={movie.id} 
                         className="group cursor-pointer"
                         onClick={() => handlePlayMovie(movie)}
                       >
-                        <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 max-w-[140px]">
+                        <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 max-w-[180px]">
                           {movie.logo ? (
                             <img
                               src={movie.logo}
@@ -301,13 +300,13 @@ const Movies = () => {
                           )}
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center">
-                            <button className="bg-white text-black font-medium mb-4 py-1 px-4 text-sm rounded hover:bg-gray-200 transition-colors">
+                            <button className="bg-white text-black font-medium mb-4 py-1.5 px-5 text-sm rounded hover:bg-gray-200 transition-colors">
                               Play
                             </button>
                           </div>
                         </div>
                         
-                        <h3 className="font-medium text-xs line-clamp-1">{movie.name}</h3>
+                        <h3 className="font-medium text-sm line-clamp-1">{movie.name}</h3>
                         <div className="flex items-center text-xs text-gray-400 mt-1">
                           {movie.year && <span>{movie.year}</span>}
                           {movie.duration && (
