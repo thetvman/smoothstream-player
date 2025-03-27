@@ -20,7 +20,7 @@ import * as z from "zod";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { useUserPosts } from "@/hooks/useUserPosts";
+import { useUserPosts, CreatePostParams } from "@/hooks/useUserPosts";
 
 const profileFormSchema = z.object({
   username: z.string().min(2, {
@@ -31,6 +31,7 @@ const profileFormSchema = z.object({
   website: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal('')),
 });
 
+// Update the post form schema to match the required fields
 const postFormSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
@@ -102,13 +103,24 @@ const Profile = () => {
     }
   };
 
+  // Fixed: Ensure we're passing a complete PostFormValues object to createPost and updatePost
   const onPostSubmit = async (values: PostFormValues) => {
     try {
       if (editingPostId) {
-        await updatePost(editingPostId, values);
+        // For updating, we pass a partial object which is fine
+        await updatePost(editingPostId, {
+          title: values.title,
+          content: values.content,
+          is_published: values.is_published
+        });
         setEditingPostId(null);
       } else {
-        await createPost(values);
+        // For creating, we need to pass a complete object with required fields
+        await createPost({
+          title: values.title,
+          content: values.content,
+          is_published: values.is_published
+        });
       }
       postForm.reset({
         title: "",

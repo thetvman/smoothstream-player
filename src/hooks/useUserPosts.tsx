@@ -14,6 +14,13 @@ export interface Post {
   updated_at: string;
 }
 
+// Make sure to define the parameters explicitly in the interface
+export interface CreatePostParams {
+  title: string;
+  content: string;
+  is_published?: boolean;
+}
+
 export const useUserPosts = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -48,7 +55,8 @@ export const useUserPosts = () => {
     fetchPosts();
   }, [user]);
 
-  const createPost = async (newPost: { title: string; content: string; is_published?: boolean }) => {
+  // Update to accept the explicitly typed parameter
+  const createPost = async (newPost: CreatePostParams) => {
     if (!user) return null;
 
     try {
