@@ -40,6 +40,13 @@
     --player-control: 0 0% 100%;
     --player-control-hover: 220 70% 60%;
     --player-overlay: 240 10% 3% / 80%;
+
+    /* Custom scrollbar variables */
+    --scrollbar-track: 220 20% 94%;
+    --scrollbar-thumb: 220 20% 80%;
+    --scrollbar-thumb-hover: 220 20% 70%;
+    --scrollbar-width: 8px;
+    --scrollbar-height: 8px;
   }
 
   .dark {
@@ -76,6 +83,11 @@
     --player-control: 0 0% 100%;
     --player-control-hover: 220 70% 60%;
     --player-overlay: 240 10% 3% / 80%;
+
+    /* Custom dark mode scrollbar variables */
+    --scrollbar-track: 240 5% 10%;
+    --scrollbar-thumb: 240 5% 20%;
+    --scrollbar-thumb-hover: 240 5% 30%;
   }
 }
 
@@ -96,6 +108,33 @@
   
   video::-webkit-media-controls-enclosure {
     display: none !important;
+  }
+
+  /* Custom scrollbar styling for WebKit browsers */
+  ::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-height);
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: hsl(var(--scrollbar-track));
+    border-radius: calc(var(--radius) / 2);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--scrollbar-thumb));
+    border-radius: calc(var(--radius) / 2);
+    transition: background-color 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--scrollbar-thumb-hover));
+  }
+
+  /* Firefox scrollbar styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
   }
 }
 
@@ -171,5 +210,10 @@
   
   .navigation-item {
     @apply transition-colors duration-200 hover:text-primary relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all hover:after:w-full;
+  }
+
+  /* Custom ScrollArea styling */
+  .custom-scrollbar .scrollbar {
+    @apply transition-all duration-300 ease-in-out opacity-70 hover:opacity-100;
   }
 }
