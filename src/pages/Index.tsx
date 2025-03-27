@@ -5,13 +5,18 @@ import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
-import { Playlist, Channel } from "@/lib/types";
+import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
+import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Index = () => {
   const navigate = useNavigate();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginatedChannels, setPaginatedChannels] = useState<PaginatedChannels | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -31,6 +36,15 @@ const Index = () => {
     }
   }, []);
   
+  // Update paginated channels when playlist or page changes
+  useEffect(() => {
+    if (playlist) {
+      setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
+    } else {
+      setPaginatedChannels(null);
+    }
+  }, [playlist, currentPage]);
+  
   // Save playlist and selected channel to localStorage
   useEffect(() => {
     if (playlist) {
@@ -43,12 +57,20 @@ const Index = () => {
   }, [playlist, selectedChannel]);
   
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
-    setPlaylist(newPlaylist);
+    setIsLoading(true);
     
-    // Select first channel by default
-    if (newPlaylist.channels.length > 0) {
-      setSelectedChannel(newPlaylist.channels[0]);
-    }
+    // Use setTimeout to prevent UI from freezing during large playlist processing
+    setTimeout(() => {
+      setPlaylist(newPlaylist);
+      setCurrentPage(1);
+      
+      // Select first channel by default
+      if (newPlaylist.channels.length > 0) {
+        setSelectedChannel(newPlaylist.channels[0]);
+      }
+      
+      setIsLoading(false);
+    }, 50);
   };
   
   const handleSelectChannel = (channel: Channel) => {
@@ -60,6 +82,72 @@ const Index = () => {
     if (selectedChannel) {
       navigate(`/player/${selectedChannel.id}`);
     }
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+  
+  // Generate pagination links
+  const renderPaginationLinks = () => {
+    if (!paginatedChannels || paginatedChannels.totalPages <= 1) return null;
+    
+    const { currentPage, totalPages } = paginatedChannels;
+    const pageItems = [];
+    
+    // Add current page and surrounding pages
+    const pageRange = 2;
+    const startPage = Math.max(1, currentPage - pageRange);
+    const endPage = Math.min(totalPages, currentPage + pageRange);
+    
+    if (startPage > 1) {
+      pageItems.push(
+        <PaginationItem key="page-1">
+          <PaginationLink isActive={currentPage === 1} onClick={() => handlePageChange(1)}>
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      if (startPage > 2) {
+        pageItems.push(
+          <PaginationItem key="ellipsis-1">
+            <span className="flex h-9 w-9 items-center justify-center">...</span>
+          </PaginationItem>
+        );
+      }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageItems.push(
+        <PaginationItem key={`page-${i}`}>
+          <PaginationLink isActive={currentPage === i} onClick={() => handlePageChange(i)}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        pageItems.push(
+          <PaginationItem key="ellipsis-2">
+            <span className="flex h-9 w-9 items-center justify-center">...</span>
+          </PaginationItem>
+        );
+      }
+      
+      pageItems.push(
+        <PaginationItem key={`page-${totalPages}`}>
+          <PaginationLink isActive={currentPage === totalPages} onClick={() => handlePageChange(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return pageItems;
   };
   
   return (
@@ -85,12 +173,41 @@ const Index = () => {
           </div>
           
           {/* Channel list section */}
-          <div className="h-full overflow-hidden">
+          <div className="h-full flex flex-col overflow-hidden">
             <ChannelList
               playlist={playlist}
+              paginatedChannels={paginatedChannels}
               selectedChannel={selectedChannel}
               onSelectChannel={handleSelectChannel}
+              isLoading={isLoading}
             />
+            
+            {paginatedChannels && paginatedChannels.totalPages > 1 && (
+              <div className="py-4 border-t">
+                <Pagination>
+                  <PaginationContent>
+                    {currentPage > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
+                      </PaginationItem>
+                    )}
+                    
+                    {renderPaginationLinks()}
+                    
+                    {currentPage < paginatedChannels.totalPages && (
+                      <PaginationItem>
+                        <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+                
+                <div className="text-xs text-center text-muted-foreground mt-2">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                  {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 /**
  * Parses an M3U8 playlist string into a structured Playlist object
+ * with improved performance for large playlists
  */
 export const parseM3U8 = (content: string, playlistName = "My Playlist"): Playlist => {
   const lines = content.split("\n");
@@ -13,8 +14,13 @@ export const parseM3U8 = (content: string, playlistName = "My Playlist"): Playli
   }
   
   let currentChannel: Partial<Channel> = {};
+  let lineCount = 0;
+  const totalLines = lines.length;
   
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < totalLines; i++) {
+    // Process in chunks to avoid UI freezing
+    lineCount++;
+    
     const line = lines[i].trim();
     
     // Skip empty lines

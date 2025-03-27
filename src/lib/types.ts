@@ -17,6 +17,14 @@ export interface Playlist {
   credentials?: XtreamCredentials; // Store credentials for potential refresh
 }
 
+export interface PaginatedChannels {
+  items: Channel[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
 export interface PlayerState {
   playing: boolean;
   currentTime: number;

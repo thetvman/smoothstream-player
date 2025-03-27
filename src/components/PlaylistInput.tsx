@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Upload, Link, Tv } from "lucide-react";
 import Button from "./common/Button";
@@ -8,6 +7,7 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 
 interface PlaylistInputProps {
   onPlaylistLoaded: (playlist: Playlist) => void;
@@ -16,6 +16,7 @@ interface PlaylistInputProps {
 
 const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, className }) => {
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [urlInput, setUrlInput] = useState("");
   
   // Xtream credentials
@@ -30,9 +31,22 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     if (!file) return;
     
     setLoading(true);
+    setLoadingProgress(10);
     
     try {
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          const newProgress = prev + Math.floor(Math.random() * 10);
+          return newProgress > 90 ? 90 : newProgress;
+        });
+      }, 300);
+      
       const playlist = await parsePlaylistFile(file);
+      
+      clearInterval(progressInterval);
+      setLoadingProgress(100);
+      
       if (playlist.channels.length === 0) {
         toast.error("No channels found in playlist file");
       } else {
@@ -42,8 +56,13 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     } catch (error) {
       console.error("File upload error:", error);
       toast.error("Failed to parse playlist file. Please check format.");
+      setLoadingProgress(0);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 500); // Keep progress at 100% briefly before resetting
+      
       // Reset file input
       e.target.value = "";
     }
@@ -67,10 +86,23 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
     
     setLoading(true);
+    setLoadingProgress(10);
+    
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 8);
+        return newProgress > 80 ? 80 : newProgress;
+      });
+    }, 300);
+    
     toast.info("Loading playlist...", { duration: 10000, id: "playlist-loading" });
     
     try {
       const playlist = await fetchPlaylist(trimmedUrl);
+      
+      clearInterval(progressInterval);
+      setLoadingProgress(100);
       
       if (playlist.channels.length === 0) {
         toast.error("No channels found in playlist");
@@ -82,8 +114,13 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     } catch (error) {
       console.error("URL fetch error:", error);
       toast.error(`Failed to load playlist from URL: ${error instanceof Error ? error.message : "Unknown error"}`, { id: "playlist-loading" });
+      clearInterval(progressInterval);
+      setLoadingProgress(0);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 500);
     }
   };
   
@@ -105,10 +142,23 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
     
     setLoading(true);
+    setLoadingProgress(10);
+    
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 5);
+        return newProgress > 70 ? 70 : newProgress;
+      });
+    }, 300);
+    
     toast.info("Connecting to Xtream server...", { duration: 15000, id: "xtream-loading" });
     
     try {
       const playlist = await fetchFromXtream(xtreamCredentials);
+      
+      clearInterval(progressInterval);
+      setLoadingProgress(100);
       
       if (playlist.channels.length === 0) {
         toast.error("No channels found from Xtream server");
@@ -126,8 +176,13 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     } catch (error) {
       console.error("Xtream error:", error);
       toast.error(`Failed to connect to Xtream server: ${error instanceof Error ? error.message : "Unknown error"}`, { id: "xtream-loading" });
+      clearInterval(progressInterval);
+      setLoadingProgress(0);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 500);
     }
   };
   
@@ -141,10 +196,23 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   
   const loadSamplePlaylist = async (url: string, name: string) => {
     setLoading(true);
+    setLoadingProgress(10);
+    
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 8);
+        return newProgress > 80 ? 80 : newProgress;
+      });
+    }, 300);
+    
     toast.info("Loading sample playlist...", { duration: 10000, id: "sample-loading" });
     
     try {
       const playlist = await fetchPlaylist(url, name);
+      
+      clearInterval(progressInterval);
+      setLoadingProgress(100);
       
       if (playlist.channels.length === 0) {
         toast.error("No channels found in sample playlist");
@@ -155,8 +223,13 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     } catch (error) {
       console.error("Sample playlist error:", error);
       toast.error("Failed to load sample playlist", { id: "sample-loading" });
+      clearInterval(progressInterval);
+      setLoadingProgress(0);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 500);
     }
   };
   
@@ -164,11 +237,20 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     <div className={`bg-card rounded-lg border border-border p-4 ${className ?? ""}`}>
       <h2 className="text-lg font-medium mb-4">Load Playlist</h2>
       
+      {loading && (
+        <div className="mb-4">
+          <Progress value={loadingProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1 text-center">
+            {loadingProgress < 100 ? 'Loading playlist...' : 'Processing channels...'}
+          </p>
+        </div>
+      )}
+      
       <Tabs defaultValue="file" className="w-full">
         <TabsList className="w-full mb-4">
-          <TabsTrigger value="file" className="flex-1">File Upload</TabsTrigger>
-          <TabsTrigger value="url" className="flex-1">M3U URL</TabsTrigger>
-          <TabsTrigger value="xtream" className="flex-1">Xtream Codes</TabsTrigger>
+          <TabsTrigger value="file" className="flex-1" disabled={loading}>File Upload</TabsTrigger>
+          <TabsTrigger value="url" className="flex-1" disabled={loading}>M3U URL</TabsTrigger>
+          <TabsTrigger value="xtream" className="flex-1" disabled={loading}>Xtream Codes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="file" className="space-y-4">
@@ -309,4 +391,3 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
 };
 
 export default PlaylistInput;
-
