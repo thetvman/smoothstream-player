@@ -17,6 +17,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   autoPlay = true 
 }) => {
   const [showInfo, setShowInfo] = useState(true);
+  const [progress, setProgress] = useState(0);
   
   // Auto-hide the info panel after 7 seconds
   useEffect(() => {
@@ -41,6 +42,22 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       });
     }
   }, [episode, series]);
+  
+  // Update progress periodically
+  const handleProgressUpdate = (currentProgress: number) => {
+    setProgress(currentProgress);
+    
+    // Save progress every 10 seconds
+    if (episode && series && Math.abs(currentProgress - progress) > 5) {
+      addToRecentlyWatched({
+        id: `${series.id}_${episode.season_number}_${episode.episode_number}`,
+        type: 'episode',
+        title: `${series.name} - ${episode.name}`,
+        poster: episode.logo || series.logo,
+        progress: currentProgress
+      });
+    }
+  };
 
   // Convert episode to channel format for VideoPlayer
   const channel = episode ? {
@@ -54,7 +71,11 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
-        <VideoPlayer channel={channel} autoPlay={autoPlay} />
+        <VideoPlayer 
+          channel={channel} 
+          autoPlay={autoPlay} 
+          onProgressUpdate={handleProgressUpdate}
+        />
         
         {/* Show info button when info is hidden */}
         {!showInfo && series && episode && (

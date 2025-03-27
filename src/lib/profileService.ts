@@ -1,4 +1,3 @@
-
 import { UserProfile, UserPreferences, RecentItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,31 +118,44 @@ export const addToRecentlyWatched = async (item: Omit<RecentItem, 'lastWatched'>
     profile.preferences.recentlyWatched = profile.preferences.recentlyWatched.slice(0, 20);
   }
   
+  // Save to localStorage
   saveProfile(profile);
   
   // If user is authenticated, also save to Supabase
-  const user = supabase.auth.getUser();
-  const userId = (await user).data.user?.id;
-  
-  if (userId) {
-    try {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      console.log('Saving watch history to Supabase for user:', user.id);
+      console.log('Item details:', {
+        content_id: item.id,
+        content_type: item.type,
+        title: item.title,
+        poster: item.poster,
+        progress: item.progress,
+      });
+      
       const { error } = await supabase
         .from('watch_history')
         .upsert({
-          user_id: userId,
+          user_id: user.id,
           content_id: item.id,
           content_type: item.type,
           title: item.title,
-          poster: item.poster,
-          progress: item.progress,
+          poster: item.poster || null,
+          progress: item.progress || null,
         }, {
           onConflict: 'user_id, content_id, content_type'
         });
         
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving watch history to Supabase:', error);
+      if (error) {
+        console.error('Error saving watch history to Supabase:', error);
+      } else {
+        console.log('Successfully saved watch history to Supabase');
+      }
     }
+  } catch (error) {
+    console.error('Error saving watch history to Supabase:', error);
   }
 };
 

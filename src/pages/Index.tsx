@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
-import VideoPlayer from "@/components/VideoPlayer";
+import TrackedVideoPlayer from "@/components/TrackedVideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
@@ -262,7 +262,14 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
           <div className="lg:col-span-2 flex flex-col space-y-4">
             <div className="animate-fade-in">
-              <VideoPlayer channel={selectedChannel} />
+              {selectedChannel && (
+                <TrackedVideoPlayer 
+                  channel={selectedChannel} 
+                  contentType="channel"
+                  title={selectedChannel.name}
+                  posterUrl={selectedChannel.logo}
+                />
+              )}
               
               {selectedChannel && (
                 <div className="flex justify-end mt-2">
