@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingSpinner from "./components/common/LoadingSpinner";
+import { ProfileProvider } from "./context/ProfileContext";
 
 // Lazy load page components with proper preloading hints
 const Index = lazy(() => {
@@ -19,6 +20,9 @@ const Series = lazy(() => import("./pages/Series"));
 const MoviePlayer = lazy(() => import("./pages/MoviePlayer"));
 const EpisodePlayer = lazy(() => import("./pages/EpisodePlayer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const History = lazy(() => import("./pages/History"));
 
 // Configure query client with faster stale time for better responsiveness
 const queryClient = new QueryClient({
@@ -34,30 +38,35 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <div className="min-h-screen bg-background text-foreground antialiased">
-        <Toaster />
-        <Sonner position="top-right" closeButton />
-        <BrowserRouter>
-          <Suspense fallback={
-            <div className="h-screen w-full flex items-center justify-center">
-              <div className="flex flex-col items-center gap-4">
-                <LoadingSpinner size="lg" />
-                <p className="text-muted-foreground animate-pulse">Loading your entertainment...</p>
+      <ProfileProvider>
+        <div className="min-h-screen bg-background text-foreground antialiased">
+          <Toaster />
+          <Sonner position="top-right" closeButton />
+          <BrowserRouter>
+            <Suspense fallback={
+              <div className="h-screen w-full flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <LoadingSpinner size="lg" />
+                  <p className="text-muted-foreground animate-pulse">Loading your entertainment...</p>
+                </div>
               </div>
-            </div>
-          }>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/player/:channelId" element={<Player />} />
-              <Route path="/movies" element={<Movies />} />
-              <Route path="/movie/:movieId" element={<MoviePlayer />} />
-              <Route path="/series" element={<Series />} />
-              <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </div>
+            }>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/player/:channelId" element={<Player />} />
+                <Route path="/movies" element={<Movies />} />
+                <Route path="/movie/:movieId" element={<MoviePlayer />} />
+                <Route path="/series" element={<Series />} />
+                <Route path="/series/:seriesId/episode/:episodeId" element={<EpisodePlayer />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/history" element={<History />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </div>
+      </ProfileProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

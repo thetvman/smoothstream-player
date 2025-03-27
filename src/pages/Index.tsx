@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -15,7 +14,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Film, Tv } from "lucide-react";
+import { Film, Tv } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -26,16 +25,17 @@ import {
 } from "@/components/ui/pagination";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import ProfileHeader from "@/components/ProfileHeader";
+import { useProfile } from "@/context/ProfileContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { profile } = useProfile();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +43,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -60,19 +59,22 @@ const Index = () => {
       }
     }
 
-    const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
-    setIsDarkMode(darkModePreference);
-  }, []);
-  
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+    if (profile && profile.preferences.theme) {
+      const isDarkMode = profile.preferences.theme === 'dark';
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     } else {
-      document.documentElement.classList.remove('dark');
+      const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
+      if (darkModePreference) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
-    
-    localStorage.setItem("iptv-dark-mode", isDarkMode.toString());
-  }, [isDarkMode]);
+  }, [profile]);
   
   useEffect(() => {
     if (playlist) {
@@ -89,12 +91,28 @@ const Index = () => {
     
     if (selectedChannel) {
       localStorage.setItem("iptv-last-channel", selectedChannel.id);
+      
+      if (profile && selectedChannel) {
+        import('@/lib/profileService').then(({ addToRecentlyWatched }) => {
+          addToRecentlyWatched({
+            id: selectedChannel.id,
+            type: 'channel',
+            title: selectedChannel.name,
+            poster: selectedChannel.logo
+          });
+        });
+      }
     }
-  }, [playlist, selectedChannel]);
+  }, [playlist, selectedChannel, profile]);
   
   useEffect(() => {
     const getEPGData = async () => {
       if (!selectedChannel || !selectedChannel.epg_channel_id) {
+        setEpgData(null);
+        return;
+      }
+      
+      if (profile && !profile.preferences.showEPG) {
         setEpgData(null);
         return;
       }
@@ -112,7 +130,7 @@ const Index = () => {
     };
     
     getEPGData();
-  }, [selectedChannel]);
+  }, [selectedChannel, profile]);
   
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
@@ -142,10 +160,6 @@ const Index = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
-  };
-  
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
   };
   
   const renderPaginationLinks = () => {
@@ -214,15 +228,6 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8 rounded-full"
-                onClick={toggleDarkMode}
-                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
             </div>
             <div className="flex items-center gap-2">
               <EPGSettings />
@@ -248,6 +253,7 @@ const Index = () => {
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
+              <ProfileHeader />
             </div>
           </div>
           <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
