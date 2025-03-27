@@ -87,7 +87,9 @@ const ChannelGuide: React.FC<ChannelGuideProps> = ({
   };
 
   // Format date (for day display)
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | undefined) => {
+    // Add a safety check to handle undefined date
+    if (!date) return "Loading...";
     return date.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
   };
   
@@ -136,6 +138,15 @@ const ChannelGuide: React.FC<ChannelGuideProps> = ({
       <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
         <Tv className="w-10 h-10 mb-2 opacity-50" />
         <p>No channels available</p>
+      </div>
+    );
+  }
+
+  // Make sure we have time slots before rendering the guide
+  if (timeSlots.length === 0) {
+    return (
+      <div className="w-full flex justify-center py-8">
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
