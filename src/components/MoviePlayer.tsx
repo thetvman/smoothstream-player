@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
@@ -28,12 +29,9 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   
   useEffect(() => {
-    if (movie) {
-      const url = movie.matchedUrl || movie.url;
-      if (url) {
-        setStreamUrl(url);
-        setError(null);
-      }
+    if (movie?.url) {
+      setStreamUrl(movie.url);
+      setError(null);
     }
   }, [movie]);
   

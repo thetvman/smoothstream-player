@@ -1,3 +1,4 @@
+
 import { 
   XtreamCredentials, 
   XtreamCategory, 
@@ -204,69 +205,6 @@ export const fetchSeriesInfo = async (
     console.error("Error fetching series info:", error);
     throw error;
   }
-};
-
-/**
- * Find a matching movie in the IPTV playlist based on TMDB movie
- */
-export const findMatchingMovieUrl = (movie: Movie, playlists: Playlist[]): string | null => {
-  if (!movie || !playlists || playlists.length === 0) {
-    return null;
-  }
-
-  // Normalize the movie name for comparison
-  const normalizeTitle = (title: string): string => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '') // Remove special characters
-      .replace(/\s+/g, ''); // Remove spaces
-  };
-
-  const normalizedMovieName = normalizeTitle(movie.name);
-  const movieYear = movie.year;
-  
-  // If there's a year, we can do a more precise match
-  const exactMatches = [];
-  const partialMatches = [];
-  
-  // Check all playlists for potential matches
-  for (const playlist of playlists) {
-    for (const channel of playlist.channels) {
-      // Skip channels that don't look like movies (e.g., TV channels)
-      if (channel.group && !channel.group.toLowerCase().includes('movie') && 
-          !channel.group.toLowerCase().includes('film') && 
-          !channel.group.toLowerCase().includes('vod')) {
-        continue;
-      }
-      
-      const normalizedChannelName = normalizeTitle(channel.name);
-      
-      // Extract year from channel name if possible
-      const yearMatch = channel.name.match(/\b(19\d{2}|20\d{2})\b/);
-      const channelYear = yearMatch ? yearMatch[1] : null;
-      
-      // Exact match (name + year)
-      if (normalizedChannelName.includes(normalizedMovieName) && 
-          movieYear && channelYear && movieYear === channelYear) {
-        exactMatches.push(channel.url);
-      } 
-      // Partial match (just name)
-      else if (normalizedChannelName.includes(normalizedMovieName)) {
-        partialMatches.push(channel.url);
-      }
-    }
-  }
-  
-  // Return exact match if found, otherwise partial match
-  if (exactMatches.length > 0) {
-    return exactMatches[0];
-  }
-  
-  if (partialMatches.length > 0) {
-    return partialMatches[0];
-  }
-  
-  return null;
 };
 
 /**

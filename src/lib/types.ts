@@ -87,7 +87,7 @@ export interface XtreamMovie {
 export interface Movie {
   id: string;
   name: string;
-  url?: string;  // Made optional to handle TMDB movies without URLs
+  url: string;
   logo?: string;
   backdrop?: string;
   group?: string;
@@ -98,10 +98,6 @@ export interface Movie {
   genre?: string;
   stream_type?: string;
   movie_id?: number; // Original ID from Xtream
-  tmdb_id?: number; // TMDB ID
-  cast?: string; // Added for TMDB
-  trailer?: string; // Added for TMDB
-  matchedUrl?: string; // URL matched from playlist
 }
 
 export interface MovieCategory {
@@ -179,10 +175,6 @@ export interface Series {
   genre?: string;
   series_id: number; // Original ID from Xtream
   seasons?: Season[];
-  tmdb_id?: number; // TMDB ID
-  cast?: string; // Added for TMDB
-  trailer?: string; // Added for TMDB
-  seasons_count?: number; // Added for TMDB
 }
 
 export interface Season {
