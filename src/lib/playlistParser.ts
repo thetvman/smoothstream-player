@@ -1,4 +1,3 @@
-
 import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -104,10 +103,23 @@ export const parsePlaylistFile = (file: File): Promise<Playlist> => {
 };
 
 /**
+ * Validates if a URL is allowed to be used for EPG or playlist fetching
+ * Only URLs from http://amri.wtf are allowed
+ */
+export const validateAllowedUrl = (url: string): boolean => {
+  return url.startsWith('http://amri.wtf');
+};
+
+/**
  * Fetch a playlist from a URL with timeout and CORS handling
  */
 export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Promise<Playlist> => {
   console.log("Fetching playlist from:", url);
+  
+  // Validate URL is from allowed domain
+  if (!validateAllowedUrl(url)) {
+    throw new Error("Only URLs from http://amri.wtf are allowed");
+  }
   
   try {
     // Add timeout to prevent eternal loading
@@ -190,6 +202,11 @@ const getXtreamM3UUrl = (credentials: XtreamCredentials): string => {
 export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<Playlist> => {
   const { server, username, password } = credentials;
   console.log("Connecting to Xtream server:", server);
+  
+  // Validate server URL is from allowed domain
+  if (!validateAllowedUrl(server)) {
+    throw new Error("Only URLs from http://amri.wtf are allowed");
+  }
   
   // Clean the server URL by removing trailing slashes
   const baseUrl = server.replace(/\/$/, "");

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Upload, Link, Tv } from "lucide-react";
 import Button from "./common/Button";
-import { parsePlaylistFile, fetchPlaylist, fetchFromXtream } from "@/lib/playlistParser";
+import { parsePlaylistFile, fetchPlaylist, fetchFromXtream, validateAllowedUrl } from "@/lib/playlistParser";
 import { Playlist, XtreamCredentials } from "@/lib/types";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,12 +19,14 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [urlInput, setUrlInput] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   
   const [xtreamCredentials, setXtreamCredentials] = useState<XtreamCredentials>({
     server: "",
     username: "",
     password: ""
   });
+  const [serverError, setServerError] = useState<string | null>(null);
   
   const handlePlaylistProcessed = (playlist: Playlist) => {
     if (playlist.channels.length > 0) {
@@ -78,19 +80,33 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
   };
   
+  const validateUrl = (url: string): boolean => {
+    if (!url.trim()) {
+      setUrlError("Please enter a URL");
+      return false;
+    }
+    
+    try {
+      new URL(url);
+    } catch (e) {
+      setUrlError("Please enter a valid URL");
+      return false;
+    }
+    
+    if (!validateAllowedUrl(url)) {
+      setUrlError("Only URLs from http://amri.wtf are allowed");
+      return false;
+    }
+    
+    setUrlError(null);
+    return true;
+  };
+  
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedUrl = urlInput.trim();
-    if (!trimmedUrl) {
-      toast.error("Please enter a valid URL");
-      return;
-    }
-    
-    try {
-      new URL(trimmedUrl);
-    } catch (e) {
-      toast.error("Please enter a valid URL");
+    if (!validateUrl(trimmedUrl)) {
       return;
     }
     
@@ -132,18 +148,37 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
   };
   
-  const handleXtreamSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!xtreamCredentials.server || !xtreamCredentials.username || !xtreamCredentials.password) {
-      toast.error("Please fill in all Xtream fields");
-      return;
+  const validateXtreamServer = (server: string): boolean => {
+    if (!server.trim()) {
+      setServerError("Please enter a server URL");
+      return false;
     }
     
     try {
-      new URL(xtreamCredentials.server);
+      new URL(server);
     } catch (e) {
-      toast.error("Please enter a valid server URL");
+      setServerError("Please enter a valid server URL");
+      return false;
+    }
+    
+    if (!validateAllowedUrl(server)) {
+      setServerError("Only servers from http://amri.wtf are allowed");
+      return false;
+    }
+    
+    setServerError(null);
+    return true;
+  };
+  
+  const handleXtreamSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateXtreamServer(xtreamCredentials.server)) {
+      return;
+    }
+    
+    if (!xtreamCredentials.username || !xtreamCredentials.password) {
+      toast.error("Please fill in all Xtream fields");
       return;
     }
     
@@ -196,9 +231,23 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
       ...prev,
       [name]: value
     }));
+    
+    if (name === 'server') {
+      setServerError(null);
+    }
+  };
+  
+  const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrlInput(e.target.value);
+    setUrlError(null);
   };
   
   const loadSamplePlaylist = async (url: string, name: string) => {
+    if (!validateAllowedUrl(url)) {
+      toast.error("Only URLs from http://amri.wtf are allowed");
+      return;
+    }
+    
     setLoading(true);
     setLoadingProgress(10);
     
@@ -285,6 +334,10 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
             </label>
           </div>
           
+          <div className="text-xs text-amber-500 mt-2 mb-4">
+            Note: Only playlists with URLs from http://amri.wtf will be allowed to load.
+          </div>
+          
           <div>
             <p className="text-sm text-muted-foreground mb-2">Sample Playlists</p>
             <div className="flex flex-wrap gap-2">
@@ -292,15 +345,15 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                 variant="secondary" 
                 size="sm"
                 disabled={loading}
-                onClick={() => loadSamplePlaylist("https://iptv-org.github.io/iptv/index.m3u", "IPTV.org Sample")}
+                onClick={() => loadSamplePlaylist("http://amri.wtf/iptv/index.m3u", "AMRI Sample")}
               >
-                IPTV.org Sample
+                AMRI Sample
               </Button>
               <Button 
                 variant="secondary" 
                 size="sm"
                 disabled={loading}
-                onClick={() => loadSamplePlaylist("https://iptv-org.github.io/iptv/categories/documentary.m3u", "Documentaries")}
+                onClick={() => loadSamplePlaylist("http://amri.wtf/iptv/documentaries.m3u", "Documentaries")}
               >
                 Documentaries
               </Button>
@@ -317,11 +370,11 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                   <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <input
                     type="url"
-                    placeholder="https://example.com/playlist.m3u8"
+                    placeholder="http://amri.wtf/playlist.m3u8"
                     value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
+                    onChange={handleUrlInputChange}
                     disabled={loading}
-                    className="w-full bg-background border border-input rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    className={`w-full bg-background border ${urlError ? 'border-red-500' : 'border-input'} rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 ${urlError ? 'focus:ring-red-500' : 'focus:ring-primary'}`}
                   />
                 </div>
                 <Button 
@@ -332,6 +385,12 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                   Load
                 </Button>
               </div>
+              {urlError && (
+                <p className="text-xs text-red-500 mt-1">{urlError}</p>
+              )}
+              <p className="text-xs text-amber-500 mt-2">
+                Only URLs from http://amri.wtf are allowed.
+              </p>
             </div>
           </form>
         </TabsContent>
@@ -346,12 +405,15 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                   <Tv className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     name="server"
-                    placeholder="Server URL (http://example.com:port)"
+                    placeholder="http://amri.wtf:port"
                     value={xtreamCredentials.server}
                     onChange={handleXtreamInputChange}
                     disabled={loading}
-                    className="pl-9"
+                    className={`pl-9 ${serverError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   />
+                  {serverError && (
+                    <p className="text-xs text-red-500 mt-1">{serverError}</p>
+                  )}
                 </div>
                 
                 <Input
@@ -381,7 +443,11 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                 </Button>
               </div>
               
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="mt-3 text-xs text-amber-500">
+                Only servers from http://amri.wtf are allowed.
+              </p>
+              
+              <p className="mt-1 text-xs text-muted-foreground">
                 Note: Your credentials are stored locally and never sent to any third party.
               </p>
             </div>
