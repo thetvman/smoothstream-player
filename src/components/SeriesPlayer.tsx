@@ -42,10 +42,10 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
                 <div className="bg-secondary px-3 py-1 rounded-full text-xs">
                   Episode {episode.episode_number}
                 </div>
-                {episode.release_date && (
+                {episode.added && (
                   <div className="flex items-center text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5 mr-1" />
-                    {episode.release_date}
+                    {episode.added}
                   </div>
                 )}
                 {episode.duration && (
