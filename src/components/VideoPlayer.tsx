@@ -1,5 +1,4 @@
-
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
 import PlayerControls from "./PlayerControls";
@@ -47,7 +46,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
           startLevel: -1,
           manifestLoadingMaxRetry: 5,
           levelLoadingMaxRetry: 5,
-          fragLoadingMaxRetry: 5
+          fragLoadingMaxRetry: 5,
+          lowLatencyMode: false,
+          enableWorker: true,
+          backBufferLength: 30,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60
         });
         
         hlsRef.current = hls;
@@ -74,7 +78,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
-                // Try to recover network error
                 console.warn("Fatal network error encountered, trying to recover");
                 hls.startLoad();
                 break;
@@ -83,7 +86,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
                 hls.recoverMediaError();
                 break;
               default:
-                // Cannot recover
                 hls.destroy();
                 setError("Failed to load stream: unrecoverable error");
                 break;
@@ -91,7 +93,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
           }
         });
       } 
-      // For browsers with native HLS support
       else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = channel.url;
         video.addEventListener("loadedmetadata", () => {
@@ -114,7 +115,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     
     loadChannel();
     
-    // Clean up
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -123,7 +123,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     };
   }, [channel, autoPlay]);
   
-  // Set up time update and other video event listeners
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -165,7 +164,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
-    // Add event listeners
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("play", handlePlay);
     video.addEventListener("playing", handlePlay);
@@ -175,7 +173,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     video.addEventListener("canplay", handleCanPlay);
     video.addEventListener("error", handleError);
     
-    // Remove event listeners on cleanup
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("play", handlePlay);
@@ -188,7 +185,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     };
   }, []);
   
-  // Handle play/pause toggling
   const handlePlayPause = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -202,7 +198,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     }
   };
   
-  // Handle mute toggling
   const handleMute = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -210,7 +205,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     video.muted = !video.muted;
   };
   
-  // Handle volume change
   const handleVolumeChange = (volume: number) => {
     const video = videoRef.current;
     if (!video) return;
@@ -221,7 +215,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     }
   };
   
-  // Handle seeking
   const handleSeek = (time: number) => {
     const video = videoRef.current;
     if (!video) return;
@@ -229,7 +222,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     video.currentTime = time;
   };
   
-  // Handle fullscreen toggle
   const handleFullscreen = () => {
     const container = containerRef.current;
     if (!container) return;
@@ -249,7 +241,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     }
   };
   
-  // Listen for fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
       setPlayerState(prev => ({
@@ -270,21 +261,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       ref={containerRef}
       className="relative w-full aspect-video bg-player overflow-hidden rounded-lg group"
     >
-      {/* Video element */}
       <video
         ref={videoRef}
         className="w-full h-full object-contain"
         playsInline
+        preload="metadata"
       />
       
-      {/* Loading spinner */}
       {playerState.loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <LoadingSpinner size="lg" />
         </div>
       )}
       
-      {/* Error message */}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
           <div className="text-red-500 mb-2 text-lg">⚠️ {error}</div>
@@ -305,14 +294,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         </div>
       )}
       
-      {/* Channel information overlay */}
       {channel && !error && (
         <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent player-controls">
           <h3 className="text-white font-medium truncate">{channel.name}</h3>
         </div>
       )}
       
-      {/* Controls */}
       {channel && !error && (
         <PlayerControls
           videoRef={videoRef}
@@ -328,4 +315,4 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
   );
 };
 
-export default VideoPlayer;
+export default memo(VideoPlayer);

@@ -33,3 +33,37 @@ export function safeJsonParse<T>(value: string, fallback: T): T {
     return fallback;
   }
 }
+
+/**
+ * Optimize image URL for faster loading
+ * Adds a placeholder for missing images
+ */
+export function optimizeImageUrl(url: string | undefined): string {
+  if (!url) return '/placeholder.svg';
+  
+  // Handle already optimized URLs
+  if (url.includes('placeholder.svg')) return url;
+  
+  // Basic URL validation
+  try {
+    new URL(url);
+    return url;
+  } catch (e) {
+    return '/placeholder.svg';
+  }
+}
+
+/**
+ * Debounce function to prevent excessive function calls
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
