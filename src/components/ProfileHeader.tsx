@@ -12,14 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/context/ProfileContext";
+import { useAuth } from "@/context/AuthContext";
 import { UserRound, Settings, Heart, Clock, LogOut, User, Moon, Sun } from "lucide-react";
 
 const ProfileHeader = () => {
   const navigate = useNavigate();
-  const { profile, isLoading, updateUserPreferences, signOut } = useProfile();
+  const { profile, isLoading: profileLoading, updateUserPreferences } = useProfile();
+  const { user, signOut, isLoading: authLoading } = useAuth();
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -37,6 +39,8 @@ const ProfileHeader = () => {
     }
   };
 
+  const isLoading = profileLoading || authLoading;
+
   if (isLoading) {
     return (
       <Button variant="ghost" size="sm" disabled className="h-8 w-8 p-0">
@@ -46,7 +50,7 @@ const ProfileHeader = () => {
     );
   }
 
-  if (!profile) {
+  if (!user || !profile) {
     return (
       <Button
         variant="outline"
