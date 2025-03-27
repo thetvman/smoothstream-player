@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Trash2, Clock, Tv, Film } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
 import { RecentItem } from "@/lib/types";
-import { optimizeImageUrl, formatTime } from "@/lib/utils";
+import { optimizeImageUrl } from "@/lib/utils";
 
 const History = () => {
   const navigate = useNavigate();
@@ -78,7 +78,7 @@ const History = () => {
         {recentlyWatched.length > 0 ? (
           <div className="space-y-4">
             {recentlyWatched.map((item, index) => (
-              <React.Fragment key={`${item.type}-${item.id}`}>
+              <div key={`${item.type}-${item.id}`}>
                 <Card 
                   className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => navigateToContent(item)}
@@ -130,7 +130,7 @@ const History = () => {
                   </CardContent>
                 </Card>
                 {index < recentlyWatched.length - 1 && <Separator />}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         ) : (
