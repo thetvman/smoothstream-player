@@ -113,9 +113,9 @@ const Favorites = () => {
                         
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium truncate">{channel.name}</h3>
-                          {channel.group_title && (
+                          {channel.group && (
                             <p className="text-sm text-muted-foreground truncate">
-                              {channel.group_title}
+                              {channel.group}
                             </p>
                           )}
                         </div>

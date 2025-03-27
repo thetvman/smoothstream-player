@@ -1,20 +1,11 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Playlist, Channel, PaginatedChannels } from '@/lib/types';
-import { Search, Trash2 } from 'lucide-react';
-import FavoriteButton from './FavoriteButton';
-import { cn } from '@/lib/utils';
-
-interface ChannelListProps {
-  playlist: Playlist | null;
-  paginatedChannels: PaginatedChannels | null;
-  selectedChannel: Channel | null;
-  onSelectChannel: (channel: Channel) => void;
-  isLoading?: boolean;
-}
+import React from "react";
+import { Channel, ChannelListProps, PaginatedChannels } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tv } from "lucide-react";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import FavoriteButton from "@/components/FavoriteButton";
+import { optimizeImageUrl } from "@/lib/utils";
 
 const ChannelList: React.FC<ChannelListProps> = ({
   playlist,
@@ -23,126 +14,78 @@ const ChannelList: React.FC<ChannelListProps> = ({
   onSelectChannel,
   isLoading = false,
 }) => {
-  const [searchTerm, setSearchTerm] = React.useState('');
-  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full py-8">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   if (!playlist) {
     return (
-      <Card className="h-full flex-1 overflow-hidden flex flex-col">
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <div className="text-center py-8 flex-1 flex flex-col items-center justify-center gap-2">
-            <p className="text-lg font-medium">No Playlist Loaded</p>
-            <p className="text-sm text-muted-foreground">
-              Load a playlist to view channels
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center p-4 border rounded-lg bg-card">
+        <h3 className="font-medium mb-2">No playlist loaded</h3>
+        <p className="text-sm text-muted-foreground">
+          Please upload an M3U playlist or connect to an Xtream service
+        </p>
+      </div>
     );
   }
-  
-  if (isLoading || !paginatedChannels) {
+
+  if (!paginatedChannels || paginatedChannels.items.length === 0) {
     return (
-      <Card className="h-full flex-1 overflow-hidden flex flex-col">
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <div className="text-center py-8 animate-pulse">
-            <p className="text-muted-foreground">Loading channels...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center p-4 border rounded-lg bg-card">
+        <h3 className="font-medium mb-2">No channels found</h3>
+        <p className="text-sm text-muted-foreground">
+          The playlist doesn't contain any channels
+        </p>
+      </div>
     );
   }
-  
-  const filteredChannels = searchTerm
-    ? paginatedChannels.channels.filter((channel) =>
-        channel.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : paginatedChannels.channels;
-  
-  const clearPlaylist = () => {
-    if (window.confirm("Are you sure you want to clear the playlist?")) {
-      localStorage.removeItem("iptv-playlist");
-      localStorage.removeItem("iptv-last-channel");
-      window.location.reload();
-    }
-  };
-  
+
   return (
-    <Card className="h-full flex-1 overflow-hidden flex flex-col">
-      <CardContent className="p-4 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search channels..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={clearPlaylist}
-            title="Clear playlist"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="space-y-1 overflow-y-auto flex-1">
-          {filteredChannels.length > 0 ? (
-            filteredChannels.map((channel) => (
-              <div
-                key={channel.id}
-                className={cn(
-                  "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                  selectedChannel?.id === channel.id
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-muted"
-                )}
-                onClick={() => onSelectChannel(channel)}
-              >
-                <div className="w-10 h-10 overflow-hidden bg-muted rounded-md flex-shrink-0">
-                  {channel.logo ? (
-                    <img
-                      src={channel.logo}
-                      alt={channel.name}
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                      No Logo
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{channel.name}</p>
-                  {channel.group_title && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {channel.group_title}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex-shrink-0">
-                  <FavoriteButton channel={channel} size="sm" iconOnly />
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No channels found</p>
+    <div className="space-y-2 overflow-auto h-full pb-4">
+      <h2 className="font-semibold mb-3 px-1">
+        Channels ({paginatedChannels.totalItems})
+      </h2>
+      {paginatedChannels.items.map((channel: Channel) => (
+        <Card
+          key={channel.id}
+          className={`cursor-pointer transition-colors hover:bg-muted/50 overflow-hidden ${
+            selectedChannel?.id === channel.id ? "ring-2 ring-primary" : ""
+          }`}
+          onClick={() => onSelectChannel(channel)}
+        >
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+              {channel.logo ? (
+                <img
+                  src={optimizeImageUrl(channel.logo)}
+                  alt={channel.name}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg";
+                  }}
+                />
+              ) : (
+                <Tv className="h-6 w-6 text-muted-foreground" />
+              )}
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-sm truncate">{channel.name}</h3>
+              {channel.group && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {channel.group}
+                </p>
+              )}
+            </div>
+            <FavoriteButton channel={channel} iconOnly size="sm" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 
