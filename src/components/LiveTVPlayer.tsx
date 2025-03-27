@@ -24,6 +24,7 @@ const LiveTVPlayer = () => {
   const [viewMode, setViewMode] = useState<'list' | 'guide'>('guide');
   const [epgData, setEpgData] = useState(null);
   const [loadingEPG, setLoadingEPG] = useState(false);
+  const [activeTab, setActiveTab] = useState("player");
 
   // Load last used playlist from localStorage
   useEffect(() => {
@@ -70,6 +71,8 @@ const LiveTVPlayer = () => {
     setSelectedChannel(channel);
     // Save last selected channel ID
     localStorage.setItem("last-channel-id", channel.id);
+    // Automatically switch to player tab when channel is selected
+    setActiveTab("player");
   };
 
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
@@ -97,7 +100,7 @@ const LiveTVPlayer = () => {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
-      <Tabs defaultValue="player" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full grid grid-cols-3 rounded-none">
           <TabsTrigger value="player">Live TV</TabsTrigger>
           <TabsTrigger value="channels">Channel Browser</TabsTrigger>
@@ -127,12 +130,26 @@ const LiveTVPlayer = () => {
             ) : playlist ? (
               <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
                 <p className="text-white">Select a channel to start watching</p>
-                <ArrowRight className="h-8 w-8 text-white/60 animate-pulse" />
+                <Button 
+                  variant="outline"
+                  onClick={() => setActiveTab("channels")}
+                  className="bg-primary/20 border-primary/30 text-white"
+                >
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Browse Channels
+                </Button>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
                 <p className="text-white">Add a playlist to start watching Live TV</p>
-                <ArrowRight className="h-8 w-8 text-white/60 animate-pulse transform rotate-90" />
+                <Button 
+                  variant="outline"
+                  onClick={() => setActiveTab("settings")}
+                  className="bg-primary/20 border-primary/30 text-white"
+                >
+                  <ArrowRight className="mr-2 h-4 w-4 transform rotate-90" />
+                  Add Playlist
+                </Button>
               </div>
             )}
           </div>
