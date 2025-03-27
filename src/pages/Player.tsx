@@ -8,7 +8,7 @@ import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft, Grid, Info, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchEPGData } from "@/lib/epgService";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
