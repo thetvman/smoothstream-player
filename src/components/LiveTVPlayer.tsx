@@ -5,7 +5,6 @@ import { Channel, Playlist } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import { safeJsonParse } from "@/lib/utils";
 import { 
-  ArrowRight, 
   PlayCircle, 
   ListFilter, 
   LayoutGrid, 
@@ -17,7 +16,6 @@ import {
   Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import PlaylistInput from "./PlaylistInput";
 import EPGGuide from "./EPGGuide";
 import { fetchEPGData } from "@/lib/epgService";
@@ -29,8 +27,6 @@ const LiveTVPlayer = () => {
   const navigate = useNavigate();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
-  const [paginatedChannels, setPaginatedChannels] = useState<any>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [epgData, setEpgData] = useState(null);
@@ -41,30 +37,34 @@ const LiveTVPlayer = () => {
 
   // Load last used playlist from localStorage
   useEffect(() => {
-    setIsLoading(true);
-    const savedPlaylist = localStorage.getItem("iptv-playlist");
-    
-    if (savedPlaylist) {
-      const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
-      if (parsedPlaylist && parsedPlaylist.channels.length > 0) {
-        setPlaylist(parsedPlaylist);
+    const loadPlaylist = async () => {
+      setIsLoading(true);
+      try {
+        const savedPlaylist = localStorage.getItem("iptv-playlist");
         
-        // Get the last watched channel id
-        const lastChannelId = localStorage.getItem("last-channel-id");
-        const initialChannel = lastChannelId 
-          ? parsedPlaylist.channels.find(c => c.id === lastChannelId) || parsedPlaylist.channels[0]
-          : parsedPlaylist.channels[0];
-          
-        setSelectedChannel(initialChannel);
-        
-        // Set up pagination
-        const paginated = paginateChannels(parsedPlaylist.channels, currentPage, ITEMS_PER_PAGE);
-        setPaginatedChannels(paginated);
+        if (savedPlaylist) {
+          const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
+          if (parsedPlaylist && parsedPlaylist.channels.length > 0) {
+            setPlaylist(parsedPlaylist);
+            
+            // Get the last watched channel id
+            const lastChannelId = localStorage.getItem("last-channel-id");
+            const initialChannel = lastChannelId 
+              ? parsedPlaylist.channels.find(c => c.id === lastChannelId) || parsedPlaylist.channels[0]
+              : parsedPlaylist.channels[0];
+              
+            setSelectedChannel(initialChannel);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading playlist:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
     
-    setIsLoading(false);
-  }, [currentPage]);
+    loadPlaylist();
+  }, []);
 
   // Fetch EPG data when channel changes
   useEffect(() => {
@@ -72,9 +72,14 @@ const LiveTVPlayer = () => {
     
     const getEPGData = async () => {
       setLoadingEPG(true);
-      const data = await fetchEPGData(selectedChannel);
-      setEpgData(data);
-      setLoadingEPG(false);
+      try {
+        const data = await fetchEPGData(selectedChannel);
+        setEpgData(data);
+      } catch (error) {
+        console.error("Error fetching EPG data:", error);
+      } finally {
+        setLoadingEPG(false);
+      }
     };
     
     getEPGData();
@@ -87,27 +92,22 @@ const LiveTVPlayer = () => {
   };
 
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
-    // Save to localStorage for persistence
-    localStorage.setItem("iptv-playlist", JSON.stringify(newPlaylist));
-    
-    setPlaylist(newPlaylist);
-    
-    if (newPlaylist.channels.length > 0) {
-      const initialChannel = newPlaylist.channels[0];
-      setSelectedChannel(initialChannel);
-      localStorage.setItem("last-channel-id", initialChannel.id);
+    try {
+      // Save to localStorage for persistence
+      localStorage.setItem("iptv-playlist", JSON.stringify(newPlaylist));
+      
+      setPlaylist(newPlaylist);
+      
+      if (newPlaylist.channels.length > 0) {
+        const initialChannel = newPlaylist.channels[0];
+        setSelectedChannel(initialChannel);
+        localStorage.setItem("last-channel-id", initialChannel.id);
+      }
+      
+      setShowSettings(false);
+    } catch (error) {
+      console.error("Error handling playlist:", error);
     }
-    
-    setCurrentPage(1);
-    const paginated = paginateChannels(newPlaylist.channels, 1, ITEMS_PER_PAGE);
-    setPaginatedChannels(paginated);
-    setShowSettings(false);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    const paginated = paginateChannels(playlist?.channels || [], page, ITEMS_PER_PAGE);
-    setPaginatedChannels(paginated);
   };
 
   const toggleGuideSize = () => {

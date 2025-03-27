@@ -16,36 +16,81 @@ const Player = () => {
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [showEPG, setShowEPG] = useState(false);
   const [loadingEPG, setLoadingEPG] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Load channel from localStorage
   useEffect(() => {
-    const savedPlaylist = localStorage.getItem("iptv-playlist");
-    if (savedPlaylist && channelId) {
-      const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
-      if (parsedPlaylist) {
+    const loadChannel = async () => {
+      setIsLoading(true);
+      
+      try {
+        const savedPlaylist = localStorage.getItem("iptv-playlist");
+        if (!savedPlaylist || !channelId) {
+          throw new Error("Playlist or channel ID not found");
+        }
+        
+        const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
+        if (!parsedPlaylist) {
+          throw new Error("Could not parse playlist");
+        }
+        
         const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
+        if (!foundChannel) {
+          throw new Error("Channel not found in playlist");
+        }
+        
         setChannel(foundChannel);
         
-        if (foundChannel) {
-          // Fetch EPG data
-          const getEPGData = async () => {
-            setLoadingEPG(true);
-            const data = await fetchEPGData(foundChannel);
-            setEpgData(data);
-            setLoadingEPG(false);
-          };
-          
-          getEPGData();
-        } else {
-          navigate("/");
+        // Fetch EPG data
+        setLoadingEPG(true);
+        try {
+          const data = await fetchEPGData(foundChannel);
+          setEpgData(data);
+        } catch (epgError) {
+          console.error("EPG data fetch error:", epgError);
+          // Don't fail the whole component on EPG error
+        } finally {
+          setLoadingEPG(false);
         }
-      } else {
-        navigate("/");
+      } catch (error) {
+        console.error("Error loading channel:", error);
+        setError(error instanceof Error ? error.message : "Failed to load channel");
+        // Navigate back to home after a short delay
+        setTimeout(() => navigate("/"), 3000);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      navigate("/");
-    }
+    };
+    
+    loadChannel();
   }, [channelId, navigate]);
+  
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
+        <div className="glass-dark p-6 rounded-xl max-w-md text-center">
+          <h2 className="text-xl font-semibold mb-2">Error</h2>
+          <p className="mb-4">{error}</p>
+          <button 
+            className="btn-icon bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Return Home
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   if (!channel) {
     return null;

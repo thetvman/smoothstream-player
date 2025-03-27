@@ -49,11 +49,20 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
     );
   }, [playlist, searchQuery]);
   
+  // Reset to page 1 when search query changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+  
   const paginatedChannels = useMemo(() => {
+    if (!filteredChannels.length) {
+      return { items: [], currentPage: 1, totalPages: 0, hasNextPage: false, hasPrevPage: false };
+    }
     return paginateItems<Channel>(filteredChannels, currentPage, ITEMS_PER_PAGE);
   }, [filteredChannels, currentPage, ITEMS_PER_PAGE]);
   
   const handlePageChange = (page: number) => {
+    if (page < 1 || page > paginatedChannels.totalPages) return;
     setCurrentPage(page);
     // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -114,7 +123,7 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
         ))}
       </div>
       
-      {/* Pagination controls */}
+      {/* Only show pagination if we have more than one page */}
       {paginatedChannels.totalPages > 1 && (
         <Pagination className="mt-6">
           <PaginationContent>
