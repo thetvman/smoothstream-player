@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { User, Settings, Heart, Clock, LogOut, Save } from "lucide-react";
+import { User, Settings, Heart, Clock, LogOut, Save, Tv } from "lucide-react";
 import { getRecentlyWatched } from "@/lib/profileService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -55,7 +54,6 @@ const Profile = () => {
     toast("Profile updated successfully");
   };
 
-  // Update form values when profile changes
   useEffect(() => {
     if (profile) {
       form.reset({
@@ -71,7 +69,6 @@ const Profile = () => {
     const newTheme = profile.preferences.theme === 'dark' ? 'light' : 'dark';
     updateUserPreferences({ theme: newTheme });
     
-    // Apply theme change immediately
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
