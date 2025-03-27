@@ -6,6 +6,7 @@ import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
+import EPGSettings from "@/components/EPGSettings";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
@@ -20,7 +21,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film, Moon, Sun, Tv } from "lucide-react";
+import { Film, Moon, Settings, Sun, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -233,28 +234,31 @@ const Index = () => {
                 {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             </div>
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink 
-                    className={navigationMenuTriggerStyle()}
-                    onClick={() => navigate('/movies')}
-                  >
-                    <Film className="mr-2 h-4 w-4" />
-                    Movies
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink 
-                    className={navigationMenuTriggerStyle()}
-                    onClick={() => navigate('/series')}
-                  >
-                    <Tv className="mr-2 h-4 w-4" />
-                    Series
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <div className="flex items-center gap-2">
+              <EPGSettings />
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/movies')}
+                    >
+                      <Film className="mr-2 h-4 w-4" />
+                      Movies
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/series')}
+                    >
+                      <Tv className="mr-2 h-4 w-4" />
+                      Series
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
           </div>
           <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
         </header>

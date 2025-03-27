@@ -1,3 +1,4 @@
+
 import { Channel } from "./types";
 
 interface EPGProgram {
@@ -12,6 +13,42 @@ interface EPGProgram {
 const EPG_CACHE: Record<string, { data: EPGProgram[], timestamp: number }> = {};
 const CACHE_EXPIRY = 15 * 60 * 1000; // 15 minutes cache expiry
 const PREFETCH_CONCURRENCY = 5; // Number of concurrent prefetch requests
+
+// Store custom EPG URL
+let customEpgUrl: string | null = null;
+
+/**
+ * Set a custom EPG URL for the application
+ */
+export const setCustomEpgUrl = (url: string | null) => {
+  if (url !== customEpgUrl) {
+    // Clear cache when changing EPG source
+    Object.keys(EPG_CACHE).forEach(key => delete EPG_CACHE[key]);
+    console.log("EPG cache cleared due to EPG URL change");
+  }
+  
+  customEpgUrl = url;
+  
+  // Save to localStorage
+  if (url) {
+    localStorage.setItem("iptv-epg-url", url);
+  } else {
+    localStorage.removeItem("iptv-epg-url");
+  }
+  
+  return url;
+};
+
+/**
+ * Get the currently set custom EPG URL
+ */
+export const getCustomEpgUrl = (): string | null => {
+  if (customEpgUrl === undefined) {
+    // Initialize from localStorage if not set yet
+    customEpgUrl = localStorage.getItem("iptv-epg-url");
+  }
+  return customEpgUrl;
+};
 
 /**
  * Prefetch EPG data for multiple channels
@@ -69,6 +106,34 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
   }
 
   try {
+    // Check if we have a custom EPG URL set
+    const userEpgUrl = getCustomEpgUrl();
+    
+    if (userEpgUrl) {
+      try {
+        console.log(`Trying to fetch EPG from custom URL: ${userEpgUrl}`);
+        const response = await fetch(userEpgUrl, { method: 'GET' });
+        
+        if (response.ok) {
+          const xmlText = await response.text();
+          const programs = parseXmltvData(xmlText, channel.epg_channel_id);
+          
+          if (programs && programs.length > 0) {
+            // Cache the results
+            EPG_CACHE[channel.epg_channel_id] = {
+              data: programs,
+              timestamp: Date.now()
+            };
+            
+            return programs;
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to fetch or parse custom EPG from ${userEpgUrl}:`, error);
+        // Fall back to default sources if custom fails
+      }
+    }
+    
     // Try XMLTV format first (most common for IPTV)
     const epgChannelId = encodeURIComponent(channel.epg_channel_id);
     
