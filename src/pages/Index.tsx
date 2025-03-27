@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -14,7 +15,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Film, Tv } from "lucide-react";
+import { Film, Tv, Heart, Filter } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -32,6 +33,12 @@ import {
 } from "@/components/ui/navigation-menu";
 import ProfileHeader from "@/components/ProfileHeader";
 import { useProfile } from "@/context/ProfileContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -43,6 +50,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -78,11 +86,20 @@ const Index = () => {
   
   useEffect(() => {
     if (playlist) {
-      setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
+      let filteredChannels = [...playlist.channels];
+      
+      // Filter to show only favorites if the option is enabled
+      if (showFavoritesOnly && profile) {
+        filteredChannels = filteredChannels.filter(channel => 
+          profile.preferences.favoriteChannels.includes(channel.id)
+        );
+      }
+      
+      setPaginatedChannels(paginateChannels(filteredChannels, currentPage, ITEMS_PER_PAGE));
     } else {
       setPaginatedChannels(null);
     }
-  }, [playlist, currentPage]);
+  }, [playlist, currentPage, showFavoritesOnly, profile]);
   
   useEffect(() => {
     if (playlist) {
@@ -91,19 +108,8 @@ const Index = () => {
     
     if (selectedChannel) {
       localStorage.setItem("iptv-last-channel", selectedChannel.id);
-      
-      if (profile && selectedChannel) {
-        import('@/lib/profileService').then(({ addToRecentlyWatched }) => {
-          addToRecentlyWatched({
-            id: selectedChannel.id,
-            type: 'channel',
-            title: selectedChannel.name,
-            poster: selectedChannel.logo
-          });
-        });
-      }
     }
-  }, [playlist, selectedChannel, profile]);
+  }, [playlist, selectedChannel]);
   
   useEffect(() => {
     const getEPGData = async () => {
@@ -160,6 +166,15 @@ const Index = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
+  };
+  
+  const toggleFavoritesFilter = () => {
+    if (!profile) {
+      navigate('/signin');
+      return;
+    }
+    setShowFavoritesOnly(!showFavoritesOnly);
+    setCurrentPage(1);
   };
   
   const renderPaginationLinks = () => {
@@ -231,8 +246,34 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <EPGSettings />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuCheckboxItem
+                    checked={showFavoritesOnly}
+                    onCheckedChange={toggleFavoritesFilter}
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    Favorites Only
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <NavigationMenu>
                 <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/favorites')}
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      Favorites
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
                   <NavigationMenuItem>
                     <NavigationMenuLink 
                       className={navigationMenuTriggerStyle()}

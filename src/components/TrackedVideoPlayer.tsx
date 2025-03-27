@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import VideoPlayer from './VideoPlayer';
 import { Channel } from '@/lib/types';
@@ -26,30 +25,7 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
   
   const handleProgressUpdate = (progress: number) => {
     setCurrentProgress(progress);
-    console.log(`[TrackedVideoPlayer] Progress update for ${contentType} "${title}": ${progress}%`);
-    
-    // Only update watch history if profile exists and it's been more than 10 seconds since last update
-    const now = Date.now();
-    if (now - lastUpdateTime > 10000 && channel && profile) {
-      console.log(`[TrackedVideoPlayer] Saving to watch history: ${contentType} "${title}" (${progress}%)`);
-      
-      const watchItem = {
-        id: channel.id,
-        type: contentType,
-        title: title,
-        poster: posterUrl || channel.logo,
-        progress: progress
-      };
-      console.log('[TrackedVideoPlayer] Watch item data:', watchItem);
-      
-      addToRecentlyWatched(watchItem)
-        .then(() => console.log('[TrackedVideoPlayer] Successfully saved to watch history'))
-        .catch(err => console.error('[TrackedVideoPlayer] Error saving to watch history:', err));
-      
-      setLastUpdateTime(now);
-    } else if (!profile) {
-      console.log('[TrackedVideoPlayer] Skipping watch history update: No profile found');
-    }
+    // Watch history tracking temporarily removed
   };
   
   // Save progress when component unmounts

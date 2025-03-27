@@ -2,6 +2,7 @@
 import { UserProfile, UserPreferences, RecentItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const PROFILE_STORAGE_KEY = 'iptv-user-profile';
 
@@ -19,10 +20,8 @@ const defaultPreferences: UserPreferences = {
 
 // Get the current user profile from localStorage
 export const getCurrentProfile = (): UserProfile | null => {
-  console.log('[profileService] Getting current profile from localStorage');
   const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
   if (!storedProfile) {
-    console.log('[profileService] No profile found in localStorage');
     return null;
   }
   
@@ -35,19 +34,15 @@ export const getCurrentProfile = (): UserProfile | null => {
       item.lastWatched = new Date(item.lastWatched);
     });
     
-    console.log(`[profileService] Found profile for user: ${profile.username}`);
-    console.log(`[profileService] Profile has ${profile.preferences.recentlyWatched.length} recently watched items`);
-    
     return profile;
   } catch (error) {
-    console.error('[profileService] Error parsing profile:', error);
+    console.error('Error parsing profile:', error);
     return null;
   }
 };
 
 // Create a new user profile
 export const createProfile = (username: string, email?: string): UserProfile => {
-  console.log(`[profileService] Creating new profile for user: ${username}`);
   const newProfile: UserProfile = {
     id: uuidv4(),
     username,
@@ -62,17 +57,13 @@ export const createProfile = (username: string, email?: string): UserProfile => 
 
 // Save profile to localStorage
 export const saveProfile = (profile: UserProfile): void => {
-  console.log(`[profileService] Saving profile for user: ${profile.username}`);
-  console.log(`[profileService] Profile has ${profile.preferences.recentlyWatched.length} recently watched items`);
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
 };
 
 // Update user preferences
 export const updatePreferences = (preferences: Partial<UserPreferences>): UserProfile | null => {
-  console.log('[profileService] Updating user preferences');
   const profile = getCurrentProfile();
   if (!profile) {
-    console.warn('[profileService] Cannot update preferences: No profile found');
     return null;
   }
   
@@ -86,23 +77,75 @@ export const updatePreferences = (preferences: Partial<UserPreferences>): UserPr
 };
 
 // Add channel to favorites
-export const toggleFavoriteChannel = (channelId: string): boolean => {
-  console.log(`[profileService] Toggling favorite status for channel: ${channelId}`);
+export const toggleFavoriteChannel = async (channelId: string, channelName: string, channelLogo?: string): Promise<boolean> => {
   const profile = getCurrentProfile();
   if (!profile) {
-    console.warn('[profileService] Cannot toggle favorite: No profile found');
+    toast.error('Sign in to add favorites');
     return false;
   }
   
-  const index = profile.preferences.favoriteChannels.indexOf(channelId);
-  if (index === -1) {
-    profile.preferences.favoriteChannels.push(channelId);
-  } else {
-    profile.preferences.favoriteChannels.splice(index, 1);
-  }
+  // Check if the channel is already a favorite
+  const isFavorite = profile.preferences.favoriteChannels.includes(channelId);
   
-  saveProfile(profile);
-  return index === -1; // Return true if added, false if removed
+  if (isFavorite) {
+    // Remove from favorites
+    profile.preferences.favoriteChannels = profile.preferences.favoriteChannels.filter(id => id !== channelId);
+    saveProfile(profile);
+    toast.success(`Removed ${channelName} from favorites`);
+    
+    // If user is authenticated, update in Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // First check if the record exists
+        const { data: existingFav } = await supabase
+          .from('favorites')
+          .select()
+          .eq('user_id', user.id)
+          .eq('content_id', channelId)
+          .eq('content_type', 'channel')
+          .single();
+          
+        if (existingFav) {
+          await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('content_id', channelId)
+            .eq('content_type', 'channel');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating channel favorites in Supabase:', error);
+    }
+    
+    return false;
+  } else {
+    // Add to favorites
+    profile.preferences.favoriteChannels.push(channelId);
+    saveProfile(profile);
+    toast.success(`Added ${channelName} to favorites`);
+    
+    // If user is authenticated, save to Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('favorites')
+          .upsert({
+            user_id: user.id,
+            content_id: channelId,
+            content_type: 'channel',
+            title: channelName,
+            poster: channelLogo || null,
+          });
+      }
+    } catch (error) {
+      console.error('Error saving channel favorites to Supabase:', error);
+    }
+    
+    return true;
+  }
 };
 
 // Check if a channel is a favorite
@@ -113,181 +156,31 @@ export const isChannelFavorite = (channelId: string): boolean => {
   return profile.preferences.favoriteChannels.includes(channelId);
 };
 
-// Add item to recently watched
+// Add to recently watched - temporarily disabled
 export const addToRecentlyWatched = async (item: Omit<RecentItem, 'lastWatched'>): Promise<void> => {
-  console.log(`[profileService] Adding to recently watched: ${item.type} "${item.title}" (${item.progress}%)`);
-  
-  const profile = getCurrentProfile();
-  if (!profile) {
-    console.warn('[profileService] Cannot add to recently watched: No profile found');
-    console.log('[profileService] Creating profile is required before using watch history');
-    return Promise.resolve(); // Return resolved promise instead of rejecting
-  }
-  
-  // Remove if it already exists
-  const existingIndex = profile.preferences.recentlyWatched.findIndex(i => i.id === item.id && i.type === item.type);
-  if (existingIndex !== -1) {
-    console.log(`[profileService] Updating existing item at index ${existingIndex}`);
-    profile.preferences.recentlyWatched.splice(existingIndex, 1);
-  }
-  
-  // Add to the beginning
-  const newItem = {
-    ...item,
-    lastWatched: new Date()
-  };
-  
-  profile.preferences.recentlyWatched.unshift(newItem);
-  console.log(`[profileService] New item added. Total watched items: ${profile.preferences.recentlyWatched.length}`);
-  
-  // Limit to 20 items
-  if (profile.preferences.recentlyWatched.length > 20) {
-    console.log('[profileService] Trimming watch history to 20 items');
-    profile.preferences.recentlyWatched = profile.preferences.recentlyWatched.slice(0, 20);
-  }
-  
-  // Save to localStorage
-  saveProfile(profile);
-  
-  // If user is authenticated, also save to Supabase
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      console.log('[profileService] User is authenticated, saving to Supabase');
-      console.log('[profileService] User ID:', user.id);
-      console.log('[profileService] Item details:', {
-        content_id: item.id,
-        content_type: item.type,
-        title: item.title,
-        poster: item.poster,
-        progress: item.progress,
-      });
-      
-      const { error } = await supabase
-        .from('watch_history')
-        .upsert({
-          user_id: user.id,
-          content_id: item.id,
-          content_type: item.type,
-          title: item.title,
-          poster: item.poster || null,
-          progress: item.progress || null,
-        }, {
-          onConflict: 'user_id, content_id, content_type'
-        });
-        
-      if (error) {
-        console.error('[profileService] Error saving watch history to Supabase:', error);
-      } else {
-        console.log('[profileService] Successfully saved watch history to Supabase');
-      }
-    } else {
-      console.log('[profileService] User is not authenticated, only saved to localStorage');
-    }
-  } catch (error) {
-    console.error('[profileService] Error saving watch history to Supabase:', error);
-  }
-  
+  // Watch history functionality temporarily disabled
   return Promise.resolve();
 };
 
-// Get recently watched items
+// Get recently watched items - temporarily disabled
 export const getRecentlyWatched = (): RecentItem[] => {
-  console.log('[profileService] Getting recently watched items');
-  const profile = getCurrentProfile();
-  if (!profile) {
-    console.warn('[profileService] Cannot get recently watched: No profile found');
-    return [];
-  }
-  
-  console.log(`[profileService] Returning ${profile.preferences.recentlyWatched.length} recently watched items`);
-  return profile.preferences.recentlyWatched;
+  // Watch history functionality temporarily disabled
+  return [];
 };
 
-// Fetch watch history from Supabase
+// Fetch watch history from Supabase - temporarily disabled
 export const fetchWatchHistoryFromSupabase = async (): Promise<RecentItem[]> => {
-  console.log('[profileService] Fetching watch history from Supabase');
-  try {
-    const user = supabase.auth.getUser();
-    const userId = (await user).data.user?.id;
-    
-    if (!userId) {
-      console.warn('[profileService] Cannot fetch watch history: No authenticated user');
-      return [];
-    }
-    
-    console.log(`[profileService] Fetching watch history for user: ${userId}`);
-    
-    const { data, error } = await supabase
-      .from('watch_history')
-      .select('*')
-      .order('watched_at', { ascending: false });
-      
-    if (error) {
-      console.error('[profileService] Error fetching watch history:', error);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      console.log('[profileService] No watch history found in Supabase');
-      return [];
-    }
-    
-    console.log(`[profileService] Fetched ${data.length} watch history items from Supabase`);
-    
-    return data.map(item => ({
-      id: item.content_id,
-      type: item.content_type as 'channel' | 'movie' | 'episode',
-      title: item.title,
-      poster: item.poster || undefined,
-      lastWatched: new Date(item.watched_at),
-      progress: item.progress
-    }));
-  } catch (error) {
-    console.error('[profileService] Error fetching watch history from Supabase:', error);
-    return [];
-  }
+  // Watch history functionality temporarily disabled
+  return [];
 };
 
-// Clear watch history from both localStorage and Supabase
+// Clear watch history - temporarily disabled
 export const clearWatchHistory = async (): Promise<boolean> => {
-  console.log('[profileService] Clearing watch history');
-  try {
-    const profile = getCurrentProfile();
-    if (profile) {
-      console.log('[profileService] Clearing watch history from localStorage');
-      profile.preferences.recentlyWatched = [];
-      saveProfile(profile);
-    }
-    
-    const user = supabase.auth.getUser();
-    const userId = (await user).data.user?.id;
-    
-    if (userId) {
-      console.log('[profileService] Clearing watch history from Supabase');
-      const { error } = await supabase
-        .from('watch_history')
-        .delete()
-        .eq('user_id', userId);
-        
-      if (error) {
-        console.error('[profileService] Error clearing watch history from Supabase:', error);
-        throw error;
-      }
-      
-      console.log('[profileService] Successfully cleared watch history from Supabase');
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('[profileService] Error clearing watch history:', error);
-    return false;
-  }
+  // Watch history functionality temporarily disabled
+  return Promise.resolve(true);
 };
 
 // Delete user profile
 export const deleteProfile = (): void => {
-  console.log('[profileService] Deleting user profile');
   localStorage.removeItem(PROFILE_STORAGE_KEY);
 };
