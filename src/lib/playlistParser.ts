@@ -1,5 +1,5 @@
 
-import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream, XtreamSeries } from "./types";
+import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -159,30 +159,19 @@ const getXtreamStreamUrl = (
   baseUrl: string, 
   username: string, 
   password: string, 
-  streamId: number | string, 
+  streamId: number, 
   streamType: string = ""
 ): string => {
   // Default container format
   let container = "ts";
   
   // Use m3u8 container for live streams when possible for better compatibility
-  if (streamType === "live" || streamType === "m3u8") {
+  if (streamType === "live") {
     container = "m3u8";
-  } else if (streamType === "movie" || streamType === "vod") {
-    container = "mp4";
-  } else if (streamType === "series") {
-    container = "mkv"; // Often used for series episodes
   }
   
-  // Build the appropriate URL format based on content type
-  if (streamType === "movie" || streamType === "vod") {
-    return `${baseUrl}/movie/${username}/${password}/${streamId}.${container}`;
-  } else if (streamType === "series") {
-    return `${baseUrl}/series/${username}/${password}/${streamId}.${container}`;
-  } else {
-    // Default to live streams
-    return `${baseUrl}/live/${username}/${password}/${streamId}.${container}`;
-  }
+  // Build the appropriate URL format
+  return `${baseUrl}/live/${username}/${password}/${streamId}.${container}`;
 };
 
 /**
@@ -236,77 +225,31 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
     const liveCategoriesUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_categories`;
     const liveStreamsUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_live_streams`;
     
-    // Fetch VOD categories and streams (for movies)
-    const vodCategoriesUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_vod_categories`;
-    const vodStreamsUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_vod_streams`;
-    
-    // Fetch Series categories and streams
-    const seriesCategoriesUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_series_categories`;
-    const seriesStreamsUrl = `${baseUrl}/player_api.php?username=${username}&password=${password}&action=get_series`;
-    
-    // Fetch all data in parallel for better performance
-    const [
-      categoriesResponse, 
-      streamsResponse, 
-      vodCategoriesResponse,
-      vodStreamsResponse,
-      seriesCategoriesResponse,
-      seriesStreamsResponse,
-      m3u8Response
-    ] = await Promise.all([
+    // Fetch both API data and M3U8 playlist in parallel
+    const [categoriesResponse, streamsResponse, m3u8Response] = await Promise.all([
       fetch(liveCategoriesUrl),
       fetch(liveStreamsUrl),
-      fetch(vodCategoriesUrl),
-      fetch(vodStreamsUrl),
-      fetch(seriesCategoriesUrl),
-      fetch(seriesStreamsUrl),
       fetchPlaylist(m3u8Url, `${new URL(baseUrl).hostname} (M3U8)`).catch(err => {
         console.warn("Failed to fetch M3U8 playlist:", err);
         return null; // Continue without M3U8 if it fails
       })
     ]);
     
-    // Process all the responses
-    const liveCategories = await categoriesResponse.json() as XtreamCategory[];
-    const liveStreams = await streamsResponse.json() as XtreamStream[];
-    const vodCategories = await vodCategoriesResponse.json() as XtreamCategory[];
-    const vodStreams = await vodStreamsResponse.json() as XtreamStream[];
-    const seriesCategories = await seriesCategoriesResponse.json() as XtreamCategory[];
-    const seriesStreams = await seriesStreamsResponse.json() as XtreamSeries[]; // Fix: Changed to XtreamSeries[]
+    const categories = await categoriesResponse.json() as XtreamCategory[];
+    const streams = await streamsResponse.json() as XtreamStream[];
     
-    if (!Array.isArray(liveStreams)) {
-      throw new Error("Invalid response from Xtream server for live streams");
+    if (!Array.isArray(streams)) {
+      throw new Error("Invalid response from Xtream server");
     }
     
-    console.log(`Found ${liveStreams.length} live channels, ${vodStreams.length} movies, and ${seriesStreams.length} series from Xtream API`);
+    console.log(`Found ${streams.length} channels from Xtream API`);
     
-    // Create category lookup maps
-    const categoryMaps: Record<string, Record<string, string>> = {
-      live: {},
-      vod: {},
-      series: {}
-    };
-    
-    if (Array.isArray(liveCategories)) {
-      liveCategories.forEach((cat) => {
+    // Create category lookup
+    const categoryMap: Record<string, string> = {};
+    if (Array.isArray(categories)) {
+      categories.forEach((cat) => {
         if (cat.category_id && cat.category_name) {
-          categoryMaps.live[cat.category_id] = cat.category_name;
-        }
-      });
-    }
-    
-    if (Array.isArray(vodCategories)) {
-      vodCategories.forEach((cat) => {
-        if (cat.category_id && cat.category_name) {
-          categoryMaps.vod[cat.category_id] = cat.category_name;
-        }
-      });
-    }
-    
-    if (Array.isArray(seriesCategories)) {
-      seriesCategories.forEach((cat) => {
-        if (cat.category_id && cat.category_name) {
-          categoryMaps.series[cat.category_id] = cat.category_name;
+          categoryMap[cat.category_id] = cat.category_name;
         }
       });
     }
@@ -318,115 +261,45 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
       // Map channels by name for easy lookup
       m3u8Response.channels.forEach(channel => {
         if (channel.name) {
-          // Use lowercase for case-insensitive matching
-          m3u8ChannelMap[channel.name.toLowerCase().trim()] = channel;
-          
-          // Also map by ID if available (for better matching)
-          if (channel.epg_channel_id) {
-            m3u8ChannelMap[`epg:${channel.epg_channel_id}`] = channel;
-          }
-          
-          // Also map by stream ID if it might be in the name
-          const streamIdMatch = channel.name.match(/\[(\d+)\]$/);
-          if (streamIdMatch && streamIdMatch[1]) {
-            m3u8ChannelMap[`id:${streamIdMatch[1]}`] = channel;
-          }
+          m3u8ChannelMap[channel.name.toLowerCase()] = channel;
         }
       });
       console.log(`Loaded ${Object.keys(m3u8ChannelMap).length} channels from M3U8 playlist`);
     }
     
-    // Create channels from live streams
-    const liveChannels: Channel[] = liveStreams.map((stream) => {
+    // Create channels from streams
+    const channels: Channel[] = streams.map((stream) => {
       // Generate URL using API format
       const apiUrl = getXtreamStreamUrl(baseUrl, username, password, stream.stream_id, "live");
       
       // Check if we have this channel in the M3U8 playlist
       let finalUrl = apiUrl;
-      let streamType = finalUrl.endsWith('.m3u8') ? 'm3u8' : 'ts';
+      let streamType = apiUrl.endsWith('.m3u8') ? 'm3u8' : 'ts';
       
       // Try to find a matching channel in the M3U8 playlist
-      const streamNameLower = stream.name.toLowerCase().trim();
-      const m3u8Channel = m3u8ChannelMap[streamNameLower] || 
-                          (stream.epg_channel_id ? m3u8ChannelMap[`epg:${stream.epg_channel_id}`] : null) ||
-                          m3u8ChannelMap[`id:${stream.stream_id}`];
-                           
+      const m3u8Channel = m3u8ChannelMap[stream.name.toLowerCase()];
       if (m3u8Channel && m3u8Channel.url) {
         finalUrl = m3u8Channel.url;
         streamType = m3u8Channel.url.endsWith('.m3u8') ? 'm3u8' : 'ts';
-        console.log(`Matched live channel "${stream.name}" with M3U8 stream`);
-      } else {
-        // Try to convert to m3u8 format if no match found
-        if (finalUrl.endsWith('.ts')) {
-          finalUrl = finalUrl.replace(/\.ts$/, '.m3u8');
-          streamType = 'm3u8';
-        }
       }
       
       return {
-        id: `live-${stream.stream_id}`,
+        id: uuidv4(),
         name: stream.name || `Channel ${stream.stream_id}`,
         url: finalUrl,
         logo: stream.stream_icon || undefined,
-        group: stream.category_id ? categoryMaps.live[stream.category_id] : undefined,
+        group: stream.category_id ? categoryMap[stream.category_id] : undefined,
         epg_channel_id: stream.epg_channel_id || undefined,
         stream_type: streamType
       };
     });
-    
-    // Create channels from VOD streams (movies)
-    const vodChannels: Channel[] = vodStreams.map((stream) => {
-      // Generate URL using API format for VOD
-      const apiUrl = getXtreamStreamUrl(baseUrl, username, password, stream.stream_id, "movie");
-      
-      // For movies, we'll try to match by name in the M3U8 playlist
-      let finalUrl = apiUrl;
-      let streamType = finalUrl.endsWith('.mp4') ? 'mp4' : 'ts';
-      
-      // Try to find by movie name in m3u8 playlist
-      const streamNameLower = stream.name.toLowerCase().trim();
-      const m3u8Channel = m3u8ChannelMap[streamNameLower];
-      
-      if (m3u8Channel && m3u8Channel.url) {
-        finalUrl = m3u8Channel.url;
-        streamType = m3u8Channel.url.endsWith('.m3u8') ? 'm3u8' : 
-                    m3u8Channel.url.endsWith('.mp4') ? 'mp4' : 'ts';
-        console.log(`Matched VOD "${stream.name}" with M3U8 stream`);
-      }
-      
-      return {
-        id: `vod-${stream.stream_id}`,
-        name: stream.name || `Movie ${stream.stream_id}`,
-        url: finalUrl,
-        logo: stream.stream_icon || undefined,
-        group: stream.category_id ? categoryMaps.vod[stream.category_id] : undefined,
-        stream_type: streamType
-      };
-    });
-    
-    // Create channels from Series streams
-    const seriesChannels: Channel[] = seriesStreams.map((series) => {
-      // For series, we're just creating a reference - actual episodes will be loaded separately
-      return {
-        id: `series-${series.series_id}`,
-        name: series.name || `Series ${series.series_id}`,
-        url: `${baseUrl}/series/${username}/${password}/${series.series_id}`,
-        logo: series.cover || series.backdrop_path || undefined,
-        group: series.category_id ? categoryMaps.series[series.category_id] : undefined,
-        stream_type: "series",
-        epg_channel_id: String(series.series_id) // Store series_id for later use
-      };
-    });
-    
-    // Combine all channels into a single array
-    const allChannels = [...liveChannels, ...vodChannels, ...seriesChannels];
     
     const serverName = new URL(baseUrl).hostname;
     
     return {
       id: uuidv4(),
       name: `${serverName} (Xtream)`,
-      channels: allChannels,
+      channels,
       source: "xtream",
       credentials // Store credentials for potential refresh
     };

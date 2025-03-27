@@ -61,38 +61,6 @@ export interface XtreamStream {
   tv_archive_duration: number;
 }
 
-// Add new interface for Xtream Series response
-export interface XtreamSeries {
-  series_id: number;
-  name: string;
-  cover: string;
-  genre: string;
-  plot: string;
-  cast: string;
-  director: string;
-  backdrop_path: string;
-  youtube_trailer: string;
-  rating: string;
-  category_id: string;
-  episode_run_time: string;
-}
-
-// Add new interface for Xtream Episode response
-export interface XtreamEpisode {
-  id: string;
-  episode_num: number;
-  title: string;
-  container_extension: string;
-  season?: string; // Added season field
-  url?: string; // Added URL field for direct access
-  info: {
-    movie_image: string;
-    plot: string;
-    duration_secs: number;
-    duration: string;
-  };
-}
-
 // Add new interface for ChannelList props
 export interface ChannelListProps {
   playlist: Playlist | null;
