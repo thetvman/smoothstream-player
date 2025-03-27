@@ -72,11 +72,13 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
   console.log(`[TrackedVideoPlayer] Rendering for ${contentType} "${title}"`);
 
   return (
-    <VideoPlayer 
-      channel={channel} 
-      autoPlay={autoPlay} 
-      onProgressUpdate={handleProgressUpdate}
-    />
+    <div className="tracked-video-player">
+      <VideoPlayer 
+        channel={channel} 
+        autoPlay={autoPlay} 
+        onProgressUpdate={handleProgressUpdate}
+      />
+    </div>
   );
 };
 
