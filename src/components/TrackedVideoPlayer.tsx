@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import VideoPlayer from './VideoPlayer';
 import { Channel } from '@/lib/types';
 import { addToRecentlyWatched } from '@/lib/profileService';
+import { useProfile } from '@/context/ProfileContext';
 
 interface TrackedVideoPlayerProps {
   channel: Channel | null;
@@ -21,14 +22,15 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
 }) => {
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [currentProgress, setCurrentProgress] = useState(0);
+  const { profile } = useProfile();
   
   const handleProgressUpdate = (progress: number) => {
     setCurrentProgress(progress);
     console.log(`[TrackedVideoPlayer] Progress update for ${contentType} "${title}": ${progress}%`);
     
-    // Update watch history if it's been more than 10 seconds since last update
+    // Only update watch history if profile exists and it's been more than 10 seconds since last update
     const now = Date.now();
-    if (now - lastUpdateTime > 10000 && channel) {
+    if (now - lastUpdateTime > 10000 && channel && profile) {
       console.log(`[TrackedVideoPlayer] Saving to watch history: ${contentType} "${title}" (${progress}%)`);
       
       const watchItem = {
@@ -45,13 +47,15 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
         .catch(err => console.error('[TrackedVideoPlayer] Error saving to watch history:', err));
       
       setLastUpdateTime(now);
+    } else if (!profile) {
+      console.log('[TrackedVideoPlayer] Skipping watch history update: No profile found');
     }
   };
   
   // Save progress when component unmounts
   useEffect(() => {
     return () => {
-      if (channel && currentProgress > 0) {
+      if (channel && currentProgress > 0 && profile) {
         console.log(`[TrackedVideoPlayer] Component unmounting, saving final progress: ${currentProgress}%`);
         
         const watchItem = {
@@ -65,9 +69,11 @@ const TrackedVideoPlayer: React.FC<TrackedVideoPlayerProps> = ({
         
         addToRecentlyWatched(watchItem)
           .catch(err => console.error('[TrackedVideoPlayer] Error saving final progress:', err));
+      } else if (!profile) {
+        console.log('[TrackedVideoPlayer] Skipping final progress save: No profile found');
       }
     };
-  }, [channel, contentType, title, posterUrl, currentProgress]);
+  }, [channel, contentType, title, posterUrl, currentProgress, profile]);
 
   console.log(`[TrackedVideoPlayer] Rendering for ${contentType} "${title}"`);
 

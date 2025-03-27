@@ -120,7 +120,8 @@ export const addToRecentlyWatched = async (item: Omit<RecentItem, 'lastWatched'>
   const profile = getCurrentProfile();
   if (!profile) {
     console.warn('[profileService] Cannot add to recently watched: No profile found');
-    return;
+    console.log('[profileService] Creating profile is required before using watch history');
+    return Promise.resolve(); // Return resolved promise instead of rejecting
   }
   
   // Remove if it already exists
