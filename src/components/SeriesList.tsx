@@ -8,14 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { paginateItems } from "@/lib/paginationUtils";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
 
 interface SeriesListProps {
   seriesCategories: SeriesCategory[] | null;
@@ -137,9 +129,6 @@ const SeriesList: React.FC<SeriesListProps> = ({
         paginatedSeries.itemsPerPage
       );
       setPaginatedSeries(newPaginatedSeries);
-      
-      // Scroll back to top of the container
-      document.querySelector('.scroll-area-viewport')?.scrollTo(0, 0);
     }
   };
 
@@ -242,54 +231,27 @@ const SeriesList: React.FC<SeriesListProps> = ({
           </Card>
         ))}
 
-        {/* Enhanced Pagination UI */}
+        {/* Pagination */}
         {paginatedSeries.totalPages > 1 && (
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
-                  className={paginatedSeries.currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              
-              {Array.from({ length: Math.min(3, paginatedSeries.totalPages) }, (_, i) => {
-                // Calculate pages to show (max 3)
-                let startPage = Math.max(1, paginatedSeries.currentPage - 1);
-                const endPage = Math.min(startPage + 2, paginatedSeries.totalPages);
-                
-                // Adjust startPage if we're near the end
-                if (endPage - startPage < 2) {
-                  startPage = Math.max(1, endPage - 2);
-                }
-                
-                const pageNum = startPage + i;
-                
-                // Don't render beyond total pages
-                if (pageNum > paginatedSeries.totalPages) {
-                  return null;
-                }
-                
-                return (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink 
-                      isActive={paginatedSeries.currentPage === pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
-                  className={paginatedSeries.currentPage >= paginatedSeries.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+          <div className="flex justify-center items-center space-x-2 mt-4">
+            <button
+              className="px-3 py-1 rounded bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+              disabled={paginatedSeries.currentPage === 1}
+              onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
+            >
+              Previous
+            </button>
+            <span className="text-sm">
+              Page {paginatedSeries.currentPage} of {paginatedSeries.totalPages}
+            </span>
+            <button
+              className="px-3 py-1 rounded bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
+              disabled={paginatedSeries.currentPage === paginatedSeries.totalPages}
+              onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     );
@@ -315,7 +277,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
         )}
       </div>
       
-      <ScrollArea className="flex-1 rounded-md border scroll-area-viewport">
+      <ScrollArea className="flex-1 rounded-md border">
         <div className="p-4">
           {renderSeriesList()}
         </div>
