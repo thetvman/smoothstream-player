@@ -1,50 +1,189 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Movie, MovieCategory, XtreamCredentials } from "@/lib/types";
-import { fetchAllMovies, storeMovieForPlayback, clearOldMovieData } from "@/lib/mediaService";
+import type { Movie, MovieCategory } from "@/lib/types";
+import { storeMovieForPlayback, clearOldMovieData } from "@/lib/mediaService";
 import MovieList from "@/components/MovieList";
 import MovieDetails from "@/components/MovieDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Tv } from "lucide-react";
+import { ArrowLeft, Tv, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { safeJsonParse } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { getMoviesByCategory, getMovieDetails, searchMovies } from "@/lib/tmdbService";
 
 const Movies = () => {
   const navigate = useNavigate();
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [activeTab, setActiveTab] = useState<string>("browse");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [movieCategories, setMovieCategories] = useState<MovieCategory[]>([]);
   
-  // Get credentials from localStorage
-  const getCredentials = (): XtreamCredentials | null => {
-    const playlist = localStorage.getItem("iptv-playlist");
-    if (!playlist) return null;
-    
-    const parsedPlaylist = safeJsonParse(playlist, null);
-    return parsedPlaylist?.credentials || null;
-  };
-  
-  const credentials = getCredentials();
-  
-  // Fetch movies
-  const { data: movieCategories, isLoading, error } = useQuery({
-    queryKey: ["movies", credentials?.server],
+  // Fetch movie categories
+  const { isLoading: isLoadingPopular } = useQuery({
+    queryKey: ["movies", "popular"],
     queryFn: async () => {
-      if (!credentials) {
-        throw new Error("No Xtream credentials found");
+      const popularMovies = await getMoviesByCategory("Popular");
+      
+      if (popularMovies.length > 0) {
+        setMovieCategories(prev => {
+          // Check if this category already exists
+          const exists = prev.some(cat => cat.name === "Popular");
+          if (exists) {
+            return prev.map(cat => 
+              cat.name === "Popular" ? { ...cat, movies: popularMovies } : cat
+            );
+          } else {
+            return [...prev, { id: "popular", name: "Popular", movies: popularMovies }];
+          }
+        });
       }
-      return fetchAllMovies(credentials);
+      
+      return popularMovies;
     },
-    enabled: !!credentials,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
-  // Handle errors
+  // Fetch top rated movies
+  const { isLoading: isLoadingTopRated } = useQuery({
+    queryKey: ["movies", "top-rated"],
+    queryFn: async () => {
+      const topRatedMovies = await getMoviesByCategory("Top Rated");
+      
+      if (topRatedMovies.length > 0) {
+        setMovieCategories(prev => {
+          const exists = prev.some(cat => cat.name === "Top Rated");
+          if (exists) {
+            return prev.map(cat => 
+              cat.name === "Top Rated" ? { ...cat, movies: topRatedMovies } : cat
+            );
+          } else {
+            return [...prev, { id: "top-rated", name: "Top Rated", movies: topRatedMovies }];
+          }
+        });
+      }
+      
+      return topRatedMovies;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Fetch now playing movies
+  const { isLoading: isLoadingNowPlaying } = useQuery({
+    queryKey: ["movies", "now-playing"],
+    queryFn: async () => {
+      const nowPlayingMovies = await getMoviesByCategory("Now Playing");
+      
+      if (nowPlayingMovies.length > 0) {
+        setMovieCategories(prev => {
+          const exists = prev.some(cat => cat.name === "Now Playing");
+          if (exists) {
+            return prev.map(cat => 
+              cat.name === "Now Playing" ? { ...cat, movies: nowPlayingMovies } : cat
+            );
+          } else {
+            return [...prev, { id: "now-playing", name: "Now Playing", movies: nowPlayingMovies }];
+          }
+        });
+      }
+      
+      return nowPlayingMovies;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Fetch upcoming movies
+  const { isLoading: isLoadingUpcoming } = useQuery({
+    queryKey: ["movies", "upcoming"],
+    queryFn: async () => {
+      const upcomingMovies = await getMoviesByCategory("Upcoming");
+      
+      if (upcomingMovies.length > 0) {
+        setMovieCategories(prev => {
+          const exists = prev.some(cat => cat.name === "Upcoming");
+          if (exists) {
+            return prev.map(cat => 
+              cat.name === "Upcoming" ? { ...cat, movies: upcomingMovies } : cat
+            );
+          } else {
+            return [...prev, { id: "upcoming", name: "Upcoming", movies: upcomingMovies }];
+          }
+        });
+      }
+      
+      return upcomingMovies;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Search movies
+  const { refetch: searchMoviesRefetch, isLoading: isSearching } = useQuery({
+    queryKey: ["movies", "search", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery) return [];
+      
+      const results = await searchMovies(searchQuery);
+      
+      if (results.length > 0) {
+        setMovieCategories(prev => {
+          const exists = prev.some(cat => cat.name === "Search Results");
+          if (exists) {
+            return prev.map(cat => 
+              cat.name === "Search Results" ? { ...cat, movies: results } : cat
+            );
+          } else {
+            return [...prev, { id: "search-results", name: "Search Results", movies: results }];
+          }
+        });
+      }
+      
+      return results;
+    },
+    enabled: false, // Don't run automatically
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+  
+  // Fetch movie details
+  const { refetch: fetchMovieDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ["movie-details", selectedMovie?.id],
+    queryFn: async () => {
+      if (selectedMovie?.tmdb_id) {
+        const details = await getMovieDetails(selectedMovie.tmdb_id);
+        if (details) {
+          // Keep the original URL if it exists
+          if (selectedMovie.url) {
+            details.url = selectedMovie.url;
+          }
+          setSelectedMovie(details);
+        }
+        return details;
+      }
+      return null;
+    },
+    enabled: false, // Don't run automatically
+  });
+  
+  // Effect to search when query changes
   useEffect(() => {
-    if (error) {
-      toast.error("Failed to load movies: " + (error instanceof Error ? error.message : "Unknown error"));
+    if (searchQuery) {
+      const timer = setTimeout(() => {
+        searchMoviesRefetch();
+      }, 500); // Debounce
+      
+      return () => clearTimeout(timer);
     }
-  }, [error]);
+  }, [searchQuery, searchMoviesRefetch]);
+  
+  // Effect to fetch details when movie is selected
+  useEffect(() => {
+    if (selectedMovie?.tmdb_id) {
+      fetchMovieDetails();
+    }
+  }, [selectedMovie?.id]); // Only run when the ID changes
+  
+  // Clean up storage on component mount
+  useEffect(() => {
+    clearOldMovieData();
+  }, []);
   
   // Handle movie selection
   const handleSelectMovie = (movie: Movie) => {
@@ -52,22 +191,16 @@ const Movies = () => {
     setActiveTab("details");
   };
   
-  // Clean up storage on component mount
-  useEffect(() => {
-    // Clear old movie data to free up space
-    clearOldMovieData();
-    
-    // Remove the full movie list if it exists (we'll use individual storage now)
-    if (localStorage.getItem("xtream-movies")) {
-      localStorage.removeItem("xtream-movies");
-      console.log("Removed full movie list from localStorage to save space");
-    }
-  }, []);
-  
   // Handle play button
   const handlePlayMovie = (movie: Movie) => {
     if (!movie) {
       toast.error("No movie selected");
+      return;
+    }
+    
+    // For TMDB movies without a URL, show a message
+    if (!movie.url) {
+      toast.info("This is a TMDB preview. Please load your IPTV playlist to stream movies.");
       return;
     }
     
@@ -82,6 +215,8 @@ const Movies = () => {
       toast.error("Failed to prepare movie for playback");
     }
   };
+  
+  const isLoading = isLoadingPopular || isLoadingTopRated || isLoadingNowPlaying || isLoadingUpcoming;
   
   return (
     <div className="container mx-auto p-4 max-w-7xl h-dvh flex flex-col">
@@ -106,76 +241,65 @@ const Movies = () => {
             <Tv className="w-5 h-5" />
             <span className="ml-2">TV Series</span>
           </button>
-          
-          <button 
-            onClick={() => navigate("/")}
-            className="btn-icon"
-          >
-            <Tv className="w-5 h-5" />
-            <span className="ml-2">Live TV</span>
-          </button>
         </div>
       </div>
       
-      {!credentials ? (
-        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
-          <p className="text-lg mb-4">No Xtream Codes credentials found</p>
-          <p className="text-muted-foreground mb-6">
-            Please load a playlist with Xtream Codes credentials to access movies
-          </p>
-          <button
-            className="px-4 py-2 bg-primary text-white rounded-md"
-            onClick={() => navigate("/")}
-          >
-            Go to Playlist
-          </button>
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            className="pl-9"
+            placeholder="Search movies..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
-          <div className="md:col-span-1 h-[calc(100vh-8rem)]">
-            <MovieList 
-              movieCategories={movieCategories || null}
-              selectedMovie={selectedMovie}
-              onSelectMovie={handleSelectMovie}
-              isLoading={isLoading}
-            />
-          </div>
-          
-          <div className="md:col-span-2 md:hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="browse">Browse</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="browse" className="h-[calc(100vh-12rem)]">
-                <MovieList 
-                  movieCategories={movieCategories || null}
-                  selectedMovie={selectedMovie}
-                  onSelectMovie={handleSelectMovie}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              
-              <TabsContent value="details" className="h-[calc(100vh-12rem)]">
-                <MovieDetails 
-                  movie={selectedMovie}
-                  onPlay={handlePlayMovie}
-                  isLoading={isLoading && !selectedMovie}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-          
-          <div className="hidden md:block md:col-span-2 border rounded-lg h-[calc(100vh-8rem)]">
-            <MovieDetails 
-              movie={selectedMovie}
-              onPlay={handlePlayMovie}
-              isLoading={isLoading && !selectedMovie}
-            />
-          </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+        <div className="md:col-span-1 h-[calc(100vh-12rem)]">
+          <MovieList 
+            movieCategories={movieCategories}
+            selectedMovie={selectedMovie}
+            onSelectMovie={handleSelectMovie}
+            isLoading={isLoading || isSearching}
+          />
         </div>
-      )}
+        
+        <div className="md:col-span-2 md:hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="browse">Browse</TabsTrigger>
+              <TabsTrigger value="details">Details</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="browse" className="h-[calc(100vh-16rem)]">
+              <MovieList 
+                movieCategories={movieCategories}
+                selectedMovie={selectedMovie}
+                onSelectMovie={handleSelectMovie}
+                isLoading={isLoading || isSearching}
+              />
+            </TabsContent>
+            
+            <TabsContent value="details" className="h-[calc(100vh-16rem)]">
+              <MovieDetails 
+                movie={selectedMovie}
+                onPlay={handlePlayMovie}
+                isLoading={isLoadingDetails && !!selectedMovie}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <div className="hidden md:block md:col-span-2 border rounded-lg h-[calc(100vh-12rem)]">
+          <MovieDetails 
+            movie={selectedMovie}
+            onPlay={handlePlayMovie}
+            isLoading={isLoadingDetails && !!selectedMovie}
+          />
+        </div>
+      </div>
     </div>
   );
 };

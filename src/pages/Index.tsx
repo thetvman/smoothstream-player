@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -13,14 +12,16 @@ import { fetchEPGData, EPGProgram } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { 
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film, Tv } from "lucide-react";
+import { Film, Tv, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { getPopularMovies, getPopularTVShows } from "@/lib/tmdbService";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -50,14 +52,34 @@ const Index = () => {
     }
   }, []);
   
+  // Prefetch some popular content for better UX even before playlist is loaded
+  useQuery({
+    queryKey: ["popular-content"],
+    queryFn: async () => {
+      // Fetch some popular movies and shows to enhance the initial UI
+      await getPopularMovies();
+      await getPopularTVShows();
+      return true;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
   // Update paginated channels when playlist or page changes
   useEffect(() => {
     if (playlist) {
-      setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
+      // If search query exists, filter channels
+      if (searchQuery) {
+        const filteredChannels = playlist.channels.filter(
+          channel => channel.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setPaginatedChannels(paginateChannels(filteredChannels, currentPage, ITEMS_PER_PAGE));
+      } else {
+        setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
+      }
     } else {
       setPaginatedChannels(null);
     }
-  }, [playlist, currentPage]);
+  }, [playlist, currentPage, searchQuery]);
   
   // Save playlist and selected channel to localStorage
   useEffect(() => {
@@ -124,6 +146,11 @@ const Index = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
   
   // Generate pagination links
@@ -223,7 +250,40 @@ const Index = () => {
           {/* Video player section */}
           <div className="lg:col-span-2 flex flex-col space-y-4">
             <div className="animate-fade-in">
-              <VideoPlayer channel={selectedChannel} />
+              {selectedChannel ? (
+                <div className="relative group">
+                  <VideoPlayer channel={selectedChannel} />
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      onClick={openFullscreenPlayer}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      Fullscreen
+                    </Button>
+                  </div>
+                </div>
+              ) : !playlist ? (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Tv className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <h3 className="text-lg font-medium">No Playlist Loaded</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Load a playlist to start streaming
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Tv className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <h3 className="text-lg font-medium">No Channel Selected</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Select a channel from the list to start watching
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* EPG Guide - New component */}
@@ -244,6 +304,20 @@ const Index = () => {
           
           {/* Channel list section */}
           <div className="h-full flex flex-col overflow-hidden">
+            {playlist && (
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Search channels..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+              </div>
+            )}
+            
             <ChannelList
               playlist={playlist}
               paginatedChannels={paginatedChannels}

@@ -2,8 +2,17 @@
 import React from "react";
 import { Movie } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, Star, Film } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Clock, 
+  Star, 
+  Film, 
+  Play,
+  Users,
+  Youtube
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface MovieDetailsProps {
   movie: Movie | null;
@@ -43,7 +52,7 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
 
   return (
     <div className="p-4 h-full flex flex-col">
-      <div className="relative mb-4 rounded-lg overflow-hidden h-48 bg-card">
+      <div className="relative mb-4 rounded-lg overflow-hidden h-64 bg-card">
         {movie.backdrop ? (
           <img
             src={movie.backdrop}
@@ -68,8 +77,27 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end">
-          <div className="p-4 text-white">
-            <h2 className="text-xl font-bold">{movie.name}</h2>
+          <div className="p-4 text-white w-full">
+            <div className="flex items-start gap-4">
+              {movie.logo && (
+                <div className="hidden md:block h-32 w-24 flex-shrink-0">
+                  <img
+                    src={movie.logo}
+                    alt={movie.name}
+                    className="h-full w-full object-cover rounded-md shadow-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
+              )}
+              <div>
+                <h2 className="text-2xl font-bold">{movie.name}</h2>
+                {movie.year && (
+                  <div className="text-sm text-gray-300 mt-1">{movie.year}</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -89,21 +117,37 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
         )}
         {movie.rating && (
           <div className="flex items-center text-sm text-muted-foreground">
-            <Star className="mr-1 h-4 w-4" />
+            <Star className="mr-1 h-4 w-4 text-yellow-400" />
             <span>{movie.rating}</span>
           </div>
         )}
         {movie.group && (
-          <div className="flex items-center text-sm bg-muted text-muted-foreground px-2 py-1 rounded-full">
+          <Badge variant="outline" className="text-xs">
             {movie.group}
-          </div>
+          </Badge>
         )}
       </div>
 
       {movie.genre && (
         <div className="mb-4">
           <h3 className="text-sm font-medium mb-1">Genre</h3>
-          <p className="text-sm text-muted-foreground">{movie.genre}</p>
+          <div className="flex flex-wrap gap-2">
+            {movie.genre.split(", ").map((genre, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {genre}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {movie.cast && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-1">Cast</h3>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Users className="mr-2 h-4 w-4" />
+            <span>{movie.cast}</span>
+          </div>
         </div>
       )}
 
@@ -114,14 +158,27 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ movie, onPlay, isLoading = 
         </div>
       )}
 
-      <div className="mt-auto flex justify-center">
+      <div className="mt-auto flex flex-col sm:flex-row gap-2 justify-center">
         <Button 
           className="w-full sm:w-auto"
           size="lg"
           onClick={() => onPlay(movie)}
         >
+          <Play className="mr-2 h-4 w-4" />
           Play Movie
         </Button>
+
+        {movie.trailer && (
+          <Button 
+            className="w-full sm:w-auto"
+            size="lg"
+            variant="outline"
+            onClick={() => window.open(movie.trailer, '_blank')}
+          >
+            <Youtube className="mr-2 h-4 w-4" />
+            Watch Trailer
+          </Button>
+        )}
       </div>
     </div>
   );
