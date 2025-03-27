@@ -7,10 +7,17 @@ import ChannelList from "@/components/ChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
+import EPGLoadingProgress from "@/components/EPGLoadingProgress";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
-import { fetchEPGData, EPGProgram, prefetchEPGDataForChannels } from "@/lib/epgService";
+import { 
+  fetchEPGData, 
+  EPGProgram, 
+  prefetchEPGDataForChannels, 
+  getEPGLoadingProgress,
+  EPGProgressInfo 
+} from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { 
   NavigationMenu,
@@ -34,6 +41,12 @@ const Index = () => {
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [epgProgress, setEpgProgress] = useState<EPGProgressInfo>({
+    total: 0,
+    processed: 0,
+    progress: 0,
+    isLoading: false
+  });
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -54,7 +67,7 @@ const Index = () => {
         const channelsWithEpg = parsedPlaylist.channels.filter(c => c.epg_channel_id);
         if (channelsWithEpg.length > 0) {
           console.log(`Starting background EPG prefetch for ${channelsWithEpg.length} channels`);
-          prefetchEPGDataForChannels(channelsWithEpg);
+          prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
         }
       }
     }
@@ -133,6 +146,12 @@ const Index = () => {
       }
       
       setIsLoading(false);
+      
+      // Start EPG prefetch with progress tracking
+      const channelsWithEpg = newPlaylist.channels.filter(c => c.epg_channel_id);
+      if (channelsWithEpg.length > 0) {
+        prefetchEPGDataForChannels(channelsWithEpg, setEpgProgress);
+      }
     }, 50);
   };
   
@@ -266,6 +285,17 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
           {/* Video player section */}
           <div className="lg:col-span-2 flex flex-col space-y-4">
+            {/* EPG loading progress indicator */}
+            {epgProgress.isLoading && (
+              <EPGLoadingProgress 
+                isLoading={epgProgress.isLoading}
+                progress={epgProgress.progress}
+                total={epgProgress.total}
+                processed={epgProgress.processed}
+                message={epgProgress.message}
+              />
+            )}
+          
             <div className="animate-fade-in">
               <VideoPlayer channel={selectedChannel} />
               
@@ -283,7 +313,7 @@ const Index = () => {
               )}
             </div>
             
-            {/* EPG Guide - New component */}
+            {/* EPG Guide */}
             {selectedChannel && (
               <EPGGuide 
                 channel={selectedChannel} 

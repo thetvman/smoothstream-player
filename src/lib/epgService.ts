@@ -9,6 +9,14 @@ interface EPGProgram {
   channelId: string;
 }
 
+interface EPGProgressInfo {
+  total: number;
+  processed: number;
+  progress: number;
+  isLoading: boolean;
+  message?: string;
+}
+
 // Cache EPG data to reduce API calls
 const EPG_CACHE: Record<string, { data: EPGProgram[], timestamp: number }> = {};
 const CACHE_EXPIRY = 15 * 60 * 1000; // 15 minutes cache expiry
@@ -16,6 +24,21 @@ const PREFETCH_CONCURRENCY = 5; // Number of concurrent prefetch requests
 
 // Store custom EPG URL
 let customEpgUrl: string | null = null;
+
+// Track loading progress
+let progressInfo: EPGProgressInfo = {
+  total: 0,
+  processed: 0,
+  progress: 0,
+  isLoading: false
+};
+
+/**
+ * Get current EPG loading progress
+ */
+export const getEPGLoadingProgress = (): EPGProgressInfo => {
+  return { ...progressInfo };
+};
 
 /**
  * Set a custom EPG URL for the application
@@ -53,7 +76,7 @@ export const getCustomEpgUrl = (): string | null => {
 /**
  * Prefetch EPG data for multiple channels
  */
-export const prefetchEPGDataForChannels = async (channels: Channel[]) => {
+export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress?: (info: EPGProgressInfo) => void) => {
   const channelsWithEpg = channels.filter(c => c.epg_channel_id);
   
   if (channelsWithEpg.length === 0) {
@@ -63,29 +86,65 @@ export const prefetchEPGDataForChannels = async (channels: Channel[]) => {
   
   console.log(`Starting EPG prefetch for ${channelsWithEpg.length} channels`);
   
-  // Process in batches to avoid overwhelming the network
+  // Initialize progress tracking
+  progressInfo = {
+    total: channelsWithEpg.length,
+    processed: 0,
+    progress: 0,
+    isLoading: true,
+    message: "Preparing EPG data..."
+  };
+  
+  if (onProgress) onProgress(progressInfo);
+  
+  // Create a batching queue with controlled concurrency
   const processBatch = async (batch: Channel[]) => {
     const promises = batch.map(channel => {
       // Skip if we already have cached data
       if (EPG_CACHE[channel.epg_channel_id!] && 
           Date.now() - EPG_CACHE[channel.epg_channel_id!].timestamp < CACHE_EXPIRY) {
         console.log(`Using cached EPG for ${channel.name}`);
+        progressInfo.processed++;
+        progressInfo.progress = progressInfo.processed / progressInfo.total;
+        progressInfo.message = `Loading EPG: ${channel.name}`;
+        if (onProgress) onProgress({ ...progressInfo });
         return Promise.resolve();
       }
       
       return fetchEPGData(channel)
-        .then(() => console.log(`Prefetched EPG for ${channel.name}`))
-        .catch(err => console.warn(`Failed to prefetch EPG for ${channel.name}:`, err));
+        .then(() => {
+          console.log(`Prefetched EPG for ${channel.name}`);
+          progressInfo.processed++;
+          progressInfo.progress = progressInfo.processed / progressInfo.total;
+          progressInfo.message = `Loading EPG: ${channel.name}`;
+          if (onProgress) onProgress({ ...progressInfo });
+        })
+        .catch(err => {
+          console.warn(`Failed to prefetch EPG for ${channel.name}:`, err);
+          progressInfo.processed++;
+          progressInfo.progress = progressInfo.processed / progressInfo.total;
+          if (onProgress) onProgress({ ...progressInfo });
+        });
     });
     
     await Promise.all(promises);
   };
   
-  // Split channels into batches
-  for (let i = 0; i < channelsWithEpg.length; i += PREFETCH_CONCURRENCY) {
-    const batch = channelsWithEpg.slice(i, i + PREFETCH_CONCURRENCY);
+  // Process in batches for better performance and memory usage
+  const batchSize = PREFETCH_CONCURRENCY;
+  for (let i = 0; i < channelsWithEpg.length; i += batchSize) {
+    const batch = channelsWithEpg.slice(i, i + batchSize);
     await processBatch(batch);
+    
+    // Add a small delay between batches to prevent overwhelming the system
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
+  
+  // Finalize progress
+  progressInfo.progress = 1;
+  progressInfo.isLoading = false;
+  progressInfo.message = "EPG data loaded";
+  if (onProgress) onProgress({ ...progressInfo });
   
   console.log("EPG prefetch completed");
 };
@@ -377,4 +436,4 @@ const generateDemoEPG = (channelId: string): EPGProgram[] => {
 };
 
 // Export the EPGProgram type so it can be imported elsewhere
-export type { EPGProgram };
+export type { EPGProgram, EPGProgressInfo };
