@@ -1,9 +1,9 @@
+
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
 import PlayerControls from "./PlayerControls";
 import LoadingSpinner from "./common/LoadingSpinner";
-import { Tv } from "lucide-react";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -21,20 +21,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     duration: 0,
     volume: 1,
     muted: false,
-    loading: channel !== null,
+    loading: true,
     fullscreen: false
   });
   
   const [error, setError] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [playAttempted, setPlayAttempted] = useState(false);
   
   useEffect(() => {
     if (channel?.url) {
       setStreamUrl(channel.url);
       setError(null);
-      setPlayAttempted(false);
-      setPlayerState(prev => ({ ...prev, loading: true }));
     }
   }, [channel]);
   
@@ -65,6 +62,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     if (!video || !streamUrl) return;
     
     setError(null);
+    setPlayerState(prev => ({ ...prev, loading: true }));
     
     const loadChannel = () => {
       if (hlsRef.current) {
@@ -94,8 +92,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         hls.attachMedia(video);
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (autoPlay && !playAttempted) {
-            setPlayAttempted(true);
+          if (autoPlay) {
             video.play()
               .then(() => {
                 setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
@@ -147,8 +144,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         console.log('Using native HLS support for:', streamUrl);
         video.src = streamUrl;
         video.addEventListener("loadedmetadata", () => {
-          if (autoPlay && !playAttempted) {
-            setPlayAttempted(true);
+          if (autoPlay) {
             video.play()
               .then(() => {
                 setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
@@ -164,8 +160,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         console.log('Using direct playback for:', streamUrl);
         video.src = streamUrl;
         
-        if (autoPlay && !playAttempted) {
-          setPlayAttempted(true);
+        if (autoPlay) {
           video.play()
             .then(() => {
               setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
@@ -180,8 +175,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
                 setPlayerState(prev => ({ ...prev, loading: false }));
               }
             });
-        } else {
-          setPlayerState(prev => ({ ...prev, loading: false }));
         }
       }
     };
@@ -194,7 +187,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
         hlsRef.current = null;
       }
     };
-  }, [streamUrl, autoPlay, playAttempted]);
+  }, [streamUrl, autoPlay]);
   
   useEffect(() => {
     const video = videoRef.current;
@@ -265,7 +258,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     if (playerState.playing) {
       video.pause();
     } else {
-      setPlayAttempted(true);
       video.play().catch((e) => {
         console.error("Failed to play:", e);
       });
@@ -329,20 +321,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
-  
-  if (!channel) {
-    return (
-      <div 
-        ref={containerRef}
-        className="relative w-full aspect-video bg-player overflow-hidden rounded-lg flex items-center justify-center"
-      >
-        <div className="text-center text-gray-400">
-          <Tv className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>Select a channel to watch</p>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <div 

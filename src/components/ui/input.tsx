@@ -1,15 +1,9 @@
-
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, id, name, ...props }, ref) => {
-    // Generate a unique ID if one isn't provided
-    const uniqueId = React.useId()
-    const inputId = id || uniqueId
-    const inputName = name || inputId
-
+  ({ className, type, ...props }, ref) => {
     return (
       <input
         type={type}
@@ -18,8 +12,6 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
-        id={inputId}
-        name={inputName}
         {...props}
       />
     )

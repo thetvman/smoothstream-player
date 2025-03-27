@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -7,12 +6,7 @@ export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, id, name, ...props }, ref) => {
-    // Generate a unique ID if one isn't provided
-    const uniqueId = React.useId()
-    const textareaId = id || uniqueId
-    const textareaName = name || textareaId
-    
+  ({ className, ...props }, ref) => {
     return (
       <textarea
         className={cn(
@@ -20,8 +14,6 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           className
         )}
         ref={ref}
-        id={textareaId}
-        name={textareaName}
         {...props}
       />
     )
