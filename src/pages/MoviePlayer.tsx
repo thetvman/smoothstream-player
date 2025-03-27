@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MoviePlayerComponent from "@/components/MoviePlayer";
-import { Movie, MovieCategory } from "@/lib/types";
-import { safeJsonParse } from "@/lib/utils";
+import { Movie } from "@/lib/types";
+import { getMovieById } from "@/lib/movieService";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,41 +24,16 @@ const MoviePlayer = () => {
       return;
     }
     
-    // Search for the movie in localStorage
-    const storedData = localStorage.getItem("xtream-movies");
-    console.log("Found stored movie data:", !!storedData);
+    // Get the movie directly using our new storage method
+    const foundMovie = getMovieById(movieId);
+    console.log("Found movie:", foundMovie?.name);
     
-    if (storedData) {
-      try {
-        const parsedData = safeJsonParse<MovieCategory[]>(storedData, []);
-        let foundMovie: Movie | null = null;
-        
-        // Search through all categories and movies
-        for (const category of parsedData) {
-          const movie = category.movies.find(m => m.id === movieId);
-          if (movie) {
-            foundMovie = movie;
-            console.log("Found movie:", movie.name);
-            break;
-          }
-        }
-        
-        if (foundMovie) {
-          setMovie(foundMovie);
-          setIsLoading(false);
-        } else {
-          console.error("Movie not found in stored data. Movie ID:", movieId);
-          toast.error("Movie not found in stored data");
-          navigate("/movies");
-        }
-      } catch (error) {
-        console.error("Error parsing stored movie data:", error);
-        toast.error("Error loading movie data");
-        navigate("/movies");
-      }
+    if (foundMovie) {
+      setMovie(foundMovie);
+      setIsLoading(false);
     } else {
-      console.error("No movie data found in localStorage");
-      toast.error("No movie data available");
+      console.error("Movie not found in storage. Movie ID:", movieId);
+      toast.error("Movie not found");
       navigate("/movies");
     }
   }, [movieId, navigate]);

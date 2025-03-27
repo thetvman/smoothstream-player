@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, MovieCategory, XtreamCredentials } from "@/lib/types";
-import { fetchAllMovies } from "@/lib/movieService";
+import { fetchAllMovies, storeMovieForPlayback, clearOldMovieData } from "@/lib/movieService";
 import MovieList from "@/components/MovieList";
 import MovieDetails from "@/components/MovieDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -53,13 +52,17 @@ const Movies = () => {
     setActiveTab("details");
   };
   
-  // Store movies in localStorage whenever they're fetched
+  // Clean up storage on component mount
   useEffect(() => {
-    if (movieCategories && movieCategories.length > 0) {
-      localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
-      console.log("Movies saved to localStorage:", movieCategories.length, "categories");
+    // Clear old movie data to free up space
+    clearOldMovieData();
+    
+    // Remove the full movie list if it exists (we'll use individual storage now)
+    if (localStorage.getItem("xtream-movies")) {
+      localStorage.removeItem("xtream-movies");
+      console.log("Removed full movie list from localStorage to save space");
     }
-  }, [movieCategories]);
+  }, []);
   
   // Handle play button
   const handlePlayMovie = (movie: Movie) => {
@@ -69,24 +72,8 @@ const Movies = () => {
     }
     
     try {
-      // Make sure the current movie is available in localStorage before navigating
-      const storedData = localStorage.getItem("xtream-movies");
-      if (!storedData) {
-        // If no data in localStorage, save current movie categories
-        if (movieCategories && movieCategories.length > 0) {
-          localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
-          console.log("Movies saved to localStorage before playback");
-        } else {
-          // Create a temporary category with just this movie
-          const tempCategory: MovieCategory = {
-            id: "temp",
-            name: "Movies",
-            movies: [movie]
-          };
-          localStorage.setItem("xtream-movies", JSON.stringify([tempCategory]));
-          console.log("Single movie saved to localStorage for playback");
-        }
-      }
+      // Store just this specific movie for playback
+      storeMovieForPlayback(movie);
       
       // Navigate to movie player
       navigate(`/movie/${movie.id}`);

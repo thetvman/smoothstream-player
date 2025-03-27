@@ -1,4 +1,3 @@
-
 import { XtreamCredentials, XtreamCategory, XtreamMovie, Movie, MovieCategory } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -95,6 +94,66 @@ export const fetchMovieInfo = async (
   } catch (error) {
     console.error("Error fetching movie info:", error);
     throw error;
+  }
+};
+
+/**
+ * Store a single movie in localStorage (for playback purposes)
+ */
+export const storeMovieForPlayback = (movie: Movie): void => {
+  try {
+    // Store just this single movie instead of all movies
+    localStorage.setItem(`movie-${movie.id}`, JSON.stringify(movie));
+    console.log("Movie saved to localStorage for playback:", movie.name);
+  } catch (error) {
+    console.error("Failed to store movie in localStorage:", error);
+    // If storing directly fails, try removing other items
+    try {
+      // Clear any previous movie data to make space
+      clearOldMovieData();
+      // Try storing again
+      localStorage.setItem(`movie-${movie.id}`, JSON.stringify(movie));
+    } catch (innerError) {
+      console.error("Still failed to store movie after cleanup:", innerError);
+    }
+  }
+};
+
+/**
+ * Get a movie from localStorage by ID
+ */
+export const getMovieById = (movieId: string): Movie | null => {
+  try {
+    const movieData = localStorage.getItem(`movie-${movieId}`);
+    if (movieData) {
+      return JSON.parse(movieData) as Movie;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error retrieving movie from localStorage:", error);
+    return null;
+  }
+};
+
+/**
+ * Clear old movie data from localStorage
+ */
+export const clearOldMovieData = (): void => {
+  try {
+    // Find and remove items that start with "movie-" prefix
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("movie-")) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove old movie data
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    console.log(`Cleared ${keysToRemove.length} old movie items from localStorage`);
+  } catch (error) {
+    console.error("Error clearing old movie data:", error);
   }
 };
 
