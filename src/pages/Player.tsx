@@ -25,24 +25,26 @@ const Player = () => {
         if (savedPlaylist && channelId) {
           const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
           if (parsedPlaylist) {
+            // First try to find the channel in the regular channels list
             const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
             
-            if (!foundChannel) {
-              // For VOD content, try to load directly from Xtream API
-              if (channelId.startsWith('vod-') || channelId.startsWith('series-')) {
-                await loadContentDirectly(channelId, parsedPlaylist);
-              } else {
-                toast.error("Content not found");
-                navigate("/");
+            if (foundChannel) {
+              console.log("Found regular channel:", foundChannel.name);
+              setChannel(foundChannel);
+              
+              // Check if it's a series and load episodes if needed
+              if (foundChannel.stream_type === "series" && parsedPlaylist.source === "xtream" && parsedPlaylist.credentials) {
+                await loadSeriesEpisodes(foundChannel, parsedPlaylist.credentials);
               }
-              return;
-            }
-            
-            setChannel(foundChannel);
-            
-            // Check if it's a series and load episodes if needed
-            if (foundChannel.stream_type === "series" && parsedPlaylist.source === "xtream" && parsedPlaylist.credentials) {
-              await loadSeriesEpisodes(foundChannel, parsedPlaylist.credentials);
+            } 
+            else if (channelId.startsWith('vod-') || channelId.startsWith('series-')) {
+              // For VOD content, try to load directly from Xtream API
+              console.log("Loading VOD/Series content:", channelId);
+              await loadContentDirectly(channelId, parsedPlaylist);
+            } 
+            else {
+              toast.error("Content not found");
+              navigate("/");
             }
           } else {
             navigate("/");
@@ -230,17 +232,27 @@ const Player = () => {
     name: getDisplayName(),
     url: getPlayUrl() || channel.url
   } : null;
+
+  const getReturnPath = () => {
+    if (!channel) return "/";
+    
+    if (channel.id.startsWith('vod-')) {
+      return "/movies";
+    } else if (channel.id.startsWith('series-')) {
+      return "/tv-series";
+    } else if (channel.group?.toLowerCase().includes("movie")) {
+      return "/movies";
+    } else {
+      return "/";
+    }
+  };
   
   return (
     <div className="fixed inset-0 bg-player">
       <div className="absolute top-4 left-4 z-10">
         <button 
           className="btn-icon bg-black/40 hover:bg-black/60"
-          onClick={() => {
-            const returnPath = channel?.stream_type === "series" ? "/tv-series" : 
-                              (channel?.group?.toLowerCase().includes("movie") ? "/movies" : "/");
-            navigate(returnPath);
-          }}
+          onClick={() => navigate(getReturnPath())}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
