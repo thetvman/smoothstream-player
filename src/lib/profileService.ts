@@ -78,59 +78,43 @@ export const updatePreferences = (preferences: Partial<UserPreferences>): UserPr
 
 // Add channel to favorites
 export const toggleFavoriteChannel = async (channelId: string, channelName: string, channelLogo?: string): Promise<boolean> => {
-  const profile = getCurrentProfile();
-  if (!profile) {
-    toast.error('Sign in to add favorites');
-    return false;
-  }
-  
-  // Check if the channel is already a favorite
-  const isFavorite = profile.preferences.favoriteChannels.includes(channelId);
-  
-  if (isFavorite) {
-    // Remove from favorites
-    profile.preferences.favoriteChannels = profile.preferences.favoriteChannels.filter(id => id !== channelId);
-    saveProfile(profile);
-    toast.success(`Removed ${channelName} from favorites`);
+  try {
+    // First check if the user is authenticated with Supabase
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // If user is authenticated, update in Supabase
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // First check if the record exists
-        const { data: existingFav } = await supabase
+    if (user) {
+      // User is authenticated with Supabase, use Supabase for favorite management
+      const profile = getCurrentProfile();
+      
+      // Check if the channel is already a favorite
+      const isFavorite = profile?.preferences.favoriteChannels.includes(channelId) || false;
+      
+      if (isFavorite) {
+        // Remove from favorites in Supabase
+        const { error } = await supabase
           .from('favorites')
-          .select()
+          .delete()
           .eq('user_id', user.id)
           .eq('content_id', channelId)
-          .eq('content_type', 'channel')
-          .single();
+          .eq('content_type', 'channel');
           
-        if (existingFav) {
-          await supabase
-            .from('favorites')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('content_id', channelId)
-            .eq('content_type', 'channel');
+        if (error) {
+          console.error('Error removing from favorites:', error);
+          toast.error('Failed to remove from favorites');
+          return true; // Keep it as favorite if removal failed
         }
-      }
-    } catch (error) {
-      console.error('Error updating channel favorites in Supabase:', error);
-    }
-    
-    return false;
-  } else {
-    // Add to favorites
-    profile.preferences.favoriteChannels.push(channelId);
-    saveProfile(profile);
-    toast.success(`Added ${channelName} to favorites`);
-    
-    // If user is authenticated, save to Supabase
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
+        
+        // Also update local profile if it exists
+        if (profile) {
+          profile.preferences.favoriteChannels = profile.preferences.favoriteChannels.filter(id => id !== channelId);
+          saveProfile(profile);
+        }
+        
+        toast.success(`Removed ${channelName} from favorites`);
+        return false;
+      } else {
+        // Add to favorites in Supabase
+        const { error } = await supabase
           .from('favorites')
           .upsert({
             user_id: user.id,
@@ -139,21 +123,65 @@ export const toggleFavoriteChannel = async (channelId: string, channelName: stri
             title: channelName,
             poster: channelLogo || null,
           });
+          
+        if (error) {
+          console.error('Error adding to favorites:', error);
+          toast.error('Failed to add to favorites');
+          return false; // Keep it as not favorite if adding failed
+        }
+        
+        // Also update local profile if it exists
+        if (profile) {
+          profile.preferences.favoriteChannels.push(channelId);
+          saveProfile(profile);
+        }
+        
+        toast.success(`Added ${channelName} to favorites`);
+        return true;
       }
-    } catch (error) {
-      console.error('Error saving channel favorites to Supabase:', error);
+    } else {
+      // Fall back to localStorage if not authenticated
+      const profile = getCurrentProfile();
+      if (!profile) {
+        toast.error('Sign in to add favorites');
+        return false;
+      }
+      
+      // Check if the channel is already a favorite
+      const isFavorite = profile.preferences.favoriteChannels.includes(channelId);
+      
+      if (isFavorite) {
+        // Remove from favorites
+        profile.preferences.favoriteChannels = profile.preferences.favoriteChannels.filter(id => id !== channelId);
+        saveProfile(profile);
+        toast.success(`Removed ${channelName} from favorites`);
+        return false;
+      } else {
+        // Add to favorites
+        profile.preferences.favoriteChannels.push(channelId);
+        saveProfile(profile);
+        toast.success(`Added ${channelName} to favorites`);
+        return true;
+      }
     }
-    
-    return true;
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    toast.error('An error occurred');
+    return isChannelFavorite(channelId); // Return current state
   }
 };
 
 // Check if a channel is a favorite
 export const isChannelFavorite = (channelId: string): boolean => {
-  const profile = getCurrentProfile();
-  if (!profile) return false;
-  
-  return profile.preferences.favoriteChannels.includes(channelId);
+  try {
+    const profile = getCurrentProfile();
+    if (!profile) return false;
+    
+    return profile.preferences.favoriteChannels.includes(channelId);
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    return false;
+  }
 };
 
 // Add to recently watched - temporarily disabled

@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { toggleFavoriteChannel, isChannelFavorite } from '@/lib/profileService';
 import { Channel } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 interface FavoriteButtonProps {
   channel: Channel;
@@ -19,16 +21,22 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   className = '',
   iconOnly = false
 }) => {
-  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const { user } = useAuth();
   
   // Check favorite status on mount
-  React.useEffect(() => {
+  useEffect(() => {
     setIsFavorite(isChannelFavorite(channel.id));
   }, [channel.id]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!user) {
+      toast.error('Please sign in to add favorites');
+      return;
+    }
     
     const result = await toggleFavoriteChannel(channel.id, channel.name, channel.logo);
     setIsFavorite(result);
