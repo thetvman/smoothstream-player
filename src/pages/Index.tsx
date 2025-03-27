@@ -5,9 +5,11 @@ import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
 import VideoPlayer from "@/components/VideoPlayer";
+import EPGGuide from "@/components/EPGGuide";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
+import { fetchEPGData, EPGProgram } from "@/lib/epgService";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Index = () => {
@@ -17,6 +19,8 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginatedChannels, setPaginatedChannels] = useState<PaginatedChannels | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
+  const [isEpgLoading, setIsEpgLoading] = useState(false);
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -55,6 +59,29 @@ const Index = () => {
       localStorage.setItem("iptv-last-channel", selectedChannel.id);
     }
   }, [playlist, selectedChannel]);
+  
+  // Fetch EPG data when selected channel changes
+  useEffect(() => {
+    const getEPGData = async () => {
+      if (!selectedChannel || !selectedChannel.epg_channel_id) {
+        setEpgData(null);
+        return;
+      }
+      
+      setIsEpgLoading(true);
+      try {
+        const data = await fetchEPGData(selectedChannel);
+        setEpgData(data);
+      } catch (error) {
+        console.error("Error fetching EPG data:", error);
+        setEpgData(null);
+      } finally {
+        setIsEpgLoading(false);
+      }
+    };
+    
+    getEPGData();
+  }, [selectedChannel]);
   
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
@@ -164,6 +191,15 @@ const Index = () => {
             <div className="animate-fade-in">
               <VideoPlayer channel={selectedChannel} />
             </div>
+            
+            {/* EPG Guide - New component */}
+            {selectedChannel && (
+              <EPGGuide 
+                channel={selectedChannel} 
+                epgData={epgData} 
+                isLoading={isEpgLoading} 
+              />
+            )}
             
             {!playlist && (
               <div className="flex-1">

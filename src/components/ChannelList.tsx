@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useEffect } from "react";
 import { Channel, ChannelListProps } from "@/lib/types";
-import { Search } from "lucide-react";
+import { Search, Tv } from "lucide-react";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 
 const ChannelList: React.FC<ChannelListProps> = ({
@@ -145,7 +146,14 @@ const ChannelList: React.FC<ChannelListProps> = ({
                 )}
                 
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{channel.name}</div>
+                  <div className="font-medium truncate">
+                    {channel.name}
+                    {channel.epg_channel_id && (
+                      <span className="ml-1.5 inline-flex items-center">
+                        <Tv className="w-3 h-3 text-primary" />
+                      </span>
+                    )}
+                  </div>
                   {channel.group && (
                     <div className="text-xs text-muted-foreground truncate">
                       {channel.group}
