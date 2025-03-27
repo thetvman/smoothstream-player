@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MoviePlayerComponent from "@/components/MoviePlayer";
-import { Movie } from "@/lib/types";
+import { Movie, MovieCategory } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 
