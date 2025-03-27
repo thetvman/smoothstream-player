@@ -1,11 +1,20 @@
 
-import React, { useMemo } from "react";
-import { Playlist, Channel } from "@/lib/types";
+import React, { useMemo, useState } from "react";
+import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import TVChannelCard from "./TVChannelCard";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import { Input } from "./ui/input";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { paginateItems } from "@/lib/paginationUtils";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 interface TVChannelGridProps {
   playlist: Playlist | null;
@@ -28,6 +37,9 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
   searchQuery = "",
   onSearchChange
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20; // Number of channels per page
+  
   const filteredChannels = useMemo(() => {
     if (!playlist) return [];
     
@@ -36,6 +48,16 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
       (channel.group && channel.group.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [playlist, searchQuery]);
+  
+  const paginatedChannels = useMemo(() => {
+    return paginateItems<Channel>(filteredChannels, currentPage, ITEMS_PER_PAGE);
+  }, [filteredChannels, currentPage, ITEMS_PER_PAGE]);
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (isLoading) {
     return (
@@ -80,7 +102,7 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
           ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2" 
           : "tv-grid",
       )}>
-        {filteredChannels.map(channel => (
+        {paginatedChannels.items.map(channel => (
           <div key={channel.id} className="h-full">
             <TVChannelCard
               channel={channel}
@@ -91,6 +113,57 @@ const TVChannelGrid: React.FC<TVChannelGridProps> = ({
           </div>
         ))}
       </div>
+      
+      {/* Pagination controls */}
+      {paginatedChannels.totalPages > 1 && (
+        <Pagination className="mt-6">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => handlePageChange(currentPage - 1)}
+                className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            
+            {/* Show max 5 page numbers */}
+            {Array.from({ length: Math.min(5, paginatedChannels.totalPages) }, (_, i) => {
+              // Start page calculation
+              let startPage = Math.max(1, currentPage - 2);
+              const endPage = Math.min(startPage + 4, paginatedChannels.totalPages);
+              
+              // Adjust startPage if we're near the end
+              if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+              }
+              
+              const pageNum = startPage + i;
+              
+              // Don't render beyond total pages
+              if (pageNum > paginatedChannels.totalPages) {
+                return null;
+              }
+              
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink 
+                    isActive={currentPage === pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+            
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => handlePageChange(currentPage + 1)}
+                className={currentPage >= paginatedChannels.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };
