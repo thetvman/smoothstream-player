@@ -115,6 +115,12 @@ const Index = () => {
     setShowChannelInfo(true);
   };
   
+  // Prevent view mode change from triggering channel selection or video playback
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    // Simply update the view mode without affecting channel selection
+    setViewMode(mode);
+  };
+  
   const openFullscreenPlayer = () => {
     if (selectedChannel) {
       navigate(`/player/${selectedChannel.id}`);
@@ -197,7 +203,7 @@ const Index = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => setViewMode('grid')}
+                    onClick={() => handleViewModeChange('grid')}
                     className={`${viewMode === 'grid' ? 'bg-gray-700/80' : ''} text-white hover:text-white hover:bg-gray-700/60`}
                   >
                     <GridIcon className="h-4 w-4" />
@@ -205,7 +211,7 @@ const Index = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => setViewMode('list')}
+                    onClick={() => handleViewModeChange('list')}
                     className={`${viewMode === 'list' ? 'bg-gray-700/80' : ''} text-white hover:text-white hover:bg-gray-700/60`}
                   >
                     <List className="h-4 w-4" />
@@ -246,7 +252,7 @@ const Index = () => {
             </div>
           ) : (
             viewMode === 'grid' ? (
-              <div className="flex-1 overflow-hidden animate-fade-in">
+              <div className="flex-1 overflow-hidden animate-fade-in" key="grid-view">
                 <GridChannelList
                   playlist={playlist}
                   channels={playlist?.channels || []}
@@ -256,7 +262,7 @@ const Index = () => {
                 />
               </div>
             ) : (
-              <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden" key="list-view">
                 <div className="lg:col-span-2 flex flex-col space-y-4">
                   <div className="animate-fade-in">
                     <VideoPlayer channel={selectedChannel} />
