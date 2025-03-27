@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Upload, Link, Tv } from "lucide-react";
 import Button from "./common/Button";
@@ -9,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { prefetchEPGDataForChannels } from "@/lib/epg"; // Fixed import
 
 interface PlaylistInputProps {
   onPlaylistLoaded: (playlist: Playlist) => void;
@@ -31,11 +29,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   
   const handlePlaylistProcessed = (playlist: Playlist) => {
     if (playlist.channels.length > 0) {
-      const channelsWithEpg = playlist.channels.filter(c => c.epg_channel_id);
-      if (channelsWithEpg.length > 0) {
-        toast.info(`Starting EPG data prefetch for ${channelsWithEpg.length} channels`, { duration: 3000 });
-        prefetchEPGDataForChannels(channelsWithEpg);
-      }
+      toast.info(`Playlist loaded with ${playlist.channels.length} channels`, { duration: 3000 });
     }
     
     onPlaylistLoaded(playlist);
