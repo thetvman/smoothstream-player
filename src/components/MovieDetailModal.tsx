@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Movie } from "@/lib/types";
 import { CalendarIcon, Clock, Star, UserIcon, Film, Loader2 } from "lucide-react";
