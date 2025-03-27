@@ -20,7 +20,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film } from "lucide-react";
+import { Film, Tv } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -202,6 +202,15 @@ const Index = () => {
                   >
                     <Film className="mr-2 h-4 w-4" />
                     Movies
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink 
+                    className={navigationMenuTriggerStyle()}
+                    onClick={() => navigate('/series')}
+                  >
+                    <Tv className="mr-2 h-4 w-4" />
+                    Series
                   </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
