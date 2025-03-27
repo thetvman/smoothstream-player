@@ -55,7 +55,30 @@ const Movies = () => {
   
   // Handle play button
   const handlePlayMovie = (movie: Movie) => {
-    navigate(`/movie/${movie.id}`);
+    // Store movie data in local storage to make it available on the player page
+    try {
+      // First, try to retrieve existing movie data
+      const existingData = localStorage.getItem("xtream-movies");
+      let movieCategories: MovieCategory[] = [];
+      
+      if (existingData) {
+        movieCategories = safeJsonParse<MovieCategory[]>(existingData, []);
+      } else if (movieCategories) {
+        // If there's no existing data, but we have fetched categories, use those
+        movieCategories = movieCategories;
+      }
+      
+      // Save to local storage if we have categories
+      if (movieCategories.length > 0) {
+        localStorage.setItem("xtream-movies", JSON.stringify(movieCategories));
+      }
+      
+      // Navigate to movie player
+      navigate(`/movie/${movie.id}`);
+    } catch (error) {
+      console.error("Error preparing movie for playback:", error);
+      toast.error("Failed to prepare movie for playback");
+    }
   };
   
   return (

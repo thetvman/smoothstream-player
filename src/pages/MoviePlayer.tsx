@@ -5,14 +5,18 @@ import MoviePlayerComponent from "@/components/MoviePlayer";
 import { Movie, MovieCategory } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 const MoviePlayer = () => {
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Load movie from localStorage
   useEffect(() => {
+    setIsLoading(true);
+    
     if (!movieId) {
       navigate("/movies");
       return;
@@ -43,16 +47,25 @@ const MoviePlayer = () => {
       setMovie(foundMovie);
     } else {
       // If we couldn't find the movie by ID, go back to the movies page
+      toast.error("Movie not found");
       navigate("/movies");
     }
+    
+    setIsLoading(false);
   }, [movieId, navigate]);
+  
+  // Use preventDefault to handle back button click
+  const handleBackClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate("/movies");
+  };
   
   return (
     <div className="fixed inset-0 bg-player">
       <div className="absolute top-4 left-4 z-10">
         <button 
           className="btn-icon bg-black/40 hover:bg-black/60"
-          onClick={() => navigate("/movies")}
+          onClick={handleBackClick}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
