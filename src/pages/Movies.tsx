@@ -287,7 +287,7 @@ const Movies = () => {
               ))}
             </div>
           ) : (
-            <>
+            <div>
               {paginatedMovies.items.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-lg text-gray-400">
@@ -295,7 +295,7 @@ const Movies = () => {
                   </p>
                 </div>
               ) : (
-                <>
+                <div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {paginatedMovies.items.map((movie) => (
                       <div 
@@ -437,9 +437,9 @@ const Movies = () => {
                       </Pagination>
                     </div>
                   )}
-                </>
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
