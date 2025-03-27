@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +23,10 @@ const Index = () => {
     <Layout>
       <div className="container mx-auto p-4 max-w-7xl">
         <section className="space-y-4 mb-8">
-          <h1 className="text-3xl font-bold tv-gradient-text mb-2">Welcome to Harmony</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Welcome to Harmony</h1>
           
           <Tabs defaultValue="live" className="w-full">
-            <TabsList className="w-full max-w-md grid grid-cols-3 mb-6">
+            <TabsList className="w-full max-w-md grid grid-cols-3">
               <TabsTrigger value="live">
                 <Tv2 className="mr-2 h-4 w-4" />
                 Live TV
@@ -42,23 +42,34 @@ const Index = () => {
             </TabsList>
             
             <TabsContent value="live" className="mt-4">
-              <div className="animate-fade-in">
-                <LiveTVPlayer />
-              </div>
+              <Card className="border-none shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-2xl">Live TV</CardTitle>
+                  <CardDescription>Watch your favorite live TV channels</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-1">
+                  <LiveTVPlayer />
+                </CardContent>
+                <CardFooter className="pt-3">
+                  <p className="text-sm text-muted-foreground">
+                    Browse channels, or add your custom playlist to get started.
+                  </p>
+                </CardFooter>
+              </Card>
             </TabsContent>
             
             <TabsContent value="movies" className="mt-4">
-              <Card className="border bg-card/50 backdrop-blur-sm shadow-lg">
+              <Card className="border-none shadow-none">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-2xl">Movies Library</CardTitle>
                   <CardDescription>Browse and watch movies on demand</CardDescription>
                 </CardHeader>
                 <CardContent className="pb-1">
-                  <div className="aspect-[21/9] bg-gradient-to-br from-card/40 to-background/40 rounded-xl overflow-hidden border border-border/40 flex items-center justify-center shadow-inner">
+                  <div className="aspect-[21/9] bg-card rounded-xl overflow-hidden border border-border flex items-center justify-center">
                     <div className="text-center p-6">
                       <Film className="h-16 w-16 text-primary mx-auto mb-4" />
                       <h3 className="text-xl font-medium mb-2">Discover Movies</h3>
-                      <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                      <p className="text-muted-foreground mb-4">
                         Browse our collection of movies from different genres
                       </p>
                       <Button 
@@ -80,17 +91,17 @@ const Index = () => {
             </TabsContent>
             
             <TabsContent value="series" className="mt-4">
-              <Card className="border bg-card/50 backdrop-blur-sm shadow-lg">
+              <Card className="border-none shadow-none">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-2xl">TV Series</CardTitle>
                   <CardDescription>Watch your favorite TV shows</CardDescription>
                 </CardHeader>
                 <CardContent className="pb-1">
-                  <div className="aspect-[21/9] bg-gradient-to-br from-card/40 to-background/40 rounded-xl overflow-hidden border border-border/40 flex items-center justify-center shadow-inner">
+                  <div className="aspect-[21/9] bg-card rounded-xl overflow-hidden border border-border flex items-center justify-center">
                     <div className="text-center p-6">
                       <PlayCircle className="h-16 w-16 text-primary mx-auto mb-4" />
                       <h3 className="text-xl font-medium mb-2">Discover TV Series</h3>
-                      <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                      <p className="text-muted-foreground mb-4">
                         Watch episodes from your favorite TV shows
                       </p>
                       <Button 

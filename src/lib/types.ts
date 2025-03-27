@@ -1,3 +1,4 @@
+
 export interface Channel {
   id: string;
   name: string;
@@ -222,21 +223,4 @@ export interface ChannelListProps {
   selectedChannel: Channel | null;
   onSelectChannel: (channel: Channel) => void;
   isLoading?: boolean;
-}
-
-// Add new interface for ChannelGuideProps
-export interface ChannelGuideProps {
-  playlist: Playlist | null;
-  selectedChannel: Channel | null;
-  onSelectChannel: (channel: Channel) => void;
-  isLoading?: boolean;
-}
-
-// Add EPGProgram interface to types
-export interface EPGProgram {
-  title: string;
-  description?: string;
-  start: Date;
-  end: Date;
-  channelId: string;
 }

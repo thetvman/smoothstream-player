@@ -33,13 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --player-background: 220 13% 13%;
-    --player-foreground: 210 40% 98%;
-    --player-control: 210 40% 98%;
-    --player-control-hover: 217.2 91.2% 59.8%;
-    --player-overlay: 220 13% 13% / 0.7;
-
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -70,12 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    
-    --player-background: 220 13% 13%;
-    --player-foreground: 210 40% 98%;
-    --player-control: 210 40% 98%;
-    --player-control-hover: 217.2 91.2% 59.8%;
-    --player-overlay: 220 13% 13% / 0.8;
   }
 }
 
@@ -86,34 +74,6 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Glassmorphism utility classes */
-.glass {
-  @apply backdrop-blur-xl bg-white/10 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
-}
-
-.glass-card {
-  @apply glass rounded-xl overflow-hidden transition-all duration-300;
-}
-
-.glass-dark {
-  @apply backdrop-blur-xl bg-black/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)];
-}
-
-.glass-input {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 focus:border-white/30 
-  focus:bg-white/15 transition-all duration-300;
-}
-
-.glass-button {
-  @apply bg-white/20 backdrop-blur-md hover:bg-white/30 active:bg-white/10 
-  border border-white/20 transition-all duration-300;
-}
-
-.glass-gradient {
-  @apply bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl 
-  border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.1)];
 }
 
 /* Category tabs styling */
@@ -140,133 +100,4 @@
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
-}
-
-/* Channel items in list */
-.channel-item {
-  @apply flex items-center space-x-3 p-2 rounded-md cursor-pointer transition-colors;
-  @apply hover:bg-secondary;
-}
-
-.channel-item-active {
-  @apply bg-primary/10 hover:bg-primary/20;
-}
-
-/* Hulu-like guide styling */
-.channel-guide {
-  @apply shadow-md;
-}
-
-.channel-guide .channel-logo img {
-  @apply bg-black/30 p-1;
-}
-
-/* Live indicator */
-.live-indicator {
-  @apply relative;
-}
-
-.live-indicator::before {
-  content: "";
-  @apply absolute w-2 h-2 bg-green-500 rounded-full;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-  }
-  
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
-  }
-  
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
-  }
-}
-
-/* EPG styling */
-.epg-program {
-  @apply relative rounded-sm overflow-hidden transition-colors glass-card;
-}
-
-.epg-program::before {
-  content: "";
-  @apply absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent z-0;
-}
-
-.epg-program-title {
-  @apply relative z-10;
-}
-
-/* Current playing progress bar */
-.now-playing-progress {
-  @apply h-1.5 bg-white/10 absolute bottom-0 left-0 right-0 rounded-full overflow-hidden;
-}
-
-.now-playing-progress-bar {
-  @apply h-full bg-gradient-to-r from-primary/80 to-primary;
-}
-
-/* Shimmer effect for loading states */
-.shimmer {
-  @apply bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:1000px_100%] animate-shimmer;
-}
-
-/* TV Guide specific styles */
-.tv-guide-container {
-  @apply bg-gradient-to-br from-gray-900 to-slate-800 text-white;
-}
-
-.tv-channel-card {
-  @apply relative rounded-lg overflow-hidden backdrop-blur-xl bg-white/5 border border-white/10 
-  hover:bg-white/10 hover:border-white/20 transition-all duration-300;
-}
-
-.tv-channel-active {
-  @apply bg-white/15 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.2)];
-}
-
-.tv-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4;
-}
-
-.tv-logo-container {
-  @apply flex items-center justify-center aspect-square rounded-full overflow-hidden 
-  bg-gradient-to-br from-gray-800/80 to-gray-900/80 p-2;
-}
-
-.tv-channel-info {
-  @apply backdrop-blur-md bg-black/40 absolute bottom-0 left-0 right-0 p-2
-  border-t border-white/10;
-}
-
-.tv-sidebar {
-  @apply backdrop-blur-xl bg-black/30 border-r border-white/10;
-}
-
-.tv-video-container {
-  @apply rounded-xl overflow-hidden shadow-2xl border border-white/10;
-}
-
-.tv-program-card {
-  @apply backdrop-blur-md bg-white/5 border border-white/10 rounded-lg p-3
-  hover:bg-white/10 transition-all duration-300;
-}
-
-.tv-gradient-text {
-  @apply bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent
-  font-bold;
-}
-
-.tv-grid-item {
-  @apply flex flex-col h-full;
-}
-
-.tv-content-area {
-  @apply flex-1 overflow-auto;
 }
