@@ -50,7 +50,7 @@ const EpisodePlayer = () => {
   };
   
   return (
-    <div className="fixed inset-0 bg-player">
+    <div className="fixed inset-0 bg-black flex flex-col">
       <div className="absolute top-4 left-4 z-10">
         <button 
           className="btn-icon bg-black/40 hover:bg-black/60"
@@ -60,9 +60,9 @@ const EpisodePlayer = () => {
         </button>
       </div>
       
-      <div className="h-full flex items-center justify-center">
+      <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
-          <div className="text-white">Loading episode...</div>
+          <div className="text-white flex items-center justify-center h-full">Loading episode...</div>
         ) : (
           <SeriesPlayer episode={episode} series={series} autoPlay />
         )}

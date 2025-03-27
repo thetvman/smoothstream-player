@@ -25,17 +25,17 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   } : null;
 
   return (
-    <div className="w-full h-full flex flex-col gap-6">
-      <div className="relative rounded-lg overflow-hidden bg-black">
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
+      <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
         <VideoPlayer channel={channel} autoPlay={autoPlay} />
       </div>
       
       {series && episode && (
-        <div className="p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-sm">
+        <div className="p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md">
           <div className="flex flex-col space-y-4">
             <div>
               <h2 className="text-xl font-bold text-white">{series.name}</h2>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
                 <div className="bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-300">
                   Season {episode.season_number}
                 </div>
