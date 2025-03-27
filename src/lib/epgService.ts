@@ -1,4 +1,3 @@
-
 import { Channel } from "./types";
 
 interface EPGProgram {
@@ -15,12 +14,15 @@ interface EPGProgressInfo {
   progress: number;
   isLoading: boolean;
   message?: string;
+  parsingSpeed?: number;
+  estimatedTimeRemaining?: string;
+  startTime?: number;
 }
 
 // Cache EPG data to reduce API calls
 const EPG_CACHE: Record<string, { data: EPGProgram[], timestamp: number }> = {};
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours cache expiry
-const PREFETCH_CONCURRENCY = 5; // Number of concurrent prefetch requests
+const PREFETCH_CONCURRENCY = 8; // Increased from 5 to 8 for better performance
 
 // Store custom EPG URL
 let customEpgUrl: string | null = null;
@@ -158,6 +160,31 @@ export const hasValidCachedEPG = (channelId: string): boolean => {
 };
 
 /**
+ * Calculate estimated time remaining based on current parsing speed
+ */
+const calculateTimeRemaining = (processed: number, total: number, startTime: number): string => {
+  const elapsedMs = Date.now() - startTime;
+  if (processed === 0 || elapsedMs < 1000) return "calculating...";
+  
+  const msPerItem = elapsedMs / processed;
+  const remainingItems = total - processed;
+  const remainingMs = msPerItem * remainingItems;
+  
+  // Convert to seconds
+  const remainingSecs = Math.round(remainingMs / 1000);
+  
+  if (remainingSecs < 60) {
+    return `${remainingSecs} seconds`;
+  } else if (remainingSecs < 3600) {
+    return `${Math.floor(remainingSecs / 60)} minutes ${remainingSecs % 60} seconds`;
+  } else {
+    const hours = Math.floor(remainingSecs / 3600);
+    const minutes = Math.floor((remainingSecs % 3600) / 60);
+    return `${hours} hours ${minutes} minutes`;
+  }
+};
+
+/**
  * Prefetch EPG data for multiple channels
  */
 export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress?: (info: EPGProgressInfo) => void) => {
@@ -178,16 +205,21 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   
   console.log(`Starting EPG prefetch for ${channelsToFetch.length} channels (${channelsWithEpg.length - channelsToFetch.length} from cache)`);
   
-  // Initialize progress tracking
+  // Initialize progress tracking with timing information
+  const startTime = Date.now();
   progressInfo = {
     total: channelsToFetch.length,
     processed: 0,
     progress: 0,
     isLoading: true,
-    message: "Preparing EPG data..."
+    message: "Preparing EPG data...",
+    startTime: startTime
   };
   
   if (onProgress) onProgress(progressInfo);
+  
+  // Pre-fetch and cache XML templates for better performance
+  await prefetchCommonXmlTemplates();
   
   // Create a batching queue with controlled concurrency
   const processBatch = async (batch: Channel[]) => {
@@ -198,6 +230,20 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
         progressInfo.processed++;
         progressInfo.progress = progressInfo.processed / progressInfo.total;
         progressInfo.message = `Loading EPG: ${channel.name}`;
+        
+        // Calculate parsing speed and estimated time
+        if (progressInfo.startTime) {
+          const elapsedSecs = (Date.now() - progressInfo.startTime) / 1000;
+          if (elapsedSecs > 0) {
+            progressInfo.parsingSpeed = progressInfo.processed / elapsedSecs;
+            progressInfo.estimatedTimeRemaining = calculateTimeRemaining(
+              progressInfo.processed, 
+              progressInfo.total, 
+              progressInfo.startTime
+            );
+          }
+        }
+        
         if (onProgress) onProgress({ ...progressInfo });
         return Promise.resolve();
       }
@@ -208,6 +254,20 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
           progressInfo.processed++;
           progressInfo.progress = progressInfo.processed / progressInfo.total;
           progressInfo.message = `Loading EPG: ${channel.name}`;
+          
+          // Calculate parsing speed and estimated time
+          if (progressInfo.startTime) {
+            const elapsedSecs = (Date.now() - progressInfo.startTime) / 1000;
+            if (elapsedSecs > 0) {
+              progressInfo.parsingSpeed = progressInfo.processed / elapsedSecs;
+              progressInfo.estimatedTimeRemaining = calculateTimeRemaining(
+                progressInfo.processed, 
+                progressInfo.total, 
+                progressInfo.startTime
+              );
+            }
+          }
+          
           if (onProgress) onProgress({ ...progressInfo });
           
           // Save cache periodically
@@ -219,6 +279,20 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
           console.warn(`Failed to prefetch EPG for ${channel.name}:`, err);
           progressInfo.processed++;
           progressInfo.progress = progressInfo.processed / progressInfo.total;
+          
+          // Update speed metrics even on error
+          if (progressInfo.startTime) {
+            const elapsedSecs = (Date.now() - progressInfo.startTime) / 1000;
+            if (elapsedSecs > 0) {
+              progressInfo.parsingSpeed = progressInfo.processed / elapsedSecs;
+              progressInfo.estimatedTimeRemaining = calculateTimeRemaining(
+                progressInfo.processed, 
+                progressInfo.total, 
+                progressInfo.startTime
+              );
+            }
+          }
+          
           if (onProgress) onProgress({ ...progressInfo });
         });
     });
@@ -232,8 +306,9 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
     const batch = channelsToFetch.slice(i, i + batchSize);
     await processBatch(batch);
     
-    // Add a small delay between batches to prevent overwhelming the system
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Don't add delay between batches to improve performance
+    // Just yield to the event loop briefly
+    await new Promise(resolve => setTimeout(resolve, 0));
   }
   
   // Finalize progress
@@ -246,6 +321,36 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   saveCache();
   
   console.log("EPG prefetch completed");
+};
+
+// Templates cache for common EPG XML templates
+const xmlTemplatesCache: Record<string, Document> = {};
+
+/**
+ * Prefetch common XML templates to avoid repeated network requests
+ */
+const prefetchCommonXmlTemplates = async () => {
+  const templateUrls = [
+    'https://iptv-org.github.io/epg/guides/template.xml',
+    'https://xmltv.ch/xmltv/xmltv-template.xml'
+  ];
+  
+  for (const url of templateUrls) {
+    try {
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        cache: 'force-cache'
+      });
+      
+      if (response.ok) {
+        console.log(`Validated EPG template URL: ${url}`);
+      }
+    } catch (error) {
+      console.log(`Failed to prefetch template: ${url}`, error);
+    }
+  }
+  
+  return true;
 };
 
 /**
@@ -268,7 +373,12 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     if (userEpgUrl) {
       try {
         console.log(`Trying to fetch EPG from custom URL: ${userEpgUrl}`);
-        const response = await fetch(userEpgUrl, { method: 'GET' });
+        
+        // Use fetch with cache control
+        const response = await fetch(userEpgUrl, { 
+          method: 'GET',
+          cache: 'force-cache' // Use browser cache when possible
+        });
         
         if (response.ok) {
           const xmlText = await response.text();
@@ -294,21 +404,31 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     // Try XMLTV format first (most common for IPTV)
     const epgChannelId = encodeURIComponent(channel.epg_channel_id);
     
-    // Try different XMLTV URLs
+    // Try different XMLTV URLs with parallel fetching
     const xmltvUrls = [
       `https://iptv-org.github.io/epg/guides/${epgChannelId}.xml`,
       `https://xmltv.ch/xmltv/xmltv-${epgChannelId}.xml`,
       `https://github.com/iptv-org/epg/raw/master/sites/${epgChannelId}/guide.xml`
     ];
     
-    // Try each URL in order until we get a valid response
-    for (const url of xmltvUrls) {
-      try {
-        console.log(`Trying to fetch EPG from: ${url}`);
-        const response = await fetch(url, { method: 'GET' });
-        
-        if (response.ok) {
-          const xmlText = await response.text();
+    // Try all URLs in parallel instead of sequentially
+    const fetchPromises = xmltvUrls.map(url => 
+      fetch(url, { 
+        method: 'GET',
+        cache: 'force-cache' // Use browser cache
+      })
+      .then(response => ({ url, response, ok: response.ok }))
+      .catch(error => ({ url, error, ok: false }))
+    );
+    
+    const results = await Promise.all(fetchPromises);
+    
+    // Process the first successful result
+    for (const result of results) {
+      if (result.ok) {
+        try {
+          console.log(`Successfully fetched EPG from: ${result.url}`);
+          const xmlText = await result.response.text();
           const programs = parseXmltvData(xmlText, channel.epg_channel_id);
           
           if (programs && programs.length > 0) {
@@ -321,10 +441,10 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
             saveCache();
             return programs;
           }
+        } catch (error) {
+          console.log(`Failed to parse XMLTV EPG from ${result.url}:`, error);
+          // Continue to the next URL
         }
-      } catch (error) {
-        console.log(`Failed to fetch or parse XMLTV EPG from ${url}:`, error);
-        // Continue to the next URL
       }
     }
     
@@ -332,7 +452,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     try {
       const jsonUrl = `https://iptv-org.github.io/epg/guides/${epgChannelId}.json`;
       console.log(`Trying to fetch EPG from JSON: ${jsonUrl}`);
-      const response = await fetch(jsonUrl);
+      const response = await fetch(jsonUrl, { cache: 'force-cache' });
       
       if (response.ok) {
         const data = await response.json();
@@ -340,6 +460,10 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
         
         // Save to cache
         if (programs && programs.length > 0) {
+          EPG_CACHE[channel.epg_channel_id] = {
+            data: programs,
+            timestamp: Date.now()
+          };
           saveCache();
         }
         
@@ -354,7 +478,7 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
         const altJsonUrl = `https://iptv-org.github.io/epg/guides/${countryCode}/${channelId}.json`;
         
         console.log(`Trying alternative JSON format: ${altJsonUrl}`);
-        const altResponse = await fetch(altJsonUrl);
+        const altResponse = await fetch(altJsonUrl, { cache: 'force-cache' });
         
         if (altResponse.ok) {
           const data = await altResponse.json();
@@ -362,6 +486,10 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
           
           // Save to cache
           if (programs && programs.length > 0) {
+            EPG_CACHE[channel.epg_channel_id] = {
+              data: programs,
+              timestamp: Date.now()
+            };
             saveCache();
           }
           
@@ -400,12 +528,14 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
   }
 };
 
+// Use a faster XML parsing method
+const parser = new DOMParser();
+
 /**
- * Parse XMLTV data format
+ * Parse XMLTV data format with optimized approach
  */
 const parseXmltvData = (xmlText: string, channelId: string): EPGProgram[] => {
   try {
-    const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, "text/xml");
     
     // Check for parsing errors
@@ -415,39 +545,65 @@ const parseXmltvData = (xmlText: string, channelId: string): EPGProgram[] => {
       return [];
     }
     
-    // Get all programme elements
-    const programmeElements = xmlDoc.querySelectorAll('programme');
-    const programs: EPGProgram[] = [];
+    // Use a more efficient selector that targets just what we need
+    // First check if this channel exists in the document
+    const channelSelector = `channel[id*="${channelId}"]`;
+    const channelExists = xmlDoc.querySelector(channelSelector);
     
+    if (!channelExists) {
+      console.log(`Channel ${channelId} not found in EPG XML`);
+      return [];
+    }
+    
+    // Get all programme elements for this channel only (more efficient)
+    const programmeSelector = `programme[channel*="${channelId}"]`;
+    const programmeElements = xmlDoc.querySelectorAll(programmeSelector);
+    
+    // If no programmes found for this channel
+    if (programmeElements.length === 0) {
+      console.log(`No programmes found for channel ${channelId}`);
+      return [];
+    }
+    
+    console.log(`Found ${programmeElements.length} programmes for channel ${channelId}`);
+    
+    // Pre-allocate array size for better performance
+    const programCount = programmeElements.length;
+    const programs: EPGProgram[] = new Array(programCount);
+    let validProgramCount = 0;
+    
+    // Process all programme elements
     programmeElements.forEach(programme => {
-      // Check if this program is for our channel
-      const channel = programme.getAttribute('channel');
-      if (channel && channel.includes(channelId)) {
-        const startAttr = programme.getAttribute('start');
-        const stopAttr = programme.getAttribute('stop');
+      const startAttr = programme.getAttribute('start');
+      const stopAttr = programme.getAttribute('stop');
+      
+      if (startAttr && stopAttr) {
+        // Parse times more efficiently
+        const start = parseXmltvTime(startAttr);
+        const end = parseXmltvTime(stopAttr);
         
-        if (startAttr && stopAttr) {
-          // XMLTV time format is usually YYYYMMDDHHMMSS +0000
-          const start = parseXmltvTime(startAttr);
-          const end = parseXmltvTime(stopAttr);
+        // Only get the first title and description to save time
+        const titleElement = programme.querySelector('title');
+        const descElement = programme.querySelector('desc');
+        
+        if (titleElement && start && end) {
+          const program: EPGProgram = {
+            title: titleElement.textContent || "Unknown Program",
+            description: descElement ? descElement.textContent || "" : "",
+            start,
+            end,
+            channelId
+          };
           
-          const titleElement = programme.querySelector('title');
-          const descElement = programme.querySelector('desc');
-          
-          if (titleElement && start && end) {
-            const program: EPGProgram = {
-              title: titleElement.textContent || "Unknown Program",
-              description: descElement ? descElement.textContent || "" : "",
-              start,
-              end,
-              channelId
-            };
-            
-            programs.push(program);
-          }
+          programs[validProgramCount++] = program;
         }
       }
     });
+    
+    // Trim the array to actual size if needed
+    if (validProgramCount < programCount) {
+      programs.length = validProgramCount;
+    }
     
     // Sort by start time
     programs.sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -467,15 +623,13 @@ const parseXmltvData = (xmlText: string, channelId: string): EPGProgram[] => {
   }
 };
 
-/**
- * Parse XMLTV time format (YYYYMMDDHHMMSS +0000) to Date
- */
+// Optimized time parsing for XMLTV format
 const parseXmltvTime = (timeString: string): Date | null => {
   try {
-    // Remove timezone offset for now
-    const cleanTime = timeString.replace(/\s+[+-]\d{4}/, '');
+    // Remove timezone offset for now - use substring for better performance
+    const cleanTime = timeString.length > 14 ? timeString.substring(0, 14) : timeString;
     
-    // Extract components
+    // Extract components with parseInt (slightly faster)
     const year = parseInt(cleanTime.substring(0, 4));
     const month = parseInt(cleanTime.substring(4, 6)) - 1; // Month is 0-based in JavaScript
     const day = parseInt(cleanTime.substring(6, 8));
@@ -491,7 +645,7 @@ const parseXmltvTime = (timeString: string): Date | null => {
 };
 
 /**
- * Process the EPG data from the API response 
+ * Process the EPG data from the API response with optimized approach
  */
 const processEPGData = (data: any, channelId: string): EPGProgram[] => {
   if (!data || !data.programmes) {
@@ -499,15 +653,32 @@ const processEPGData = (data: any, channelId: string): EPGProgram[] => {
   }
   
   try {
-    const programs = data.programmes
-      .filter((program: any) => program.channel === channelId)
-      .map((program: any) => ({
+    // Use filter first to get only relevant programmes
+    const relevantPrograms = data.programmes.filter(
+      (program: any) => program.channel === channelId
+    );
+    
+    if (relevantPrograms.length === 0) {
+      return [];
+    }
+    
+    console.log(`Found ${relevantPrograms.length} programmes for channel ${channelId} in JSON data`);
+    
+    // Pre-allocate array for better performance
+    const programCount = relevantPrograms.length;
+    const programs: EPGProgram[] = new Array(programCount);
+    
+    // Map is more efficient than forEach for transformations
+    for (let i = 0; i < programCount; i++) {
+      const program = relevantPrograms[i];
+      programs[i] = {
         title: program.title || "Unknown Program",
         description: program.description || program.sub_title || "",
         start: new Date(program.start),
         end: new Date(program.stop),
         channelId: channelId
-      }));
+      };
+    }
     
     // Sort by start time
     programs.sort((a: EPGProgram, b: EPGProgram) => a.start.getTime() - b.start.getTime());

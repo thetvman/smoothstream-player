@@ -28,14 +28,12 @@ const Player = () => {
   const [epgProgress, setEpgProgress] = useState(getEPGLoadingProgress());
   const [cachedChannelCount, setCachedChannelCount] = useState(0);
   
-  // Periodically update EPG progress information
   useEffect(() => {
     if (epgProgress.isLoading) {
       const interval = setInterval(() => {
         const progress = getEPGLoadingProgress();
         setEpgProgress(progress);
         
-        // Calculate cached channel count if playlist is available
         const savedPlaylist = localStorage.getItem("iptv-playlist");
         if (savedPlaylist) {
           const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
@@ -51,7 +49,6 @@ const Player = () => {
     }
   }, [epgProgress.isLoading]);
   
-  // Load channel from localStorage
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
     if (savedPlaylist && channelId) {
@@ -76,11 +73,9 @@ const Player = () => {
     }
   }, [channelId, navigate, toast]);
 
-  // Always use dark mode in player, regardless of main site preference
   useEffect(() => {
     document.documentElement.classList.add('dark');
     
-    // Clean up when component unmounts - restore user preference
     return () => {
       const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
       if (!darkModePreference) {
@@ -89,7 +84,6 @@ const Player = () => {
     };
   }, []);
   
-  // Fetch EPG data when channel changes
   useEffect(() => {
     const loadEpgData = async () => {
       if (!channel || !channel.epg_channel_id) {
@@ -146,7 +140,6 @@ const Player = () => {
       </div>
       
       <div className="h-full flex">
-        {/* Main video area */}
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="w-full max-w-screen-2xl mx-auto relative">
             {epgProgress.isLoading && (
@@ -158,6 +151,8 @@ const Player = () => {
                   processed={epgProgress.processed}
                   message={epgProgress.message}
                   cachedCount={cachedChannelCount}
+                  parsingSpeed={epgProgress.parsingSpeed}
+                  estimatedTimeRemaining={epgProgress.estimatedTimeRemaining}
                 />
               </div>
             )}
@@ -175,7 +170,6 @@ const Player = () => {
           </div>
         </div>
         
-        {/* Info sidebar - conditionally shown */}
         {showInfo && (
           <div className="w-80 bg-gray-900 border-l border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up">
             <ScrollArea className="h-screen p-4">

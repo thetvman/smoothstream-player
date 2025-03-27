@@ -10,6 +10,8 @@ interface EPGLoadingProgressProps {
   processed: number;
   message?: string;
   cachedCount?: number;
+  parsingSpeed?: number;
+  estimatedTimeRemaining?: string;
 }
 
 const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
@@ -18,7 +20,9 @@ const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
   total,
   processed,
   message = "Loading EPG data...",
-  cachedCount = 0
+  cachedCount = 0,
+  parsingSpeed = 0,
+  estimatedTimeRemaining
 }) => {
   if (!isLoading) return null;
 
@@ -42,6 +46,18 @@ const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
       {cachedCount > 0 && (
         <div className="text-xs text-emerald-500 dark:text-emerald-400">
           {cachedCount} channels loaded from cache
+        </div>
+      )}
+      
+      {parsingSpeed > 0 && (
+        <div className="text-xs text-blue-500 dark:text-blue-400">
+          Processing speed: {parsingSpeed.toFixed(2)} channels/second
+        </div>
+      )}
+      
+      {estimatedTimeRemaining && (
+        <div className="text-xs text-orange-500 dark:text-orange-400">
+          Estimated time remaining: {estimatedTimeRemaining}
         </div>
       )}
     </div>
