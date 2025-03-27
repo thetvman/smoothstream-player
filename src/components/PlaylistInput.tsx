@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Upload, Link, Tv } from "lucide-react";
 import Button from "./common/Button";
@@ -8,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { prefetchEPGDataForChannels } from "@/lib/epgService";
+import { prefetchEPGDataForChannels } from "@/lib/epg"; // Fixed import
 
 interface PlaylistInputProps {
   onPlaylistLoaded: (playlist: Playlist) => void;

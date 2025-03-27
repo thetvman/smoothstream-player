@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -12,12 +13,31 @@ import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { 
   fetchEPGData, 
-  EPGProgram, 
+  type EPGProgram, 
   prefetchEPGDataForChannels, 
   getEPGLoadingProgress,
-  EPGProgressInfo,
+  type EPGProgressInfo,
   hasValidCachedEPG
 } from "@/lib/epg";
+import { Button } from "@/components/ui/button";
+import { Moon, Sun, Film, Tv } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 const Index = () => {
   const navigate = useNavigate();
