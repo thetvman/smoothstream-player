@@ -33,7 +33,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
     );
   }
 
-  if (!paginatedChannels || paginatedChannels.items.length === 0) {
+  if (!paginatedChannels || !paginatedChannels.items || paginatedChannels.items.length === 0) {
     return (
       <div className="text-center p-4 border rounded-lg bg-card">
         <h3 className="font-medium mb-2">No channels found</h3>
