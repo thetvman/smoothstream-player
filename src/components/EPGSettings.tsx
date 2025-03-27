@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Cog, LinkIcon, X } from "lucide-react";
+import { Cog, LinkIcon, X, AlertTriangle } from "lucide-react";
 import { setCustomEpgUrl, getCustomEpgUrl } from '@/lib/epgService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,7 +24,10 @@ const EPGSettings = () => {
   }, []);
 
   const validateUrl = (url: string): boolean => {
-    if (!url) return true; // Empty URL is valid (will use default sources)
+    if (!url) {
+      setValidationError('An EPG URL is required for this app to function properly');
+      return false;
+    }
     
     // Validate that the URL starts with http://amri.wtf
     if (!url.startsWith('http://amri.wtf')) {
@@ -44,18 +47,6 @@ const EPGSettings = () => {
   };
 
   const handleSave = () => {
-    if (!epgUrl) {
-      // Clear the EPG URL
-      setCustomEpgUrl(null);
-      setHasSavedUrl(false);
-      toast({
-        title: "EPG source removed",
-        description: "Using default EPG sources now",
-      });
-      setOpen(false);
-      return;
-    }
-    
     // Validate the URL
     if (!validateUrl(epgUrl)) {
       return; // Don't proceed if validation fails
@@ -77,7 +68,7 @@ const EPGSettings = () => {
     setValidationError(null);
     toast({
       title: "EPG source removed",
-      description: "Using default EPG sources now",
+      description: "EPG functionality will be limited without a source",
     });
     setOpen(false);
   };
@@ -96,12 +87,12 @@ const EPGSettings = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
-          variant="outline" 
+          variant={hasSavedUrl ? "outline" : "secondary"}
           size="sm" 
           className={`flex items-center gap-1 ${hasSavedUrl ? 'border-green-500 text-green-500 dark:border-green-600 dark:text-green-400' : ''}`}
         >
           <Cog className="h-4 w-4" />
-          EPG Source {hasSavedUrl && '✓'}
+          EPG Source {hasSavedUrl ? '✓' : ''}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -109,15 +100,25 @@ const EPGSettings = () => {
           <DialogTitle>EPG Settings</DialogTitle>
           <DialogDescription>
             Configure your Electronic Program Guide (EPG) source.
-            You can provide a custom XMLTV URL for your channels.
+            You must provide a custom XMLTV URL for your channels.
             <span className="block mt-1 font-medium text-amber-500">
               Note: Only URLs from http://amri.wtf are allowed.
             </span>
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
+          {!hasSavedUrl && (
+            <div className="flex p-3 text-sm bg-amber-100 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md items-start gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="text-amber-800 dark:text-amber-300">
+                EPG functionality requires a valid EPG source URL to work properly.
+                Please configure your EPG source below.
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <label className="text-sm font-medium">Custom XMLTV EPG URL</label>
+            <label className="text-sm font-medium">XMLTV EPG URL (Required)</label>
             <div className="flex gap-2">
               <Input
                 placeholder="http://amri.wtf/epg.xml"
@@ -143,8 +144,8 @@ const EPGSettings = () => {
               <p className="text-xs text-red-500 mt-1">{validationError}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Enter the URL to your XMLTV EPG file. If not provided, the system will
-              use default sources based on channel EPG IDs.
+              Enter the URL to your XMLTV EPG file. This is required for
+              program guide information to display correctly.
             </p>
           </div>
           

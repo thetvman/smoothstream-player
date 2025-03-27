@@ -1,3 +1,4 @@
+
 import { Channel } from "./types";
 
 interface EPGProgram {
@@ -203,6 +204,24 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
     return;
   }
   
+  // Check if we have a custom EPG URL set
+  const userEpgUrl = getCustomEpgUrl();
+  if (!userEpgUrl) {
+    console.log("No custom EPG URL set, skipping prefetch");
+    
+    // Update progress info to show we're not loading
+    progressInfo = {
+      total: 0,
+      processed: 0,
+      progress: 1,
+      isLoading: false,
+      message: "No EPG source configured"
+    };
+    
+    if (onProgress) onProgress(progressInfo);
+    return;
+  }
+  
   console.log(`Starting EPG prefetch for ${channelsToFetch.length} channels (${channelsWithEpg.length - channelsToFetch.length} from cache)`);
   
   // Initialize progress tracking with timing information
@@ -217,9 +236,6 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   };
   
   if (onProgress) onProgress(progressInfo);
-  
-  // Pre-fetch and cache XML templates for better performance
-  await prefetchCommonXmlTemplates();
   
   // Create a batching queue with controlled concurrency
   const processBatch = async (batch: Channel[]) => {
@@ -323,36 +339,6 @@ export const prefetchEPGDataForChannels = async (channels: Channel[], onProgress
   console.log("EPG prefetch completed");
 };
 
-// Templates cache for common EPG XML templates
-const xmlTemplatesCache: Record<string, Document> = {};
-
-/**
- * Prefetch common XML templates to avoid repeated network requests
- */
-const prefetchCommonXmlTemplates = async () => {
-  const templateUrls = [
-    'https://iptv-org.github.io/epg/guides/template.xml',
-    'https://xmltv.ch/xmltv/xmltv-template.xml'
-  ];
-  
-  for (const url of templateUrls) {
-    try {
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        cache: 'force-cache'
-      });
-      
-      if (response.ok) {
-        console.log(`Validated EPG template URL: ${url}`);
-      }
-    } catch (error) {
-      console.log(`Failed to prefetch template: ${url}`, error);
-    }
-  }
-  
-  return true;
-};
-
 /**
  * Fetch EPG data from a real EPG service
  */
@@ -370,139 +356,47 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     // Check if we have a custom EPG URL set
     const userEpgUrl = getCustomEpgUrl();
     
-    if (userEpgUrl) {
-      try {
-        console.log(`Trying to fetch EPG from custom URL: ${userEpgUrl}`);
-        
-        // Use fetch with cache control
-        const response = await fetch(userEpgUrl, { 
-          method: 'GET',
-          cache: 'force-cache' // Use browser cache when possible
-        });
-        
-        if (response.ok) {
-          const xmlText = await response.text();
-          const programs = parseXmltvData(xmlText, channel.epg_channel_id);
-          
-          if (programs && programs.length > 0) {
-            // Cache the results
-            EPG_CACHE[channel.epg_channel_id] = {
-              data: programs,
-              timestamp: Date.now()
-            };
-            
-            saveCache();
-            return programs;
-          }
-        }
-      } catch (error) {
-        console.error(`Failed to fetch or parse custom EPG from ${userEpgUrl}:`, error);
-        // Fall back to default sources if custom fails
-      }
-    }
-    
-    // Try XMLTV format first (most common for IPTV)
-    const epgChannelId = encodeURIComponent(channel.epg_channel_id);
-    
-    // Try different XMLTV URLs with parallel fetching
-    const xmltvUrls = [
-      `https://iptv-org.github.io/epg/guides/${epgChannelId}.xml`,
-      `https://xmltv.ch/xmltv/xmltv-${epgChannelId}.xml`,
-      `https://github.com/iptv-org/epg/raw/master/sites/${epgChannelId}/guide.xml`
-    ];
-    
-    // Try all URLs in parallel instead of sequentially
-    const fetchPromises = xmltvUrls.map(url => 
-      fetch(url, { 
-        method: 'GET',
-        cache: 'force-cache' // Use browser cache
-      })
-      .then(response => ({ url, response, ok: response.ok }))
-      .catch(error => ({ url, error, ok: false }))
-    );
-    
-    const results = await Promise.all(fetchPromises);
-    
-    // Process the first successful result
-    for (const result of results) {
-      if (result.ok) {
-        try {
-          console.log(`Successfully fetched EPG from: ${result.url}`);
-          // Fix TypeScript error by checking for 'response' property
-          if ('response' in result) {
-            const xmlText = await result.response.text();
-            const programs = parseXmltvData(xmlText, channel.epg_channel_id);
-            
-            if (programs && programs.length > 0) {
-              // Cache the results
-              EPG_CACHE[channel.epg_channel_id] = {
-                data: programs,
-                timestamp: Date.now()
-              };
-              
-              saveCache();
-              return programs;
-            }
-          }
-        } catch (error) {
-          console.log(`Failed to parse XMLTV EPG from ${result.url}:`, error);
-          // Continue to the next URL
-        }
-      }
-    }
-    
-    // Fallback to JSON format
-    try {
-      const jsonUrl = `https://iptv-org.github.io/epg/guides/${epgChannelId}.json`;
-      console.log(`Trying to fetch EPG from JSON: ${jsonUrl}`);
-      const response = await fetch(jsonUrl, { cache: 'force-cache' });
+    if (!userEpgUrl) {
+      console.log("No custom EPG URL set, returning demo data");
+      const demoData = generateDemoEPG(channel.epg_channel_id);
       
-      if (response.ok) {
-        const data = await response.json();
-        const programs = processEPGData(data, channel.epg_channel_id);
+      // Cache the demo data
+      EPG_CACHE[channel.epg_channel_id] = {
+        data: demoData,
+        timestamp: Date.now()
+      };
+      saveCache();
+      
+      return demoData;
+    }
+    
+    console.log(`Fetching EPG from custom URL: ${userEpgUrl}`);
+    
+    // Use fetch with cache control
+    const response = await fetch(userEpgUrl, { 
+      method: 'GET',
+      cache: 'force-cache' // Use browser cache when possible
+    });
+    
+    if (response.ok) {
+      const xmlText = await response.text();
+      const programs = parseXmltvData(xmlText, channel.epg_channel_id);
+      
+      if (programs && programs.length > 0) {
+        // Cache the results
+        EPG_CACHE[channel.epg_channel_id] = {
+          data: programs,
+          timestamp: Date.now()
+        };
         
-        // Save to cache
-        if (programs && programs.length > 0) {
-          EPG_CACHE[channel.epg_channel_id] = {
-            data: programs,
-            timestamp: Date.now()
-          };
-          saveCache();
-        }
-        
+        saveCache();
         return programs;
       }
-      
-      // Try alternative format, some EPG IDs might be country-specific
-      const countryParts = epgChannelId.split('.');
-      if (countryParts.length > 1) {
-        const countryCode = countryParts[0];
-        const channelId = countryParts[1];
-        const altJsonUrl = `https://iptv-org.github.io/epg/guides/${countryCode}/${channelId}.json`;
-        
-        console.log(`Trying alternative JSON format: ${altJsonUrl}`);
-        const altResponse = await fetch(altJsonUrl, { cache: 'force-cache' });
-        
-        if (altResponse.ok) {
-          const data = await altResponse.json();
-          const programs = processEPGData(data, channel.epg_channel_id);
-          
-          // Save to cache
-          if (programs && programs.length > 0) {
-            EPG_CACHE[channel.epg_channel_id] = {
-              data: programs,
-              timestamp: Date.now()
-            };
-            saveCache();
-          }
-          
-          return programs;
-        }
-      }
-    } catch (error) {
-      console.log("Error fetching JSON EPG data:", error);
+    } else {
+      console.error(`Failed to fetch EPG from ${userEpgUrl}: ${response.status} ${response.statusText}`);
     }
     
+    // If we reach here, we couldn't get data from the custom URL
     console.warn(`No EPG data found for channel ID: ${channel.epg_channel_id}`);
     const demoData = generateDemoEPG(channel.epg_channel_id);
     
@@ -644,58 +538,6 @@ const parseXmltvTime = (timeString: string): Date | null => {
   } catch (error) {
     console.error("Error parsing XMLTV time:", timeString, error);
     return null;
-  }
-};
-
-/**
- * Process the EPG data from the API response with optimized approach
- */
-const processEPGData = (data: any, channelId: string): EPGProgram[] => {
-  if (!data || !data.programmes) {
-    return [];
-  }
-  
-  try {
-    // Use filter first to get only relevant programmes
-    const relevantPrograms = data.programmes.filter(
-      (program: any) => program.channel === channelId
-    );
-    
-    if (relevantPrograms.length === 0) {
-      return [];
-    }
-    
-    console.log(`Found ${relevantPrograms.length} programmes for channel ${channelId} in JSON data`);
-    
-    // Pre-allocate array for better performance
-    const programCount = relevantPrograms.length;
-    const programs: EPGProgram[] = new Array(programCount);
-    
-    // Map is more efficient than forEach for transformations
-    for (let i = 0; i < programCount; i++) {
-      const program = relevantPrograms[i];
-      programs[i] = {
-        title: program.title || "Unknown Program",
-        description: program.description || program.sub_title || "",
-        start: new Date(program.start),
-        end: new Date(program.stop),
-        channelId: channelId
-      };
-    }
-    
-    // Sort by start time
-    programs.sort((a: EPGProgram, b: EPGProgram) => a.start.getTime() - b.start.getTime());
-    
-    // Cache the results
-    EPG_CACHE[channelId] = {
-      data: programs,
-      timestamp: Date.now()
-    };
-    
-    return programs;
-  } catch (e) {
-    console.error("Error processing EPG data:", e);
-    return [];
   }
 };
 

@@ -60,6 +60,10 @@ const EPGLoadingProgress: React.FC<EPGLoadingProgressProps> = ({
           Estimated time remaining: {estimatedTimeRemaining}
         </div>
       )}
+      
+      <div className="text-xs text-muted-foreground">
+        Using custom EPG source
+      </div>
     </div>
   );
 };
