@@ -115,6 +115,39 @@ export type Database = {
           },
         ]
       }
+      watch_history: {
+        Row: {
+          content_id: string
+          content_type: string
+          id: string
+          poster: string | null
+          progress: number | null
+          title: string
+          user_id: string
+          watched_at: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          id?: string
+          poster?: string | null
+          progress?: number | null
+          title: string
+          user_id: string
+          watched_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          id?: string
+          poster?: string | null
+          progress?: number | null
+          title?: string
+          user_id?: string
+          watched_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,7 +1,14 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { UserProfile, UserPreferences } from '@/lib/types';
-import { getCurrentProfile, createProfile, saveProfile, updatePreferences } from '@/lib/profileService';
+import { UserProfile, UserPreferences, RecentItem } from '@/lib/types';
+import { 
+  getCurrentProfile, 
+  createProfile, 
+  saveProfile, 
+  updatePreferences, 
+  fetchWatchHistoryFromSupabase,
+  clearWatchHistory 
+} from '@/lib/profileService';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +19,7 @@ interface ProfileContextType {
   createUserProfile: (username: string, email?: string) => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
   updateUserPreferences: (preferences: Partial<UserPreferences>) => void;
+  clearHistory: () => Promise<void>;
   signOut: () => void;
 }
 
@@ -47,6 +55,9 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
             const themeValue = preferencesData?.theme || 'system';
             const validatedTheme = isValidTheme(themeValue) ? themeValue : 'system';
             
+            // Fetch watch history from Supabase
+            const watchHistory = await fetchWatchHistoryFromSupabase();
+            
             const supabaseProfile: UserProfile = {
               id: data.id,
               username: data.username,
@@ -60,7 +71,7 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
                 favoriteChannels: [],
                 favoriteMovies: [],
                 favoriteSeries: [],
-                recentlyWatched: []
+                recentlyWatched: watchHistory
               }
             };
             setProfile(supabaseProfile);
@@ -154,6 +165,35 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   };
+  
+  const clearHistory = async () => {
+    try {
+      const success = await clearWatchHistory();
+      if (success && profile) {
+        setProfile({
+          ...profile,
+          preferences: {
+            ...profile.preferences,
+            recentlyWatched: []
+          }
+        });
+        
+        toast({
+          title: 'Watch History Cleared',
+          description: 'Your watch history has been cleared successfully',
+        });
+      } else {
+        throw new Error('Failed to clear watch history');
+      }
+    } catch (error) {
+      console.error('Error clearing watch history:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear watch history',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const signOut = () => {
     setProfile(null);
@@ -172,6 +212,7 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
         createUserProfile,
         updateProfile,
         updateUserPreferences,
+        clearHistory,
         signOut,
       }}
     >

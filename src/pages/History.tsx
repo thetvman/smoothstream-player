@@ -8,22 +8,10 @@ import { ArrowLeft, Trash2, Clock, Tv, Film } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
 import { RecentItem } from "@/lib/types";
 import { optimizeImageUrl, formatTime } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 
 const History = () => {
   const navigate = useNavigate();
-  const { profile, isLoading, updateUserPreferences } = useProfile();
-  const { toast } = useToast();
-  
-  const clearHistory = () => {
-    if (!profile) return;
-    
-    updateUserPreferences({ recentlyWatched: [] });
-    toast({
-      title: "Watch History Cleared",
-      description: "Your watch history has been cleared successfully",
-    });
-  };
+  const { profile, isLoading, clearHistory } = useProfile();
   
   const navigateToContent = (item: RecentItem) => {
     switch (item.type) {

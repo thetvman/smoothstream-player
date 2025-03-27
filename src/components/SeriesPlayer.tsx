@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 import { Calendar, Clock } from "lucide-react";
+import { addToRecentlyWatched } from "@/lib/profileService";
 
 interface SeriesPlayerProps {
   episode: Episode | null;
@@ -27,6 +28,19 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       return () => clearTimeout(timer);
     }
   }, [showInfo]);
+
+  // Add to recently watched when episode is played
+  useEffect(() => {
+    if (episode && series) {
+      addToRecentlyWatched({
+        id: `${series.id}_${episode.season_number}_${episode.episode_number}`,
+        type: 'episode',
+        title: `${series.name} - ${episode.name}`,
+        poster: episode.logo || series.logo,
+        progress: 0 // Initial progress
+      });
+    }
+  }, [episode, series]);
 
   // Convert episode to channel format for VideoPlayer
   const channel = episode ? {

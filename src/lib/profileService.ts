@@ -1,6 +1,7 @@
 
 import { UserProfile, UserPreferences, RecentItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 const PROFILE_STORAGE_KEY = 'iptv-user-profile';
 
@@ -95,7 +96,7 @@ export const isChannelFavorite = (channelId: string): boolean => {
 };
 
 // Add item to recently watched
-export const addToRecentlyWatched = (item: Omit<RecentItem, 'lastWatched'>): void => {
+export const addToRecentlyWatched = async (item: Omit<RecentItem, 'lastWatched'>): Promise<void> => {
   const profile = getCurrentProfile();
   if (!profile) return;
   
@@ -106,10 +107,12 @@ export const addToRecentlyWatched = (item: Omit<RecentItem, 'lastWatched'>): voi
   }
   
   // Add to the beginning
-  profile.preferences.recentlyWatched.unshift({
+  const newItem = {
     ...item,
     lastWatched: new Date()
-  });
+  };
+  
+  profile.preferences.recentlyWatched.unshift(newItem);
   
   // Limit to 20 items
   if (profile.preferences.recentlyWatched.length > 20) {
@@ -117,6 +120,31 @@ export const addToRecentlyWatched = (item: Omit<RecentItem, 'lastWatched'>): voi
   }
   
   saveProfile(profile);
+  
+  // If user is authenticated, also save to Supabase
+  const user = supabase.auth.getUser();
+  const userId = (await user).data.user?.id;
+  
+  if (userId) {
+    try {
+      const { error } = await supabase
+        .from('watch_history')
+        .upsert({
+          user_id: userId,
+          content_id: item.id,
+          content_type: item.type,
+          title: item.title,
+          poster: item.poster,
+          progress: item.progress,
+        }, {
+          onConflict: 'user_id, content_id, content_type'
+        });
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving watch history to Supabase:', error);
+    }
+  }
 };
 
 // Get recently watched items
@@ -125,6 +153,65 @@ export const getRecentlyWatched = (): RecentItem[] => {
   if (!profile) return [];
   
   return profile.preferences.recentlyWatched;
+};
+
+// Fetch watch history from Supabase
+export const fetchWatchHistoryFromSupabase = async (): Promise<RecentItem[]> => {
+  try {
+    const user = supabase.auth.getUser();
+    const userId = (await user).data.user?.id;
+    
+    if (!userId) return [];
+    
+    const { data, error } = await supabase
+      .from('watch_history')
+      .select('*')
+      .order('watched_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    if (!data || data.length === 0) return [];
+    
+    return data.map(item => ({
+      id: item.content_id,
+      type: item.content_type as 'channel' | 'movie' | 'episode',
+      title: item.title,
+      poster: item.poster || undefined,
+      lastWatched: new Date(item.watched_at),
+      progress: item.progress
+    }));
+  } catch (error) {
+    console.error('Error fetching watch history from Supabase:', error);
+    return [];
+  }
+};
+
+// Clear watch history from both localStorage and Supabase
+export const clearWatchHistory = async (): Promise<boolean> => {
+  try {
+    const profile = getCurrentProfile();
+    if (profile) {
+      profile.preferences.recentlyWatched = [];
+      saveProfile(profile);
+    }
+    
+    const user = supabase.auth.getUser();
+    const userId = (await user).data.user?.id;
+    
+    if (userId) {
+      const { error } = await supabase
+        .from('watch_history')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error clearing watch history:', error);
+    return false;
+  }
 };
 
 // Delete user profile
