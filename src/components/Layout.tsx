@@ -32,10 +32,10 @@ const Layout: React.FC<LayoutProps> = ({
     <div 
       className={cn(
         "w-full",
-        withSidebar ? "flex" : "mx-auto",
+        withSidebar ? "flex h-screen overflow-hidden" : "mx-auto",
         maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
         padded && !withSidebar ? "px-4 sm:px-6 md:px-8" : "",
-        fullHeight ? "min-h-screen flex flex-col" : "",
+        fullHeight && !withSidebar ? "min-h-screen flex flex-col" : "",
         className
       )}
     >
