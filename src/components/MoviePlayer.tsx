@@ -1,0 +1,372 @@
+
+import React, { useRef, useState, useEffect, memo } from "react";
+import Hls from "hls.js";
+import { Movie, PlayerState } from "@/lib/types";
+import PlayerControls from "./PlayerControls";
+import LoadingSpinner from "./common/LoadingSpinner";
+
+interface MoviePlayerProps {
+  movie: Movie | null;
+  autoPlay?: boolean;
+}
+
+const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  
+  const [playerState, setPlayerState] = useState<PlayerState>({
+    playing: false,
+    currentTime: 0,
+    duration: 0,
+    volume: 1,
+    muted: false,
+    loading: true,
+    fullscreen: false
+  });
+  
+  const [error, setError] = useState<string | null>(null);
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (movie?.url) {
+      setStreamUrl(movie.url);
+      setError(null);
+    }
+  }, [movie]);
+  
+  const tryAlternativeFormat = () => {
+    if (!movie?.url) return false;
+    
+    const currentUrl = streamUrl || movie.url;
+    
+    if (currentUrl.endsWith('.mp4')) {
+      const m3u8Url = currentUrl.replace(/\.mp4$/, '.m3u8');
+      console.log('Trying alternative format:', m3u8Url);
+      setStreamUrl(m3u8Url);
+      return true;
+    }
+    
+    if (currentUrl.endsWith('.m3u8')) {
+      const mp4Url = currentUrl.replace(/\.m3u8$/, '.mp4');
+      console.log('Trying alternative format:', mp4Url);
+      setStreamUrl(mp4Url);
+      return true;
+    }
+    
+    return false;
+  };
+  
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamUrl) return;
+    
+    setError(null);
+    setPlayerState(prev => ({ ...prev, loading: true }));
+    
+    const loadMovie = () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      
+      const isHlsStream = streamUrl.endsWith('.m3u8');
+      console.log('Loading ' + (isHlsStream ? 'HLS' : 'direct') + ' stream:', streamUrl);
+      
+      if (isHlsStream && Hls.isSupported()) {
+        const hls = new Hls({
+          startLevel: -1,
+          manifestLoadingMaxRetry: 5,
+          levelLoadingMaxRetry: 5,
+          fragLoadingMaxRetry: 5,
+          lowLatencyMode: false,
+          enableWorker: true,
+          backBufferLength: 30,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60
+        });
+        
+        hlsRef.current = hls;
+        
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (autoPlay) {
+            video.play()
+              .then(() => {
+                setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
+              })
+              .catch((e) => {
+                console.error("Failed to autoplay:", e);
+                setPlayerState(prev => ({ ...prev, loading: false }));
+              });
+          } else {
+            setPlayerState(prev => ({ ...prev, loading: false }));
+          }
+        });
+        
+        let errorCount = 0;
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          errorCount++;
+          console.warn(`HLS error (${errorCount}):`, data.type, data.details);
+          
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.warn("Fatal network error encountered, trying to recover");
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.warn("Fatal media error encountered, trying to recover");
+                hls.recoverMediaError();
+                break;
+              default:
+                hls.destroy();
+                hlsRef.current = null;
+                
+                if (tryAlternativeFormat()) {
+                  console.log("Trying alternative stream format after fatal error");
+                } else {
+                  setError("Failed to load stream: unrecoverable error");
+                }
+                break;
+            }
+          } else if (errorCount > 10) {
+            if (tryAlternativeFormat()) {
+              console.log("Trying alternative stream format after too many errors");
+              errorCount = 0;
+            }
+          }
+        });
+      } 
+      else {
+        console.log('Using direct playback for:', streamUrl);
+        video.src = streamUrl;
+        
+        if (autoPlay) {
+          video.play()
+            .then(() => {
+              setPlayerState(prev => ({ ...prev, playing: true, loading: false }));
+            })
+            .catch((e) => {
+              console.error("Direct playback failed:", e);
+              
+              if (tryAlternativeFormat()) {
+                console.log("Trying alternative stream format after direct playback failed");
+              } else {
+                setError("Your browser does not support this stream format");
+                setPlayerState(prev => ({ ...prev, loading: false }));
+              }
+            });
+        }
+      }
+    };
+    
+    loadMovie();
+    
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [streamUrl, autoPlay]);
+  
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const handleTimeUpdate = () => {
+      setPlayerState(prev => ({
+        ...prev,
+        currentTime: video.currentTime,
+        duration: video.duration || 0
+      }));
+    };
+    
+    const handlePlay = () => {
+      setPlayerState(prev => ({ ...prev, playing: true }));
+    };
+    
+    const handlePause = () => {
+      setPlayerState(prev => ({ ...prev, playing: false }));
+    };
+    
+    const handleVolumeChange = () => {
+      setPlayerState(prev => ({
+        ...prev,
+        volume: video.volume,
+        muted: video.muted
+      }));
+    };
+    
+    const handleLoadStart = () => {
+      setPlayerState(prev => ({ ...prev, loading: true }));
+    };
+    
+    const handleCanPlay = () => {
+      setPlayerState(prev => ({ ...prev, loading: false }));
+    };
+    
+    const handleError = () => {
+      setError("Error playing movie. Please try again.");
+      setPlayerState(prev => ({ ...prev, loading: false }));
+    };
+    
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("playing", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("volumechange", handleVolumeChange);
+    video.addEventListener("loadstart", handleLoadStart);
+    video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("error", handleError);
+    
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("playing", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("volumechange", handleVolumeChange);
+      video.removeEventListener("loadstart", handleLoadStart);
+      video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("error", handleError);
+    };
+  }, []);
+  
+  const handlePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    if (playerState.playing) {
+      video.pause();
+    } else {
+      video.play().catch((e) => {
+        console.error("Failed to play:", e);
+      });
+    }
+  };
+  
+  const handleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.muted = !video.muted;
+  };
+  
+  const handleVolumeChange = (volume: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.volume = volume;
+    if (volume > 0) {
+      video.muted = false;
+    }
+  };
+  
+  const handleSeek = (time: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.currentTime = time;
+  };
+  
+  const handleFullscreen = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().then(() => {
+        setPlayerState(prev => ({ ...prev, fullscreen: true }));
+      }).catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setPlayerState(prev => ({ ...prev, fullscreen: false }));
+      }).catch(err => {
+        console.error(`Error attempting to exit fullscreen: ${err.message}`);
+      });
+    }
+  };
+  
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setPlayerState(prev => ({
+        ...prev,
+        fullscreen: !!document.fullscreenElement
+      }));
+    };
+    
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+  
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full aspect-video bg-player overflow-hidden rounded-lg group"
+    >
+      <video
+        ref={videoRef}
+        className="w-full h-full object-contain"
+        playsInline
+        preload="metadata"
+      />
+      
+      {playerState.loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
+      
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
+          <div className="text-red-500 mb-2 text-lg">⚠️ {error}</div>
+          {movie && (
+            <button
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
+              onClick={() => {
+                if (tryAlternativeFormat()) {
+                  setError(null);
+                } else {
+                  setError(null);
+                  const video = videoRef.current;
+                  if (video) {
+                    video.load();
+                  }
+                }
+              }}
+            >
+              Try Alternative Format
+            </button>
+          )}
+        </div>
+      )}
+      
+      {movie && !error && (
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent player-controls">
+          <h3 className="text-white font-medium truncate">{movie.name}</h3>
+        </div>
+      )}
+      
+      {movie && !error && (
+        <PlayerControls
+          videoRef={videoRef}
+          playerState={playerState}
+          onPlayPause={handlePlayPause}
+          onMute={handleMute}
+          onVolumeChange={handleVolumeChange}
+          onSeek={handleSeek}
+          onFullscreen={handleFullscreen}
+        />
+      )}
+    </div>
+  );
+};
+
+export default memo(MoviePlayer);

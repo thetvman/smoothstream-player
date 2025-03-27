@@ -1,3 +1,4 @@
+
 export interface Channel {
   id: string;
   name: string;
@@ -59,6 +60,58 @@ export interface XtreamStream {
   tv_archive: number;
   direct_source: string;
   tv_archive_duration: number;
+}
+
+// Add new interfaces for Movies
+export interface XtreamMovie {
+  movie_id: number;
+  stream_id: number;
+  name: string;
+  added: string;
+  category_id: string;
+  container_extension: string;
+  stream_type: string;
+  stream_icon: string;
+  rating: string;
+  director: string;
+  actors: string;
+  genre: string;
+  plot: string;
+  duration: string;
+  releasedate: string;
+  tmdb_id?: string;
+  backdrop_path?: string;
+  youtube_trailer?: string;
+}
+
+export interface Movie {
+  id: string;
+  name: string;
+  url: string;
+  logo?: string;
+  backdrop?: string;
+  group?: string;
+  description?: string;
+  duration?: string;
+  rating?: string;
+  year?: string;
+  genre?: string;
+  stream_type?: string;
+  movie_id?: number; // Original ID from Xtream
+}
+
+export interface MovieCategory {
+  id: string;
+  name: string;
+  movies: Movie[];
+}
+
+export interface PaginatedMovies {
+  items: Movie[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 // Add new interface for ChannelList props
