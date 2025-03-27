@@ -258,10 +258,10 @@ const Movies = () => {
 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {Array.from({ length: 24 }).map((_, i) => (
                 <div key={i} className="space-y-2">
-                  <Skeleton className="aspect-[2/3] w-full rounded-md bg-gray-800" />
+                  <Skeleton className="aspect-[2/3] w-full max-w-[280px] rounded-md bg-gray-800" />
                   <Skeleton className="h-4 w-3/4 rounded bg-gray-800" />
                 </div>
               ))}
@@ -276,14 +276,14 @@ const Movies = () => {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {paginatedMovies.items.map((movie) => (
                       <div 
                         key={movie.id} 
                         className="group cursor-pointer"
                         onClick={() => handlePlayMovie(movie)}
                       >
-                        <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 max-w-[180px]">
+                        <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 mx-auto w-full max-w-[280px]">
                           {movie.logo ? (
                             <img
                               src={movie.logo}
@@ -300,14 +300,14 @@ const Movies = () => {
                           )}
                           
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center">
-                            <button className="bg-white text-black font-medium mb-4 py-1.5 px-5 text-sm rounded hover:bg-gray-200 transition-colors">
+                            <button className="bg-white text-black font-medium mb-4 py-2 px-6 text-sm rounded hover:bg-gray-200 transition-colors">
                               Play
                             </button>
                           </div>
                         </div>
                         
-                        <h3 className="font-medium text-sm line-clamp-1">{movie.name}</h3>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
+                        <h3 className="font-medium text-sm line-clamp-1 max-w-[280px] mx-auto">{movie.name}</h3>
+                        <div className="flex items-center text-xs text-gray-400 mt-1 max-w-[280px] mx-auto">
                           {movie.year && <span>{movie.year}</span>}
                           {movie.duration && (
                             <>
