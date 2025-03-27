@@ -20,7 +20,8 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film, Tv } from "lucide-react";
+import { Film, Moon, Sun, Tv } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   // Load saved playlist and selected channel from localStorage
   useEffect(() => {
@@ -48,7 +50,23 @@ const Index = () => {
         }
       }
     }
+
+    // Check for saved dark mode preference
+    const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
+    setIsDarkMode(darkModePreference);
   }, []);
+  
+  // Apply dark mode class
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Save preference to localStorage
+    localStorage.setItem("iptv-dark-mode", isDarkMode.toString());
+  }, [isDarkMode]);
   
   // Update paginated channels when playlist or page changes
   useEffect(() => {
@@ -126,6 +144,10 @@ const Index = () => {
     window.scrollTo(0, 0);
   };
   
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+  
   // Generate pagination links
   const renderPaginationLinks = () => {
     if (!paginatedChannels || paginatedChannels.totalPages <= 1) return null;
@@ -192,7 +214,18 @@ const Index = () => {
       <div className="flex flex-col h-full space-y-6">
         <header className="flex flex-col space-y-1">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8 rounded-full"
+                onClick={toggleDarkMode}
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
@@ -224,6 +257,19 @@ const Index = () => {
           <div className="lg:col-span-2 flex flex-col space-y-4">
             <div className="animate-fade-in">
               <VideoPlayer channel={selectedChannel} />
+              
+              {selectedChannel && (
+                <div className="flex justify-end mt-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={openFullscreenPlayer}
+                    className="text-xs"
+                  >
+                    Open Fullscreen Player
+                  </Button>
+                </div>
+              )}
             </div>
             
             {/* EPG Guide - New component */}

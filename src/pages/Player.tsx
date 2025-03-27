@@ -42,13 +42,16 @@ const Player = () => {
     }
   }, [channelId, navigate, toast]);
 
-  // Force dark mode by adding 'dark' class to html when component mounts
+  // Always use dark mode in player, regardless of main site preference
   useEffect(() => {
     document.documentElement.classList.add('dark');
     
-    // Clean up when component unmounts
+    // Clean up when component unmounts - restore user preference
     return () => {
-      document.documentElement.classList.remove('dark');
+      const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
+      if (!darkModePreference) {
+        document.documentElement.classList.remove('dark');
+      }
     };
   }, []);
   
