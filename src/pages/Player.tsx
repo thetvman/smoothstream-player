@@ -29,7 +29,7 @@ const Player = () => {
             const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
             
             if (foundChannel) {
-              console.log("Found regular channel:", foundChannel.name);
+              console.log("Found channel:", foundChannel.name);
               setChannel(foundChannel);
               
               // Check if it's a series and load episodes if needed
@@ -94,6 +94,10 @@ const Player = () => {
             movieChannel.name = data.info.name || movieChannel.name;
             movieChannel.logo = data.info.movie_image || undefined;
             movieChannel.group = data.info.category_name || undefined;
+            
+            // Try m3u8 format first for better compatibility
+            movieChannel.url = `${server}/movie/${username}/${password}/${streamId}.m3u8`;
+            movieChannel.stream_type = "m3u8";
           }
         } catch (error) {
           console.error("Error fetching movie details:", error);
@@ -153,10 +157,13 @@ const Player = () => {
       Object.entries(episodesData).forEach(([seasonNum, episodes]: [string, any]) => {
         if (Array.isArray(episodes)) {
           episodes.forEach((episode: any) => {
+            // Try m3u8 format first for better compatibility
+            const episodeUrl = `${server}/series/${username}/${password}/${episode.id}.m3u8`;
+            
             allEpisodes.push({
               ...episode,
               season: seasonNum,
-              url: `${server}/series/${username}/${password}/${episode.id}.${episode.container_extension}`
+              url: episodeUrl
             });
           });
         }

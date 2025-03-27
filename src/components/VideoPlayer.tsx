@@ -40,17 +40,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     
     const currentUrl = streamUrl || channel.url;
     
+    // We'll support multiple format conversions
     if (currentUrl.endsWith('.ts')) {
       const m3u8Url = currentUrl.replace(/\.ts$/, '.m3u8');
-      console.log('Trying alternative format:', m3u8Url);
+      console.log('Trying alternative format (ts -> m3u8):', m3u8Url);
       setStreamUrl(m3u8Url);
       return true;
     }
     
     if (currentUrl.endsWith('.m3u8')) {
       const tsUrl = currentUrl.replace(/\.m3u8$/, '.ts');
-      console.log('Trying alternative format:', tsUrl);
+      console.log('Trying alternative format (m3u8 -> ts):', tsUrl);
       setStreamUrl(tsUrl);
+      return true;
+    }
+    
+    if (currentUrl.endsWith('.mp4')) {
+      const m3u8Url = currentUrl.replace(/\.mp4$/, '.m3u8');
+      console.log('Trying alternative format (mp4 -> m3u8):', m3u8Url);
+      setStreamUrl(m3u8Url);
+      return true;
+    }
+    
+    if (currentUrl.endsWith('.mkv')) {
+      const m3u8Url = currentUrl.replace(/\.mkv$/, '.m3u8');
+      console.log('Trying alternative format (mkv -> m3u8):', m3u8Url);
+      setStreamUrl(m3u8Url);
       return true;
     }
     
