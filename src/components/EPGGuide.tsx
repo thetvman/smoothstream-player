@@ -31,7 +31,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
   if (!channel || !channel.epg_channel_id) {
     return (
-      <div className="mt-2 py-2 text-sm text-muted-foreground">
+      <div className="mt-1 py-2 text-sm text-white/70">
         <div className="flex items-center gap-2">
           <Tv className="w-4 h-4" />
           <p>No program information available for this channel.</p>
@@ -42,7 +42,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
   if (!epgData || epgData.length === 0) {
     return (
-      <div className="mt-2 py-2 text-sm text-muted-foreground">
+      <div className="mt-1 py-2 text-sm text-white/70">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
           <p>No current program information available.</p>
@@ -78,26 +78,44 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
     return Math.round(durationMs / 60000); // Convert to minutes
   };
 
+  // Calculate progress percentage for current program
+  const calculateProgress = (start: Date, end: Date) => {
+    const total = end.getTime() - start.getTime();
+    const elapsed = now.getTime() - start.getTime();
+    return Math.min(Math.max(Math.round((elapsed / total) * 100), 0), 100);
+  };
+
   return (
-    <div className="mt-2 space-y-3">
+    <div className="space-y-3 text-white">
       {currentProgram && (
-        <div className="rounded-md bg-secondary/40 p-3">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium">
-              NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
-              <span className="ml-2 text-muted-foreground">
-                ({calculateDuration(currentProgram.start, currentProgram.end)} min)
+        <div className="rounded-md bg-white/5 backdrop-blur-sm p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary/80" />
+              <span className="text-xs font-medium">
+                NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
               </span>
+            </div>
+            <span className="text-xs text-white/60">
+              {calculateDuration(currentProgram.start, currentProgram.end)} min
             </span>
           </div>
           <h3 className="font-medium mt-1">{currentProgram.title}</h3>
           {currentProgram.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            <p className="text-sm text-white/70 mt-1 line-clamp-2">
               {currentProgram.description}
             </p>
           )}
-          <div className="text-xs text-muted-foreground mt-1">
+          
+          {/* Progress bar */}
+          <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary/80"
+              style={{ width: `${calculateProgress(currentProgram.start, currentProgram.end)}%` }}
+            />
+          </div>
+          
+          <div className="text-xs text-white/60 mt-1">
             {formatDate(currentProgram.start)}
           </div>
         </div>
@@ -105,26 +123,26 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
       {nextPrograms.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+          <h4 className="text-sm font-medium text-white/70 flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" />
             Up Next
           </h4>
-          {nextPrograms.map((program, index) => (
-            <div key={index} className="text-sm border-l-2 border-primary/30 pl-2">
-              <div className="text-xs text-muted-foreground flex justify-between">
-                <span>{formatTime(program.start)} - {formatTime(program.end)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {calculateDuration(program.start, program.end)} min
-                </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {nextPrograms.map((program, index) => (
+              <div key={index} className="text-sm bg-white/5 backdrop-blur-sm rounded p-2">
+                <div className="text-xs text-white/60 flex justify-between">
+                  <span>{formatTime(program.start)}</span>
+                  <span>{calculateDuration(program.start, program.end)} min</span>
+                </div>
+                <div className="font-medium mt-0.5">{program.title}</div>
+                {program.description && (
+                  <p className="text-xs text-white/70 line-clamp-1 mt-0.5">
+                    {program.description}
+                  </p>
+                )}
               </div>
-              <div className="font-medium">{program.title}</div>
-              {program.description && (
-                <p className="text-xs text-muted-foreground line-clamp-1">
-                  {program.description}
-                </p>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

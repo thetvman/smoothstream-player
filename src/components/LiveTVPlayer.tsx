@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Channel, Playlist } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import { safeJsonParse } from "@/lib/utils";
-import { ArrowRight, PlayCircle, ListFilter, LayoutGrid, Maximize, ArrowLeftRight } from "lucide-react";
+import { ArrowRight, PlayCircle, ListFilter, LayoutGrid, Maximize, ArrowLeftRight, Settings, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChannelList from "./ChannelList";
 import ChannelGuide from "./ChannelGuide";
@@ -13,6 +13,7 @@ import PlaylistInput from "./PlaylistInput";
 import EPGGuide from "./EPGGuide";
 import { fetchEPGData } from "@/lib/epgService";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LiveTVPlayer = () => {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ const LiveTVPlayer = () => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden h-[calc(100vh-8rem)] flex flex-col">
+    <div className="bg-gradient-to-br from-card to-background border border-border rounded-xl shadow-xl overflow-hidden h-[calc(100vh-8rem)] flex flex-col">
       {/* Main Content Area - Flexible Layout */}
       <div className="flex flex-col md:flex-row h-full overflow-hidden">
         {/* Channel Guide - Left Side (Responsive Size) */}
@@ -118,17 +119,20 @@ const LiveTVPlayer = () => {
             ${guideSize === 'expanded' ? 'w-full md:w-3/5 lg:w-1/2' : ''}
             ${guideSize === 'normal' ? 'w-full md:w-2/5 lg:w-1/3' : ''}
             ${guideSize === 'minimized' ? 'w-full md:w-[120px]' : ''}
-            border-r border-border transition-all duration-300 flex flex-col
+            border-r border-border/40 transition-all duration-300 flex flex-col
+            backdrop-blur-sm bg-card/95
           `}
         >
-          <div className="border-b border-border flex justify-between items-center bg-muted/30 px-4 py-2">
+          <div className="border-b border-border/40 flex justify-between items-center bg-primary/5 px-4 py-3">
             <h3 className={`font-medium ${guideSize === 'minimized' ? 'hidden md:block' : ''}`}>
               {playlist?.name || "Channels"}
-              <span className="ml-2 text-sm text-muted-foreground">
-                {playlist?.channels.length || 0} channels
-              </span>
+              {playlist?.channels.length > 0 && (
+                <span className="ml-2 text-sm text-muted-foreground">
+                  {playlist?.channels.length} channels
+                </span>
+              )}
             </h3>
-            <div className="flex space-x-2">
+            <div className="flex space-x-1.5">
               <Button 
                 variant={viewMode === 'list' ? "secondary" : "ghost"} 
                 size="sm"
@@ -159,7 +163,7 @@ const LiveTVPlayer = () => {
               <Sheet open={showSettings} onOpenChange={setShowSettings}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8">
-                    <ArrowRight className="h-4 w-4 rotate-90" />
+                    <Settings className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent>
@@ -172,7 +176,7 @@ const LiveTVPlayer = () => {
             </div>
           </div>
           
-          <div className={`overflow-y-auto ${guideSize === 'minimized' ? 'p-2' : 'p-4'} flex-1`}>
+          <div className={`overflow-y-auto ${guideSize === 'minimized' ? 'p-2' : 'p-4'} flex-1 scrollbar-none`}>
             {viewMode === 'guide' ? (
               <ChannelGuide 
                 playlist={playlist}
@@ -199,8 +203,9 @@ const LiveTVPlayer = () => {
           ${guideSize === 'normal' ? 'w-full md:w-3/5 lg:w-2/3' : ''}
           ${guideSize === 'minimized' ? 'w-full md:flex-1' : ''}
           flex flex-col h-full transition-all duration-300
+          bg-black
         `}>
-          <div className="flex-1 bg-black relative">
+          <div className="flex-1 relative">
             {selectedChannel ? (
               <div className="h-full">
                 <VideoPlayer 
@@ -210,27 +215,62 @@ const LiveTVPlayer = () => {
                 <div className="absolute bottom-4 right-4 z-10">
                   <Button
                     size="sm"
-                    className="bg-primary text-white hover:bg-primary/90"
+                    className="bg-primary/80 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all"
                     onClick={() => navigate(`/player/${selectedChannel.id}`)}
                   >
                     <Maximize className="mr-2 h-4 w-4" />
                     Fullscreen
                   </Button>
                 </div>
+                
+                {/* Channel info overlay */}
+                <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
+                  <div className="flex items-center gap-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg max-w-[70%]">
+                    {selectedChannel.logo && (
+                      <img 
+                        src={selectedChannel.logo} 
+                        alt="" 
+                        className="h-8 w-8 object-contain bg-black/40 rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <div className="truncate">
+                      <h3 className="font-medium truncate">{selectedChannel.name}</h3>
+                      {selectedChannel.group && (
+                        <p className="text-xs text-white/70 truncate">{selectedChannel.group}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-500/80 text-white text-xs px-2 py-1 rounded font-medium flex items-center">
+                    <PlayCircle className="w-3 h-3 mr-1 fill-current" />
+                    LIVE
+                  </div>
+                </div>
               </div>
             ) : playlist ? (
-              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
-                <p className="text-white">Select a channel to start watching</p>
+              <div className="flex items-center justify-center h-full flex-col gap-4 p-4 bg-gradient-to-br from-card/20 to-background/20 text-white">
+                <PlayCircle className="h-16 w-16 text-primary/80 animate-pulse" />
+                <p className="text-lg">Select a channel to start watching</p>
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
-                <p className="text-white">Add a playlist to start watching Live TV</p>
+              <div className="flex items-center justify-center h-full flex-col gap-5 p-6 bg-gradient-to-br from-card/20 to-background/20 text-white">
+                <div className="text-center">
+                  <PlayCircle className="h-16 w-16 text-primary/80 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium mb-2">Add a playlist to start watching</h3>
+                  <p className="text-white/70 max-w-md mb-4">
+                    You can add your custom IPTV playlist to access your favorite live TV channels
+                  </p>
+                </div>
                 <Button 
                   variant="outline"
                   onClick={() => setShowSettings(true)}
-                  className="bg-primary/20 border-primary/30 text-white"
+                  className="bg-primary/20 border-primary/30 text-white hover:bg-primary/30"
+                  size="lg"
                 >
-                  <ArrowRight className="mr-2 h-4 w-4 transform rotate-90" />
+                  <Settings className="mr-2 h-4 w-4" />
                   Add Playlist
                 </Button>
               </div>
@@ -239,7 +279,7 @@ const LiveTVPlayer = () => {
           
           {/* Current program info */}
           {selectedChannel && (
-            <div className="p-4 border-t border-border bg-card">
+            <div className="p-4 border-t border-border/10 bg-gradient-to-r from-black/90 to-black/80">
               <EPGGuide 
                 channel={selectedChannel} 
                 epgData={epgData} 
