@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -185,15 +186,15 @@ const Index = () => {
       <Layout fullHeight className="py-6 md:py-8">
         <div className="flex flex-col h-full space-y-6">
           <header className="flex flex-col space-y-1">
-            <div className="flex justify-between items-center bg-[hsl(0,83%,25%)] p-4 rounded-lg mb-2 shadow-md">
+            <div className="flex justify-between items-center glossy-header p-4 rounded-lg mb-2 shadow-md">
               <h1 className="text-2xl font-bold tracking-tight text-white">Stream Player</h1>
               <div className="flex items-center gap-4">
-                <div className="flex items-center overflow-hidden rounded-md">
+                <div className="flex items-center overflow-hidden rounded-md bg-gray-800/60 backdrop-blur-sm border border-gray-700/40">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setViewMode('grid')}
-                    className={`${viewMode === 'grid' ? 'bg-[hsl(0,83%,30%)]' : ''} text-white hover:text-white hover:bg-[hsl(0,73%,30%)]`}
+                    className={`${viewMode === 'grid' ? 'bg-gray-700/80' : ''} text-white hover:text-white hover:bg-gray-700/60`}
                   >
                     <Grid className="h-4 w-4" />
                   </Button>
@@ -201,7 +202,7 @@ const Index = () => {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setViewMode('list')}
-                    className={`${viewMode === 'list' ? 'bg-[hsl(0,83%,30%)]' : ''} text-white hover:text-white hover:bg-[hsl(0,73%,30%)]`}
+                    className={`${viewMode === 'list' ? 'bg-gray-700/80' : ''} text-white hover:text-white hover:bg-gray-700/60`}
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -210,7 +211,7 @@ const Index = () => {
                   <NavigationMenuList>
                     <NavigationMenuItem>
                       <NavigationMenuLink 
-                        className={`${navigationMenuTriggerStyle()} text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]`}
+                        className={`${navigationMenuTriggerStyle()} text-white glossy-button py-2`}
                         onClick={() => navigate('/movies')}
                       >
                         <Film className="mr-2 h-4 w-4" />
@@ -219,7 +220,7 @@ const Index = () => {
                     </NavigationMenuItem>
                     <NavigationMenuItem>
                       <NavigationMenuLink 
-                        className={`${navigationMenuTriggerStyle()} text-white bg-[hsl(0,73%,22%)] hover:bg-[hsl(0,73%,25%)]`}
+                        className={`${navigationMenuTriggerStyle()} text-white glossy-button py-2`}
                         onClick={() => navigate('/series')}
                       >
                         <Tv className="mr-2 h-4 w-4" />
@@ -230,7 +231,7 @@ const Index = () => {
                 </NavigationMenu>
               </div>
             </div>
-            <p className="text-[hsl(0,30%,85%)] text-center pb-2 border-b border-[hsl(0,60%,35%)]">
+            <p className="text-gray-400 text-center pb-2 border-b border-gray-800">
               {playlist ? "Browse channels or search to find your favorites" : "Load your IPTV playlist to get started"}
             </p>
           </header>
@@ -258,7 +259,7 @@ const Index = () => {
                     
                     {selectedChannel && (
                       <Button 
-                        className="mt-3 w-full bg-[hsl(0,83%,30%)] hover:bg-[hsl(0,83%,35%)] text-white font-medium"
+                        className="mt-3 w-full glossy-button py-2.5 hover:bg-gradient-to-b hover:from-primary/70 hover:to-primary/50 text-white font-medium"
                         onClick={openFullscreenPlayer}
                       >
                         Watch Full Screen
@@ -279,14 +280,14 @@ const Index = () => {
                             }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded bg-[hsl(0,73%,30%)] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded bg-gray-700 flex items-center justify-center">
                             {selectedChannel.name.substring(0, 2).toUpperCase()}
                           </div>
                         )}
                         <div>
                           <h3 className="font-bold">{selectedChannel.name}</h3>
                           {selectedChannel.group && (
-                            <p className="text-xs text-[hsl(0,30%,85%)]">{selectedChannel.group}</p>
+                            <p className="text-xs text-gray-400">{selectedChannel.group}</p>
                           )}
                         </div>
                       </div>
@@ -314,7 +315,7 @@ const Index = () => {
                   />
                   
                   {paginatedChannels && paginatedChannels.totalPages > 1 && (
-                    <div className="py-4 border-t border-[hsl(0,60%,35%)] px-3">
+                    <div className="py-4 border-t border-gray-700 px-3">
                       <Pagination>
                         <PaginationContent>
                           {currentPage > 1 && (
@@ -333,7 +334,7 @@ const Index = () => {
                         </PaginationContent>
                       </Pagination>
                       
-                      <div className="text-xs text-center text-[hsl(0,30%,85%)] mt-2">
+                      <div className="text-xs text-center text-gray-400 mt-2">
                         Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
                         {Math.min(currentPage * ITEMS_PER_PAGE, paginatedChannels.totalItems)} of {paginatedChannels.totalItems} channels
                       </div>

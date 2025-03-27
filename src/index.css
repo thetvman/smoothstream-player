@@ -5,33 +5,33 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 20% 16%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 16%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 16%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 220 70% 50%;
+    --primary: 220 70% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 96%;
-    --secondary-foreground: 220 20% 16%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 20% 96%;
-    --muted-foreground: 220 20% 40%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 220 70% 96%;
-    --accent-foreground: 220 70% 30%;
+    --accent: 240 5% 12%;
+    --accent-foreground: 220 70% 60%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 220 70% 50%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 220 70% 60%;
 
     --radius: 0.75rem;
 
@@ -42,16 +42,16 @@
     --player-overlay: 240 10% 3% / 80%;
 
     /* TV theme variables */
-    --tv-background: 0 83% 28%;
-    --tv-card: 0 73% 18%;
-    --tv-foreground: 0 0% 100%;
-    --tv-muted: 0 30% 85%;
-    --tv-border: 0 60% 35%;
+    --tv-background: 240 10% 4%;
+    --tv-card: 240 10% 8%;
+    --tv-foreground: 0 0% 98%;
+    --tv-muted: 240 5% 65%;
+    --tv-border: 240 5% 16%;
 
     /* Custom scrollbar variables */
-    --scrollbar-track: 220 20% 94%;
-    --scrollbar-thumb: 220 20% 80%;
-    --scrollbar-thumb-hover: 220 20% 70%;
+    --scrollbar-track: 240 5% 10%;
+    --scrollbar-thumb: 240 5% 20%;
+    --scrollbar-thumb-hover: 240 5% 30%;
     --scrollbar-width: 8px;
     --scrollbar-height: 8px;
   }
@@ -147,7 +147,7 @@
 
 @layer components {
   .glass-morphism {
-    @apply bg-white/40 backdrop-blur-lg border border-white/20 shadow-lg;
+    @apply bg-gray-800/40 backdrop-blur-lg border border-gray-700/40 shadow-lg;
   }
   
   .player-controls {
@@ -188,11 +188,11 @@
   }
   
   .channel-card {
-    @apply aspect-video bg-white/40 backdrop-blur-sm flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden border border-white/20 shadow-md;
+    @apply aspect-video bg-gray-800/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer overflow-hidden border border-gray-700/40 shadow-md hover:shadow-lg hover:border-gray-600/60;
   }
   
   .channel-card-selected {
-    @apply ring-2 ring-gray-400/60;
+    @apply ring-2 ring-primary/60;
   }
   
   .channel-logo {
@@ -200,7 +200,7 @@
   }
   
   .channel-fallback {
-    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gray-200 to-gray-300 text-gray-700;
+    @apply w-full h-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gray-700 to-gray-800 text-gray-300;
   }
   
   /* Movie website specific styles */
@@ -242,23 +242,23 @@
 
   /* TV theme styles */
   .tv-background {
-    @apply bg-gradient-to-br from-[#F1F0FB] to-[#e2d1c3];
+    @apply bg-black;
   }
   
   .tv-card {
-    @apply bg-white/40 backdrop-blur-md text-gray-800 border border-white/20 rounded-lg overflow-hidden shadow-md;
+    @apply bg-gray-800/40 backdrop-blur-md text-gray-100 border border-gray-700/40 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all;
   }
   
   .tv-section {
-    @apply bg-white/60 backdrop-blur-md text-gray-800 p-3 font-medium border-b border-white/20;
+    @apply bg-gray-800/60 backdrop-blur-md text-gray-100 p-3 font-medium border-b border-gray-700/40;
   }
   
   .tv-content {
-    @apply p-4 bg-white/30 backdrop-blur-sm text-gray-800;
+    @apply p-4 bg-gray-800/20 backdrop-blur-sm text-gray-100;
   }
   
   .tv-info-row {
-    @apply border-t border-white/20 mt-2 pt-2 text-sm text-gray-700;
+    @apply border-t border-gray-700/40 mt-2 pt-2 text-sm text-gray-400;
   }
 
   /* Custom ScrollArea styling */
@@ -276,24 +276,28 @@
     to { opacity: 1; }
   }
   
-  /* UHF-inspired styles */
-  .uhf-header {
-    @apply bg-white/60 backdrop-blur-md text-gray-800 font-bold p-4 shadow-md border-b border-white/20;
+  /* Glossy styles */
+  .glossy-card {
+    @apply bg-gradient-to-b from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-gray-700/60 rounded-lg overflow-hidden shadow-lg;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
   }
   
-  .uhf-card {
-    @apply bg-white/40 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden shadow-md;
+  .glossy-header {
+    @apply bg-gradient-to-r from-gray-800/90 to-gray-800/70 backdrop-blur-md border-b border-gray-700/40 text-gray-100 shadow-md;
   }
   
-  .uhf-category-pill {
-    @apply px-3 py-1 text-xs rounded-full bg-white/60 backdrop-blur-sm text-gray-700 shadow-sm;
+  .glossy-button {
+    @apply bg-gradient-to-b from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-md shadow-md transition-all border border-gray-600/40;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
   }
   
-  .uhf-nav-button {
-    @apply bg-white/40 hover:bg-white/60 backdrop-blur-sm p-2 rounded-md transition-colors text-gray-700 shadow-sm;
+  .glossy-pill {
+    @apply bg-gradient-to-r from-gray-700/90 to-gray-800/90 hover:from-gray-600/90 hover:to-gray-700/90 text-white rounded-full px-3 py-1 text-xs shadow-sm border border-gray-600/40 transition-all;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   }
   
-  .uhf-channel-title {
-    @apply bg-white/60 backdrop-blur-md p-2 text-gray-800 font-medium text-sm truncate border-t border-white/20;
+  .glossy-input {
+    @apply bg-gray-800/60 border border-gray-700/60 rounded-md px-3 py-2 text-white shadow-inner focus:ring-1 focus:ring-primary/50 focus:border-primary/50;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   }
 }
