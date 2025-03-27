@@ -1,18 +1,14 @@
 
 import React, { useState, useMemo } from "react";
-import { Playlist, Channel } from "@/lib/types";
+import { Channel, ChannelListProps, PaginatedChannels } from "@/lib/types";
 import { Search } from "lucide-react";
-
-interface ChannelListProps {
-  playlist: Playlist | null;
-  selectedChannel: Channel | null;
-  onSelectChannel: (channel: Channel) => void;
-}
 
 const ChannelList: React.FC<ChannelListProps> = ({
   playlist,
+  paginatedChannels,
   selectedChannel,
-  onSelectChannel
+  onSelectChannel,
+  isLoading = false
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
@@ -31,9 +27,11 @@ const ChannelList: React.FC<ChannelListProps> = ({
   
   // Filter channels based on search term and active group
   const filteredChannels = useMemo(() => {
-    if (!playlist?.channels) return [];
+    if (!paginatedChannels?.items) {
+      return [];
+    }
     
-    return playlist.channels.filter(channel => {
+    return paginatedChannels.items.filter(channel => {
       const matchesSearch = !searchTerm || 
         channel.name.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -41,7 +39,20 @@ const ChannelList: React.FC<ChannelListProps> = ({
       
       return matchesSearch && matchesGroup;
     });
-  }, [playlist, searchTerm, activeGroup]);
+  }, [paginatedChannels, searchTerm, activeGroup]);
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full justify-center items-center bg-card rounded-lg border border-border p-4">
+        <div className="animate-pulse space-y-4 w-full">
+          <div className="h-8 bg-muted rounded w-full"></div>
+          {Array.from({ length: 10 }).map((_, index) => (
+            <div key={index} className="h-14 bg-muted rounded w-full"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   
   if (!playlist) {
     return (
