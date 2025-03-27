@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Channel, Playlist } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import { safeJsonParse } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, PlayCircle, ListFilter, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChannelList from "./ChannelList";
@@ -13,6 +12,7 @@ import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import PlaylistInput from "./PlaylistInput";
 import EPGGuide from "./EPGGuide";
 import { fetchEPGData } from "@/lib/epgService";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const LiveTVPlayer = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const LiveTVPlayer = () => {
   const [viewMode, setViewMode] = useState<'list' | 'guide'>('guide');
   const [epgData, setEpgData] = useState(null);
   const [loadingEPG, setLoadingEPG] = useState(false);
-  const [activeTab, setActiveTab] = useState("player");
+  const [showSettings, setShowSettings] = useState(false);
 
   // Load last used playlist from localStorage
   useEffect(() => {
@@ -71,8 +71,6 @@ const LiveTVPlayer = () => {
     setSelectedChannel(channel);
     // Save last selected channel ID
     localStorage.setItem("last-channel-id", channel.id);
-    // Automatically switch to player tab when channel is selected
-    setActiveTab("player");
   };
 
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
@@ -90,6 +88,7 @@ const LiveTVPlayer = () => {
     setCurrentPage(1);
     const paginated = paginateChannels(newPlaylist.channels, 1, ITEMS_PER_PAGE);
     setPaginatedChannels(paginated);
+    setShowSettings(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -100,73 +99,9 @@ const LiveTVPlayer = () => {
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-3 rounded-none">
-          <TabsTrigger value="player">Live TV</TabsTrigger>
-          <TabsTrigger value="channels">Channel Browser</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="player" className="m-0">
-          <div className="aspect-video bg-black relative">
-            {selectedChannel ? (
-              <div>
-                <VideoPlayer 
-                  channel={selectedChannel} 
-                  autoPlay 
-                />
-                <div className="absolute bottom-4 right-4">
-                  <Button
-                    size="sm"
-                    className="bg-primary text-white hover:bg-primary/90"
-                    onClick={() => navigate(`/player/${selectedChannel.id}`)}
-                  >
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Fullscreen
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : playlist ? (
-              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
-                <p className="text-white">Select a channel to start watching</p>
-                <Button 
-                  variant="outline"
-                  onClick={() => setActiveTab("channels")}
-                  className="bg-primary/20 border-primary/30 text-white"
-                >
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  Browse Channels
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
-                <p className="text-white">Add a playlist to start watching Live TV</p>
-                <Button 
-                  variant="outline"
-                  onClick={() => setActiveTab("settings")}
-                  className="bg-primary/20 border-primary/30 text-white"
-                >
-                  <ArrowRight className="mr-2 h-4 w-4 transform rotate-90" />
-                  Add Playlist
-                </Button>
-              </div>
-            )}
-          </div>
-          
-          {/* Current program info */}
-          {selectedChannel && (
-            <div className="p-4 border-t border-border">
-              <EPGGuide 
-                channel={selectedChannel} 
-                epgData={epgData} 
-                isLoading={loadingEPG} 
-              />
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="channels" className="m-0">
+      <div className="flex flex-col md:flex-row h-full">
+        {/* Channel Guide - Left Side */}
+        <div className="w-full md:w-2/5 lg:w-1/3 border-r border-border">
           <div className="border-b border-border flex justify-between items-center bg-muted/30 px-4 py-2">
             <h3 className="font-medium">
               {playlist?.name || "Channels"}
@@ -193,10 +128,23 @@ const LiveTVPlayer = () => {
                 <LayoutGrid className="h-4 w-4 mr-1" />
                 Guide
               </Button>
+              <Sheet open={showSettings} onOpenChange={setShowSettings}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8">
+                    <ArrowRight className="h-4 w-4 rotate-90" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <div className="py-6">
+                    <h3 className="text-lg font-medium mb-4">Playlist Settings</h3>
+                    <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
           
-          <div className="p-4">
+          <div className="h-[calc(100vh-14rem)] overflow-y-auto p-4">
             {viewMode === 'guide' ? (
               <ChannelGuide 
                 playlist={playlist}
@@ -214,16 +162,63 @@ const LiveTVPlayer = () => {
               />
             )}
           </div>
-        </TabsContent>
+        </div>
         
-        <TabsContent value="settings" className="m-0">
-          <div className="p-4 h-[500px] overflow-y-auto">
-            <PlaylistInput onPlaylistLoaded={handlePlaylistLoaded} />
+        {/* Video Player - Right Side */}
+        <div className="w-full md:w-3/5 lg:w-2/3">
+          <div className="aspect-video bg-black relative">
+            {selectedChannel ? (
+              <div>
+                <VideoPlayer 
+                  channel={selectedChannel} 
+                  autoPlay 
+                />
+                <div className="absolute bottom-4 right-4">
+                  <Button
+                    size="sm"
+                    className="bg-primary text-white hover:bg-primary/90"
+                    onClick={() => navigate(`/player/${selectedChannel.id}`)}
+                  >
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Fullscreen
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : playlist ? (
+              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
+                <p className="text-white">Select a channel to start watching</p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full flex-col gap-3 p-4">
+                <p className="text-white">Add a playlist to start watching Live TV</p>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowSettings(true)}
+                  className="bg-primary/20 border-primary/30 text-white"
+                >
+                  <ArrowRight className="mr-2 h-4 w-4 transform rotate-90" />
+                  Add Playlist
+                </Button>
+              </div>
+            )}
           </div>
-        </TabsContent>
-      </Tabs>
+          
+          {/* Current program info */}
+          {selectedChannel && (
+            <div className="p-4 border-t border-border">
+              <EPGGuide 
+                channel={selectedChannel} 
+                epgData={epgData} 
+                isLoading={loadingEPG} 
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
 export default LiveTVPlayer;
+
