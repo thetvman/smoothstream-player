@@ -25,7 +25,7 @@ const Player = () => {
         if (savedPlaylist && channelId) {
           const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
           if (parsedPlaylist) {
-            // First try to find the channel in the regular channels list
+            // Try to find the channel in the regular channels list
             const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
             
             if (foundChannel) {
@@ -63,7 +63,7 @@ const Player = () => {
     loadContent();
   }, [channelId, navigate]);
 
-  // New function to load content directly from Xtream API
+  // Function to load content directly from Xtream API
   const loadContentDirectly = async (contentId: string, playlist: Playlist) => {
     if (!playlist.credentials || playlist.source !== "xtream") {
       toast.error("Content not found");
