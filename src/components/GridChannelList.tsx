@@ -28,6 +28,7 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
   const [filteredChannels, setFilteredChannels] = useState<Channel[]>(channels);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(24); // Show more items per page in grid view
+  const [hoveredChannel, setHoveredChannel] = useState<string | null>(null);
   
   const groups = useMemo(() => {
     if (!playlist?.channels) return [];
@@ -222,8 +223,10 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
                   selectedChannel?.id === channel.id ? "ring-2 ring-primary/90" : ""
                 )}
                 onClick={() => handleChannelClick(channel)}
+                onMouseEnter={() => setHoveredChannel(channel.id)}
+                onMouseLeave={() => setHoveredChannel(null)}
               >
-                <CardContent className="p-0 h-full flex flex-col bg-gray-900/20 backdrop-blur-sm aspect-video">
+                <CardContent className="p-0 h-full flex flex-col bg-gray-900/20 backdrop-blur-sm aspect-video relative">
                   <div className="flex-1 flex items-center justify-center p-3">
                     {channel.logo ? (
                       <img 
@@ -249,6 +252,19 @@ const GridChannelList: React.FC<GridChannelListProps> = ({
                   <div className="bg-gradient-to-r from-gray-800/90 to-gray-900/90 backdrop-blur-md p-2 text-center text-xs font-medium text-gray-200 truncate border-t border-gray-700/40">
                     {channel.name}
                   </div>
+                  
+                  {/* Channel info tooltip shown on hover - always visible, no timeout */}
+                  {hoveredChannel === channel.id && (
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 opacity-0 group-hover:opacity-100 animate-fade-in z-10">
+                      <div className="text-center">
+                        <h3 className="font-bold text-white">{channel.name}</h3>
+                        {channel.group && (
+                          <p className="text-xs text-gray-300 mt-1">{channel.group}</p>
+                        )}
+                        <p className="text-xs text-primary mt-2">Click to watch</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

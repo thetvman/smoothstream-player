@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -21,7 +20,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
-import { Film, Grid, List, Tv } from "lucide-react";
+import { Film, Grid as GridIcon, List, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -35,6 +34,7 @@ const Index = () => {
   const [epgData, setEpgData] = useState<any[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showChannelInfo, setShowChannelInfo] = useState(true);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -109,6 +109,7 @@ const Index = () => {
   
   const handleSelectChannel = (channel: Channel) => {
     setSelectedChannel(channel);
+    setShowChannelInfo(true);
   };
   
   const openFullscreenPlayer = () => {
@@ -196,7 +197,7 @@ const Index = () => {
                     onClick={() => setViewMode('grid')}
                     className={`${viewMode === 'grid' ? 'bg-gray-700/80' : ''} text-white hover:text-white hover:bg-gray-700/60`}
                   >
-                    <Grid className="h-4 w-4" />
+                    <GridIcon className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -267,7 +268,7 @@ const Index = () => {
                     )}
                   </div>
                   
-                  {selectedChannel && (
+                  {selectedChannel && showChannelInfo && (
                     <div className="tv-card shadow-lg animate-fade-in">
                       <div className="tv-section flex items-center gap-2">
                         {selectedChannel.logo ? (
