@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -27,6 +26,7 @@ const Player = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isShowingInfo, setIsShowingInfo] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -56,7 +56,6 @@ const Player = () => {
   useEffect(() => {
     document.documentElement.classList.add('dark');
     
-    // Check fullscreen status
     const checkFullscreen = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -72,7 +71,6 @@ const Player = () => {
     };
   }, []);
   
-  // Load EPG data when the info panel is opened for the first time
   useEffect(() => {
     const loadEpgData = async () => {
       if (!channel || !channel.epg_channel_id || epgLoaded) {
@@ -104,7 +102,6 @@ const Player = () => {
     }
   }, [channel, showInfo, epgLoaded]);
   
-  // Auto-hide navigation controls after inactivity
   useEffect(() => {
     const resetControlsTimeout = () => {
       if (controlsTimeoutRef.current) {
@@ -119,7 +116,6 @@ const Player = () => {
     
     resetControlsTimeout();
     
-    // Add mouse movement listener to show controls
     const handleMouseMove = () => resetControlsTimeout();
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('click', handleMouseMove);
@@ -134,7 +130,20 @@ const Player = () => {
   }, []);
   
   const handleShowInfo = () => {
-    setShowInfo(true);
+    setShowControls(false);
+    setIsShowingInfo(true);
+    
+    setTimeout(() => {
+      setShowInfo(true);
+      setIsShowingInfo(false);
+    }, 300);
+  };
+  
+  const handleHideInfo = () => {
+    setShowInfo(false);
+    setTimeout(() => {
+      setShowControls(true);
+    }, 300);
   };
   
   const navigateToChannel = (direction: 'next' | 'prev') => {
@@ -160,7 +169,7 @@ const Player = () => {
   
   return (
     <div className="fixed inset-0 bg-black">
-      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}>
         <button 
           className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors text-white"
           onClick={() => navigate("/")}
@@ -170,7 +179,7 @@ const Player = () => {
         </button>
       </div>
       
-      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}>
         <EPGSettings />
         
         <Button
@@ -184,9 +193,8 @@ const Player = () => {
         </Button>
       </div>
       
-      {/* Channel navigation controls */}
       <div 
-        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${showControls && !showInfo && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}
       >
         <Button
           variant="ghost"
@@ -214,7 +222,7 @@ const Player = () => {
           <div className="w-full h-full mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />
             
-            <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-20 transition-opacity duration-300 ${showControls || !isFullscreen ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-20 transition-opacity duration-300 ${(showControls || !isFullscreen) && !showInfo && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}>
               <h1 className={`text-white font-bold mb-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{channel.name}</h1>
               {channel.group && (
                 <div className="inline-block bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
@@ -234,7 +242,7 @@ const Player = () => {
                   variant="ghost" 
                   size="sm" 
                   className="text-gray-400 hover:text-white"
-                  onClick={() => setShowInfo(false)}
+                  onClick={handleHideInfo}
                 >
                   Close
                 </Button>
