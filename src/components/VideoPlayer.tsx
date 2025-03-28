@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
@@ -33,7 +34,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     isLoading: true
   });
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const watchIntervalRef = useRef<number | null>(null);
+  const playerRef = useRef<ReactPlayer>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!channel) return;
