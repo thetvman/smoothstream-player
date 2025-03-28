@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import ReactPlayer from 'react-player';
 import { Loader2 } from 'lucide-react';
@@ -48,7 +47,6 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   const isMobile = useIsMobile();
   const [isIOS, setIsIOS] = useState(false);
   
-  // Check if device is iOS
   useEffect(() => {
     const checkIOS = () => {
       const userAgent = navigator.userAgent || navigator.vendor || '';
@@ -58,14 +56,12 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     setIsIOS(checkIOS());
   }, []);
 
-  // Collect video stats periodically
   useEffect(() => {
     if (!onStatsUpdate) return;
     
     const collectStats = () => {
       const video = videoRef.current;
       if (!video) {
-        // Try to get video element from ReactPlayer
         const player = playerRef.current;
         if (player) {
           const internalPlayer = player.getInternalPlayer();
@@ -90,11 +86,9 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
           audioChannels: undefined as string | undefined,
         };
         
-        // Try to get frame rate if available in webkit stats
         if ('webkitVideoDecodedByteCount' in videoElement) {
           const webkitVideoDecodedFrameCount = (videoElement as any).webkitVideoDecodedFrameCount;
           if (typeof webkitVideoDecodedFrameCount === 'number') {
-            // Use a custom property to track last frame count for FPS calculation
             const lastStats = (videoElement as any)._lastStats || { 
               time: Date.now(),
               frames: webkitVideoDecodedFrameCount 
@@ -106,7 +100,6 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
               const frameDiff = webkitVideoDecodedFrameCount - lastStats.frames;
               stats.frameRate = frameDiff / timeDiff;
               
-              // Update last stats
               (videoElement as any)._lastStats = {
                 time: now,
                 frames: webkitVideoDecodedFrameCount
@@ -115,15 +108,7 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
           }
         }
         
-        // Get audio information from audio tracks if available
-        if (videoElement.audioTracks && videoElement.audioTracks.length > 0) {
-          const audioTrack = videoElement.audioTracks[0];
-          stats.audioChannels = audioTrack.label || 'Stereo';  // Often contains audio channel info
-        } else {
-          stats.audioChannels = 'Stereo';  // Default assumption
-        }
-        
-        // We can't easily get actual audio bitrate, so this is just a placeholder
+        stats.audioChannels = 'Stereo';  // Default assumption
         stats.audioBitrate = '128 kbps';  // Default assumption
         
         onStatsUpdate(stats);
@@ -161,7 +146,6 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     };
   }, [onPlay, onPause, onEnded, onError, onProgress]);
 
-  // Control HTML5 video with our player controls when not using native controls
   useEffect(() => {
     const video = videoRef.current;
     if (!video || isIOS) return;
@@ -178,7 +162,6 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     video.muted = muted;
   }, [playing, volume, muted, isIOS]);
 
-  // For iOS devices, use the native HTML5 video player with controls
   if (isIOS) {
     return (
       <>
@@ -208,7 +191,6 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     );
   }
 
-  // For non-iOS devices, use ReactPlayer
   return (
     <>
       {isLoading && (

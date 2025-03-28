@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import screenfull from 'screenfull';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -7,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWatchTime } from "@/hooks/use-watch-time";
 import PlayerControls from "./player/PlayerControls";
 import VideoDisplay from "./player/VideoDisplay";
+import PlayerInfo from "./player/PlayerInfo";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -43,7 +43,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   
-  // Check if device is iOS
   useEffect(() => {
     const checkIOS = () => {
       const userAgent = navigator.userAgent || navigator.vendor || '';
@@ -217,7 +216,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {/* Only show custom controls for non-iOS devices */}
       {!isIOS && (
         <>
           <PlayerControls
@@ -236,7 +234,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             onToggleFullscreen={handleToggleFullscreen}
           />
 
-          {/* Player Info with stats */}
           {channel && (
             <PlayerInfo
               channel={channel}
