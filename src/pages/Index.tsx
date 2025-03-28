@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -15,7 +14,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Film, Tv } from "lucide-react";
+import { Moon, Sun, Film, Tv, BarChart2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -244,6 +243,15 @@ const Index = () => {
                     >
                       <Tv className="mr-2 h-4 w-4" />
                       Series
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink 
+                      className={navigationMenuTriggerStyle()}
+                      onClick={() => navigate('/connections')}
+                    >
+                      <BarChart2 className="mr-2 h-4 w-4" />
+                      Connections
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 </NavigationMenuList>

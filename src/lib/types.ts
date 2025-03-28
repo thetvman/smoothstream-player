@@ -1,4 +1,3 @@
-
 export interface Channel {
   id: string;
   name: string;
@@ -223,4 +222,14 @@ export interface ChannelListProps {
   selectedChannel: Channel | null;
   onSelectChannel: (channel: Channel) => void;
   isLoading?: boolean;
+}
+
+// Add watch history related types
+export interface WatchHistoryItem {
+  id: string;
+  name: string;
+  type: "channel" | "movie" | "episode";
+  watchTime: number;
+  lastWatched: string;
+  thumbnailUrl?: string;
 }
