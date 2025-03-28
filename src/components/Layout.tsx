@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +21,7 @@ const Layout: React.FC<LayoutProps> = ({
   withSidebar = false,
 }) => {
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   
   const maxWidthClasses = {
     sm: "max-w-screen-sm",
@@ -31,14 +32,24 @@ const Layout: React.FC<LayoutProps> = ({
     "full": "max-w-full",
   };
 
+  // Responsive padding based on device type
+  const getPadding = () => {
+    if (!padded || withSidebar) return "";
+    
+    if (isMobile) return "px-3 py-3";
+    if (isTablet) return "px-4 py-4 sm:px-6";
+    return "px-4 py-4 sm:px-6 md:px-8";
+  };
+
   return (
     <div 
       className={cn(
         "w-full mobile-safe-area",
         withSidebar ? "flex h-screen overflow-hidden" : "mx-auto",
         maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
-        padded && !withSidebar ? `px-${isMobile ? '3' : '4'} sm:px-6 md:px-8` : "",
+        getPadding(),
         fullHeight && !withSidebar ? "min-h-screen flex flex-col" : "",
+        isMobile ? "text-sm" : "text-base", // Slightly smaller text on mobile
         className
       )}
     >

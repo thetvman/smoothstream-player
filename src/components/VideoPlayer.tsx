@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import ReactPlayer from 'react-player';
+
+import React, { useState, useCallback, useRef } from "react";
 import screenfull from 'screenfull';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Loader2 } from 'lucide-react';
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Channel } from "@/lib/types";
-import { updateWatchHistory } from "@/lib/watchHistoryService";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useWatchTime } from "@/hooks/use-watch-time";
+import PlayerControls from "./player/PlayerControls";
+import VideoDisplay from "./player/VideoDisplay";
+import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -30,82 +29,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     volume: 0.5,
     duration: 0,
     currentTime: 0,
-    seeking: false,
-    isFullscreen: false,
-    isLoading: true
+    seeking: false
   });
-  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const watchIntervalRef = useRef<number | null>(null);
-  const playerRef = useRef<ReactPlayer>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  useEffect(() => {
-    if (isMobile && playerState.playing) {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      setShowControls(true);
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
-    
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, [isMobile, playerState.playing]);
-  
-  useEffect(() => {
-    if (!channel) return;
-    
-    setWatchStartTime(Date.now());
-    
-    if (watchIntervalRef.current) {
-      window.clearInterval(watchIntervalRef.current);
-    }
-    
-    watchIntervalRef.current = window.setInterval(() => {
-      if (watchStartTime && playerState.playing) {
-        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
-        if (watchTimeSeconds > 5) {
-          updateWatchHistory(
-            channel.id,
-            channel.name,
-            "channel",
-            watchTimeSeconds,
-            channel.logo
-          );
-          setWatchStartTime(Date.now());
-        }
-      }
-    }, 30000);
-    
-    return () => {
-      if (watchStartTime && channel) {
-        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
-        if (watchTimeSeconds > 5) {
-          updateWatchHistory(
-            channel.id,
-            channel.name,
-            "channel",
-            watchTimeSeconds,
-            channel.logo
-          );
-        }
-      }
-      
-      if (watchIntervalRef.current) {
-        window.clearInterval(watchIntervalRef.current);
-      }
-    };
-  }, [channel, watchStartTime, playerState.playing]);
+  // Use the watch time tracking hook if channel exists
+  const watchTime = channel ? useWatchTime({
+    id: channel.id,
+    name: channel.name,
+    type: "channel",
+    isPlaying: playerState.playing,
+    thumbnailUrl: channel?.logo
+  }) : null;
 
   const handlePlayPause = useCallback(() => {
     const newPlayingState = !playerState.playing;
@@ -114,29 +52,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (onPlaybackChange) {
       onPlaybackChange(newPlayingState);
     }
-    
-    if (isMobile) {
-      setShowControls(true);
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      if (newPlayingState) {
-        controlsTimeoutRef.current = setTimeout(() => {
-          setShowControls(false);
-        }, 3000);
-      }
-    }
-  }, [playerState.playing, onPlaybackChange, isMobile]);
+  }, [playerState.playing, onPlaybackChange]);
 
   const handleVolumeChange = useCallback((value: number[]) => {
     const newVolume = value[0];
-    setPlayerState(prevState => ({ ...prevState, volume: newVolume }));
-    if (newVolume === 0) {
-      setPlayerState(prevState => ({ ...prevState, muted: true }));
-    } else {
-      setPlayerState(prevState => ({ ...prevState, muted: false }));
-    }
+    setPlayerState(prevState => ({ 
+      ...prevState, 
+      volume: newVolume,
+      muted: newVolume === 0
+    }));
   }, []);
 
   const handleMuteUnmute = useCallback(() => {
@@ -162,8 +86,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, []);
 
   const handleSeekMouseUp = useCallback((value: number[]) => {
-    setPlayerState(prevState => ({ ...prevState, seeking: false }));
-    playerRef.current?.seekTo(value[0], 'seconds');
+    setPlayerState(prevState => ({ ...prevState, seeking: false, currentTime: value[0] }));
   }, []);
 
   const handleToggleFullscreen = useCallback(() => {
@@ -182,30 +105,52 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, []);
 
   const handleEnded = useCallback(() => {
-    if (watchStartTime && channel) {
-      const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
-      if (watchTimeSeconds > 5) {
-        updateWatchHistory(
-          channel.id,
-          channel.name,
-          "channel",
-          watchTimeSeconds,
-          channel.logo
-        );
-      }
-    }
+    watchTime?.handlePlaybackEnd();
     
     if (onEnded) {
       onEnded();
     }
-  }, [onEnded, channel, watchStartTime]);
+  }, [onEnded, watchTime]);
 
   const handleError = useCallback(() => {
     setIsLoading(false);
     console.error("Error loading stream for channel:", channel?.name);
   }, [channel?.name]);
 
-  useEffect(() => {
+  const handlePlay = useCallback(() => {
+    setPlayerState(prev => ({ ...prev, playing: true }));
+    
+    if (onPlaybackChange) {
+      onPlaybackChange(true);
+    }
+  }, [onPlaybackChange]);
+  
+  const handlePause = useCallback(() => {
+    setPlayerState(prev => ({ ...prev, playing: false }));
+    
+    if (onPlaybackChange) {
+      onPlaybackChange(false);
+    }
+  }, [onPlaybackChange]);
+
+  // Register hotkeys for non-mobile devices
+  useHotkeys('space', (e) => {
+    e.preventDefault();
+    handlePlayPause();
+  }, { enabled: !isMobile });
+  
+  useHotkeys('m', (e) => {
+    e.preventDefault();
+    handleMuteUnmute();
+  }, { enabled: !isMobile });
+  
+  useHotkeys('f', (e) => {
+    e.preventDefault();
+    handleToggleFullscreen();
+  }, { enabled: !isMobile });
+
+  // Effect for fullscreen changes
+  React.useEffect(() => {
     if (screenfull.isEnabled) {
       screenfull.on('change', handleScreenfullChange);
     }
@@ -217,114 +162,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, [handleScreenfullChange]);
 
-  useHotkeys('space', handlePlayPause, { 
-    preventDefault: true,
-    enabled: !isMobile 
-  });
-  useHotkeys('m', handleVolumeChange, { 
-    preventDefault: true,
-    enabled: !isMobile 
-  });
-  useHotkeys('f', handleToggleFullscreen, { 
-    preventDefault: true,
-    enabled: !isMobile 
-  });
-
   const handleContainerTap = useCallback(() => {
     if (isMobile) {
       setShowControls(prev => !prev);
-      
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      if (!showControls && playerState.playing) {
-        controlsTimeoutRef.current = setTimeout(() => {
-          setShowControls(false);
-        }, 3000);
-      }
     }
-  }, [isMobile, showControls, playerState.playing]);
-
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    const formattedMinutes = String(minutes).padStart(2, '0');
-    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
-    return `${formattedMinutes}:${formattedSeconds}`;
-  };
-
-  const handlePlay = useCallback(() => {
-    setPlayerState(prev => ({ ...prev, playing: true }));
-    setWatchStartTime(Date.now());
-    
-    if (onPlaybackChange) {
-      onPlaybackChange(true);
-    }
-  }, [onPlaybackChange]);
-  
-  const handlePause = useCallback(() => {
-    setPlayerState(prev => ({ ...prev, playing: false }));
-    
-    if (watchStartTime && channel) {
-      const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
-      if (watchTimeSeconds > 5) {
-        updateWatchHistory(
-          channel.id,
-          channel.name,
-          "channel",
-          watchTimeSeconds,
-          channel.logo
-        );
-      }
-      setWatchStartTime(null);
-    }
-    
-    if (onPlaybackChange) {
-      onPlaybackChange(false);
-    }
-  }, [channel, watchStartTime, onPlaybackChange]);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    const handleTimeUpdate = () => {
-      setPlayerState(prevState => ({ ...prevState, duration: video.duration }));
-      setPlayerState(prevState => ({ ...prevState, currentTime: video.currentTime }));
-    };
-    
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("playing", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("volumechange", () => {
-      setPlayerState(prevState => ({ ...prevState, volume: video.volume }));
-      setPlayerState(prevState => ({ ...prevState, muted: video.muted }));
-    });
-    video.addEventListener("loadedmetadata", () => {
-      setPlayerState(prevState => ({ ...prevState, duration: video.duration }));
-    });
-    video.addEventListener("waiting", () => setIsLoading(true));
-    video.addEventListener("canplay", () => setIsLoading(false));
-    video.addEventListener("ended", handleEnded);
-    video.addEventListener("error", handleError);
-    
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("playing", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("volumechange", () => {});
-      video.removeEventListener("loadedmetadata", () => {});
-      video.removeEventListener("waiting", () => {});
-      video.removeEventListener("canplay", () => {});
-      video.removeEventListener("ended", handleEnded);
-      video.removeEventListener("error", handleError);
-    };
-  }, [handlePlay, handlePause, handleEnded, handleError]);
+  }, [isMobile]);
 
   if (!channel) {
     return <div className="text-red-500">No channel selected.</div>;
@@ -336,20 +178,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       ref={playerContainerRef}
       onClick={handleContainerTap}
     >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <Loader2 className="h-10 w-10 animate-spin text-white" />
-        </div>
-      )}
-      <ReactPlayer
-        ref={playerRef}
-        url={channel.url}
+      <VideoDisplay
+        channel={channel}
         playing={playerState.playing}
         muted={playerState.muted}
         volume={playerState.volume}
-        width="100%"
-        height="100%"
-        style={{ backgroundColor: 'black' }}
         onReady={handleReady}
         onDuration={handleDuration}
         onProgress={handleProgress}
@@ -357,63 +190,24 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onError={handleError}
         onPlay={handlePlay}
         onPause={handlePause}
+        isLoading={isLoading}
       />
 
-      <div 
-        className={cn(
-          "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white flex items-center",
-          isMobile ? "transition-opacity duration-300" : "",
-          isMobile && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"
-        )}
-      >
-        <div className="flex items-center gap-2 mr-4">
-          <Button variant="ghost" size="icon" onClick={handlePlayPause}>
-            {playerState.playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </Button>
-
-          {!isMobile && (
-            <>
-              <Button variant="ghost" size="icon" onClick={handleMuteUnmute}>
-                {playerState.muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </Button>
-
-              <div className="w-24 hidden sm:block">
-                <Slider
-                  defaultValue={[playerState.volume]}
-                  max={1}
-                  step={0.01}
-                  onValueChange={handleVolumeChange}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {isMobile ? (
-          <div className="flex-1 text-xs">
-            <span>{formatTime(playerState.currentTime)}</span>
-          </div>
-        ) : (
-          <div className="flex-1 text-sm">
-            <span>{formatTime(playerState.currentTime)}</span> / <span>{formatTime(playerState.duration)}</span>
-          </div>
-        )}
-
-        <div className={cn("mr-4", isMobile ? "w-24" : "w-48")}>
-          <Slider
-            defaultValue={[playerState.currentTime]}
-            max={playerState.duration}
-            step={1}
-            onValueChange={handleSeek}
-            onMouseDown={handleSeekMouseDown}
-            onValueCommit={handleSeekMouseUp}
-          />
-        </div>
-
-        <Button variant="ghost" size="icon" onClick={handleToggleFullscreen}>
-          {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-        </Button>
-      </div>
+      <PlayerControls
+        playing={playerState.playing}
+        muted={playerState.muted}
+        volume={playerState.volume}
+        currentTime={playerState.currentTime}
+        duration={playerState.duration}
+        isFullscreen={isFullscreen}
+        onPlayPause={handlePlayPause}
+        onMuteUnmute={handleMuteUnmute}
+        onVolumeChange={handleVolumeChange}
+        onSeek={handleSeek}
+        onSeekStart={handleSeekMouseDown}
+        onSeekEnd={handleSeekMouseUp}
+        onToggleFullscreen={handleToggleFullscreen}
+      />
     </div>
   );
 };
