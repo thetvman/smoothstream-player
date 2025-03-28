@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from "react";
-import { Channel, ChannelListProps } from "@/lib/types";
+import { Channel, Playlist, PaginatedChannels } from "@/lib/types";
 import { Search, Tv, Grid2X2, List, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { ScrollArea } from "@/components/ui/scroll-area";
