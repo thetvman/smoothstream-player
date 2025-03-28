@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { Episode, Series } from "@/lib/types";
+import type { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 import { Calendar, Clock } from "lucide-react";
 

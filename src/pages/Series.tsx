@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import SeriesPlayer from "@/components/SeriesPlayer";
-import { Episode, Series } from "@/lib/types";
+import type { Episode, Series } from "@/lib/types";
 import { getSeriesById, getEpisodeById } from "@/lib/mediaService";
-import { ArrowLeft, SkipForward, Tv } from "lucide-react";
+import { ArrowLeft, SkipForward, Tv, Film } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,22 +68,17 @@ const Series = () => {
     }
   }, [error]);
 
-  // Set active category when series categories load
   useEffect(() => {
     if (seriesCategories && seriesCategories.length > 0 && !activeCategory) {
       setActiveCategory(seriesCategories[0].id);
     }
   }, [seriesCategories, activeCategory]);
 
-  // Select a random featured series when categories load
   useEffect(() => {
     if (seriesCategories && seriesCategories.length > 0 && !featuredSeries) {
-      // Find a category with series
       const categoriesWithSeries = seriesCategories.filter(cat => cat.series.length > 0);
       if (categoriesWithSeries.length > 0) {
-        // Pick a random category
         const randomCategory = categoriesWithSeries[Math.floor(Math.random() * categoriesWithSeries.length)];
-        // Pick a random series from that category
         const randomSeries = randomCategory.series[Math.floor(Math.random() * randomCategory.series.length)];
         setFeaturedSeries(randomSeries);
       }
@@ -140,7 +135,6 @@ const Series = () => {
     setActiveCategory(categoryId);
   };
 
-  // Get suggested series (from different categories than the selected series)
   const getSuggestedSeries = (): Series[] => {
     if (!seriesCategories) return [];
     
@@ -149,13 +143,11 @@ const Series = () => {
       allSeries.push(...category.series);
     });
     
-    // Get up to 10 random series, excluding the selected one
     const filteredSeries = allSeries.filter(series => series.id !== selectedSeries?.id);
     const shuffled = [...filteredSeries].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 10);
   };
-  
-  // Apply advanced search filters to series
+
   const applyAdvancedSearch = (params: AdvancedSearchParams) => {
     if (!seriesCategories) return;
     
@@ -164,25 +156,20 @@ const Series = () => {
     
     let results: Series[] = [];
     
-    // Gather all series from all categories
     seriesCategories.forEach(category => {
       results = [...results, ...category.series];
     });
     
-    // Apply filters
     results = results.filter(series => {
-      // Title filter
       if (params.title && !series.name.toLowerCase().includes(params.title.toLowerCase())) {
         return false;
       }
       
-      // Genre filter
       if (params.genre && series.genre && 
           !series.genre.toLowerCase().includes(params.genre.toLowerCase())) {
         return false;
       }
       
-      // Year filter
       if (series.year) {
         const year = parseInt(series.year);
         if (year < params.yearFrom || year > params.yearTo) {
@@ -190,7 +177,6 @@ const Series = () => {
         }
       }
       
-      // Rating filter
       if (series.rating) {
         const rating = parseFloat(series.rating);
         if (rating < params.ratingMin) {
@@ -203,8 +189,7 @@ const Series = () => {
     
     setFilteredSeries(results);
   };
-  
-  // Clear advanced search
+
   const clearAdvancedSearch = () => {
     setIsAdvancedSearch(false);
     setSearchParams({
@@ -215,7 +200,7 @@ const Series = () => {
       ratingMin: 0
     });
   };
-  
+
   if (!credentials) {
     return (
       <div className="container mx-auto p-4 max-w-7xl h-dvh flex flex-col">
@@ -259,7 +244,6 @@ const Series = () => {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white">
-      {/* Featured Banner */}
       {featuredSeries && (
         <div className="relative w-full h-64 md:h-80 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent z-10"></div>
@@ -311,7 +295,6 @@ const Series = () => {
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
         <div className="w-64 border-r border-gray-800 bg-black h-full flex-shrink-0 overflow-y-auto">
           <div>
             <div className="flex items-center mb-6 p-4">
@@ -333,7 +316,6 @@ const Series = () => {
                 </div>
               ) : (
                 <>
-                  {/* Advanced Search Button */}
                   <div className="mb-4">
                     <AdvancedSearch 
                       onSearch={applyAdvancedSearch}
@@ -381,10 +363,8 @@ const Series = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
-            {/* Series Suggestions Carousel */}
             {!isAdvancedSearch && (
               <div className="mb-8 animate-fade-in">
                 <h2 className="text-xl font-bold mb-4">Suggested Series</h2>
@@ -398,7 +378,6 @@ const Series = () => {
               </div>
             )}
 
-            {/* Series Grid */}
             <div className="mb-6 animate-fade-in">
               <h2 className="text-xl font-bold mb-4">
                 {isAdvancedSearch 
@@ -512,32 +491,29 @@ const Series = () => {
           </div>
         </div>
 
-        {/* Series Details Modal */}
-        {selectedSeries && (
-          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-            <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh] animate-scale-in">
-              <div className="p-4 flex justify-between items-center border-b border-gray-800">
-                <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
-                <button 
-                  onClick={() => setSelectedSeries(null)}
-                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="overflow-y-auto max-h-[calc(90vh-4rem)]">
-                <SeriesDetails 
-                  series={selectedSeries}
-                  onPlayEpisode={handlePlayEpisode}
-                  onLoadSeasons={handleLoadSeasons}
-                  isLoading={isLoading && !selectedSeries.seasons}
-                />
-              </div>
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh] animate-scale-in">
+            <div className="p-4 flex justify-between items-center border-b border-gray-800">
+              <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
+              <button 
+                onClick={() => setSelectedSeries(null)}
+                className="p-1 hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[calc(90vh-4rem)]">
+              <SeriesDetails 
+                series={selectedSeries}
+                onPlayEpisode={handlePlayEpisode}
+                onLoadSeasons={handleLoadSeasons}
+                isLoading={isLoading && !selectedSeries.seasons}
+              />
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import SeriesPlayer from "@/components/SeriesPlayer";
-import { Episode, Series } from "@/lib/types";
+import type { Episode, Series } from "@/lib/types";
 import { getSeriesById, getEpisodeById } from "@/lib/mediaService";
 import { ArrowLeft, SkipForward } from "lucide-react";
 import { toast } from "sonner";
