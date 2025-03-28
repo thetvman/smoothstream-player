@@ -1,9 +1,9 @@
 
-import React, { useRef, useEffect, useState } from "react";
-import ReactPlayer from 'react-player';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
 import { Channel } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import IOSVideoDisplay from "./IOSVideoDisplay";
+import StandardVideoDisplay from "./StandardVideoDisplay";
 
 interface VideoDisplayProps {
   channel: Channel;
@@ -27,28 +27,9 @@ interface VideoDisplayProps {
   }) => void;
 }
 
-const VideoDisplay: React.FC<VideoDisplayProps> = ({
-  channel,
-  playing,
-  muted,
-  volume,
-  onReady,
-  onDuration,
-  onProgress,
-  onEnded,
-  onError,
-  onPlay,
-  onPause,
-  isLoading,
-  isFullscreen = false,
-  onStatsUpdate
-}) => {
-  const playerRef = useRef<ReactPlayer>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const isMobile = useIsMobile();
+const VideoDisplay: React.FC<VideoDisplayProps> = (props) => {
   const [isIOS, setIsIOS] = useState(false);
-  const [isCollectingStats, setIsCollectingStats] = useState(false);
-  const statsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     const checkIOS = () => {
@@ -59,202 +40,27 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     setIsIOS(checkIOS());
   }, []);
 
-  useEffect(() => {
-    // Clear any existing timeout when component unmounts
-    return () => {
-      if (statsTimeoutRef.current) {
-        clearTimeout(statsTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!onStatsUpdate) return;
-    
-    const collectStats = () => {
-      if (!isCollectingStats) {
-        // Start collecting stats for a limited time
-        setIsCollectingStats(true);
-        
-        if (statsTimeoutRef.current) {
-          clearTimeout(statsTimeoutRef.current);
-        }
-        
-        // Stop collecting stats after 10 seconds
-        statsTimeoutRef.current = setTimeout(() => {
-          setIsCollectingStats(false);
-          // Send null stats after timeout to hide the stats display
-          onStatsUpdate({
-            resolution: undefined,
-            frameRate: undefined,
-            audioBitrate: undefined,
-            audioChannels: undefined
-          });
-        }, 10000); // 10 seconds
-      }
-      
-      const video = videoRef.current;
-      if (!video) {
-        const player = playerRef.current;
-        if (player) {
-          const internalPlayer = player.getInternalPlayer();
-          if (internalPlayer instanceof HTMLVideoElement) {
-            collectVideoStats(internalPlayer);
-          }
-        }
-        return;
-      }
-      
-      collectVideoStats(video);
-    };
-    
-    const collectVideoStats = (videoElement: HTMLVideoElement) => {
-      try {
-        const stats = {
-          resolution: videoElement.videoWidth && videoElement.videoHeight 
-            ? `${videoElement.videoWidth}×${videoElement.videoHeight}` 
-            : undefined,
-          frameRate: undefined as number | undefined,
-          audioBitrate: undefined as string | undefined,
-          audioChannels: undefined as string | undefined,
-        };
-        
-        if ('webkitVideoDecodedByteCount' in videoElement) {
-          const webkitVideoDecodedFrameCount = (videoElement as any).webkitVideoDecodedFrameCount;
-          if (typeof webkitVideoDecodedFrameCount === 'number') {
-            const lastStats = (videoElement as any)._lastStats || { 
-              time: Date.now(),
-              frames: webkitVideoDecodedFrameCount 
-            };
-            
-            const now = Date.now();
-            const timeDiff = (now - lastStats.time) / 1000;
-            if (timeDiff > 0) {
-              const frameDiff = webkitVideoDecodedFrameCount - lastStats.frames;
-              stats.frameRate = frameDiff / timeDiff;
-              
-              (videoElement as any)._lastStats = {
-                time: now,
-                frames: webkitVideoDecodedFrameCount
-              };
-            }
-          }
-        }
-        
-        stats.audioChannels = 'Stereo';  // Default assumption
-        stats.audioBitrate = '128 kbps';  // Default assumption
-        
-        onStatsUpdate(stats);
-      } catch (error) {
-        console.error("Error collecting video stats:", error);
-      }
-    };
-    
-    // Only collect and update stats when actively collecting
-    if (isCollectingStats) {
-      const intervalId = setInterval(collectStats, 1000);
-      return () => clearInterval(intervalId);
-    } else {
-      // Start collection when this effect runs
-      collectStats();
-    }
-  }, [onStatsUpdate, isCollectingStats]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    const handleTimeUpdate = () => {
-      onProgress({ playedSeconds: video.currentTime });
-    };
-    
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("play", onPlay);
-    video.addEventListener("playing", onPlay);
-    video.addEventListener("pause", onPause);
-    video.addEventListener("ended", onEnded);
-    video.addEventListener("error", onError);
-    
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("playing", onPlay);
-      video.removeEventListener("pause", onPause);
-      video.removeEventListener("ended", onEnded);
-      video.removeEventListener("error", onError);
-    };
-  }, [onPlay, onPause, onEnded, onError, onProgress]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || isIOS) return;
-    
-    if (playing) {
-      video.play().catch(err => {
-        console.error("Error playing video:", err);
-      });
-    } else {
-      video.pause();
-    }
-    
-    video.volume = volume;
-    video.muted = muted;
-  }, [playing, volume, muted, isIOS]);
-
   if (isIOS) {
     return (
-      <>
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-            <Loader2 className="h-10 w-10 animate-spin text-white" />
-          </div>
-        )}
-        <video
-          ref={videoRef}
-          src={channel.url}
-          className="w-full h-full"
-          controls
-          playsInline
-          autoPlay={playing}
-          muted={muted}
-          onLoadedMetadata={(e) => {
-            onReady();
-            onDuration(e.currentTarget.duration || 0);
-          }}
-          onEnded={onEnded}
-          onError={onError}
-          onPlay={onPlay}
-          onPause={onPause}
-        />
-      </>
+      <IOSVideoDisplay
+        channel={props.channel}
+        playing={props.playing}
+        muted={props.muted}
+        onReady={props.onReady}
+        onDuration={props.onDuration}
+        onEnded={props.onEnded}
+        onError={props.onError}
+        onPlay={props.onPlay}
+        onPause={props.onPause}
+        isLoading={props.isLoading}
+      />
     );
   }
 
   return (
-    <>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-          <Loader2 className="h-10 w-10 animate-spin text-white" />
-        </div>
-      )}
-      <ReactPlayer
-        ref={playerRef}
-        url={channel.url}
-        playing={playing}
-        muted={muted}
-        volume={volume}
-        width="100%"
-        height="100%"
-        style={{ backgroundColor: 'black' }}
-        onReady={onReady}
-        onDuration={onDuration}
-        onProgress={onProgress}
-        onEnded={onEnded}
-        onError={onError}
-        onPlay={onPlay}
-        onPause={onPause}
-      />
-    </>
+    <StandardVideoDisplay
+      {...props}
+    />
   );
 };
 
