@@ -13,7 +13,6 @@ const EPGSettings = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load saved EPG URL when component mounts
   useEffect(() => {
     const savedUrl = getCustomEpgUrl();
     if (savedUrl) {
@@ -28,15 +27,14 @@ const EPGSettings = () => {
       return false;
     }
     
-    // Validate that the URL starts with allowed domains
     if (!(url.startsWith('http://amri.wtf') || 
           url.startsWith('http://deliverynetwork.online') || 
-          url.startsWith('https://deliverynetwork.online'))) {
+          url.startsWith('https://deliverynetwork.online') ||
+          url.startsWith('https://xerotv.vip'))) {
       setValidationError('Only URLs from our allowed domains are permitted');
       return false;
     }
     
-    // Additional URL validation
     try {
       new URL(url);
       setValidationError(null);
@@ -48,14 +46,12 @@ const EPGSettings = () => {
   };
 
   const handleSave = () => {
-    // Validate the URL
     if (!validateUrl(epgUrl)) {
-      return; // Don't proceed if validation fails
+      return;
     }
     
     const result = setCustomEpgUrl(epgUrl);
     if (result.isChanged) {
-      // Clear cache when URL changes
       clearCache();
     }
     
@@ -83,7 +79,6 @@ const EPGSettings = () => {
     const newUrl = e.target.value;
     setEpgUrl(newUrl);
     
-    // Clear validation error when user starts typing
     if (validationError) {
       setValidationError(null);
     }
@@ -108,7 +103,7 @@ const EPGSettings = () => {
             Configure your Electronic Program Guide (EPG) source.
             You must provide a custom XMLTV URL for your channels.
             <span className="block mt-1 font-medium text-amber-500">
-              Note: Only URLs from amri.wtf or deliverynetwork.online are allowed.
+              Note: Only URLs from amri.wtf, deliverynetwork.online, or xerotv.vip are allowed.
             </span>
           </DialogDescription>
         </DialogHeader>

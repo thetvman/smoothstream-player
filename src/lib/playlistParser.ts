@@ -107,7 +107,10 @@ export const parsePlaylistFile = (file: File): Promise<Playlist> => {
  * Only URLs from allowed domains are allowed
  */
 export const validateAllowedUrl = (url: string): boolean => {
-  return url.startsWith('http://amri.wtf') || url.startsWith('http://deliverynetwork.online') || url.startsWith('https://deliverynetwork.online');
+  return url.startsWith('http://amri.wtf') || 
+         url.startsWith('http://deliverynetwork.online') || 
+         url.startsWith('https://deliverynetwork.online') ||
+         url.startsWith('https://xerotv.vip');
 };
 
 /**
