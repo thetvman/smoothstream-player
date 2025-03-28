@@ -4,6 +4,10 @@ import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { fetchEPGData, type EPGProgram } from "@/lib/epg";
+import { useToast } from "@/hooks/use-toast";
+
+// Maximum number of channels to store in localStorage to prevent quota issues
+const MAX_STORED_CHANNELS = 1000;
 
 export function usePlaylist() {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
@@ -13,6 +17,7 @@ export function usePlaylist() {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const { toast } = useToast();
 
   // Load saved playlist from localStorage
   useEffect(() => {
@@ -43,13 +48,50 @@ export function usePlaylist() {
   // Save playlist and selectedChannel to localStorage
   useEffect(() => {
     if (playlist) {
-      localStorage.setItem("iptv-playlist", JSON.stringify(playlist));
+      try {
+        // Create a storage-friendly version of the playlist with limited channels
+        const storagePlaylist: Playlist = {
+          ...playlist,
+          channels: playlist.channels.length > MAX_STORED_CHANNELS 
+            ? playlist.channels.slice(0, MAX_STORED_CHANNELS) 
+            : playlist.channels
+        };
+        
+        // If we had to limit the channels, add a note to the name
+        if (playlist.channels.length > MAX_STORED_CHANNELS) {
+          storagePlaylist.name = `${playlist.name} (First ${MAX_STORED_CHANNELS} of ${playlist.channels.length} channels)`;
+        }
+        
+        localStorage.setItem("iptv-playlist", JSON.stringify(storagePlaylist));
+        
+        // Show warning if channels were truncated for storage
+        if (playlist.channels.length > MAX_STORED_CHANNELS && !localStorage.getItem("channel-limit-warned")) {
+          toast({
+            title: "Large Playlist Detected",
+            description: `Your playlist has ${playlist.channels.length.toLocaleString()} channels. Only the first ${MAX_STORED_CHANNELS.toLocaleString()} will be saved between sessions to prevent storage issues.`,
+            duration: 6000,
+          });
+          localStorage.setItem("channel-limit-warned", "true");
+        }
+      } catch (error) {
+        console.error("Failed to save playlist to localStorage:", error);
+        toast({
+          title: "Storage Error",
+          description: "Unable to save your playlist due to browser storage limitations. Your channels will be available for this session only.",
+          variant: "destructive",
+          duration: 6000,
+        });
+      }
     }
     
     if (selectedChannel) {
-      localStorage.setItem("iptv-last-channel", selectedChannel.id);
+      try {
+        localStorage.setItem("iptv-last-channel", selectedChannel.id);
+      } catch (error) {
+        console.error("Failed to save selected channel to localStorage:", error);
+      }
     }
-  }, [playlist, selectedChannel]);
+  }, [playlist, selectedChannel, toast]);
 
   // Fetch EPG data when selectedChannel changes
   useEffect(() => {
@@ -86,6 +128,12 @@ export function usePlaylist() {
       }
       
       setIsLoading(false);
+      
+      // Show info about the loaded playlist
+      toast({
+        title: "Playlist Loaded",
+        description: `${newPlaylist.name} with ${newPlaylist.channels.length.toLocaleString()} channels has been loaded successfully.`,
+      });
     }, 50);
   };
 
@@ -96,6 +144,7 @@ export function usePlaylist() {
   const handleClearPlaylist = () => {
     localStorage.removeItem("iptv-playlist");
     localStorage.removeItem("iptv-last-channel");
+    localStorage.removeItem("channel-limit-warned");
     setPlaylist(null);
     setSelectedChannel(null);
     setPaginatedChannels(null);
