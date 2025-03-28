@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Channel } from "@/lib/types";
-import { Clock, Calendar, Tv } from "lucide-react";
+import { Clock, Calendar, Tv, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EPGProgram } from "@/lib/epg";
+import { Badge } from "@/components/ui/badge";
 
 interface EPGGuideProps {
   channel: Channel | null;
@@ -65,7 +66,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   const nextPrograms = epgData
     .filter(program => program.start > now)
     .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .slice(0, 5); // Show more upcoming programs (increased from 3 to 5)
+    .slice(0, 8); // Show more upcoming programs (increased from 5 to 8)
 
   // Format time function
   const formatTime = (date: Date) => {
@@ -84,25 +85,31 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   };
 
   return (
-    <div className="mt-4 space-y-6">
+    <div className="mt-4 space-y-8">
       {currentProgram && (
-        <div className="rounded-md bg-secondary/40 p-4 shadow-inner">
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium">
-              NOW PLAYING: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
-              <span className="ml-2 text-muted-foreground">
-                ({calculateDuration(currentProgram.start, currentProgram.end)} min)
-              </span>
+        <div className="rounded-md bg-secondary/40 p-5 shadow-inner">
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30 py-1 px-3">
+              <Clock className="w-4 h-4 mr-1" />
+              NOW PLAYING
+            </Badge>
+            <span className="text-sm font-medium text-muted-foreground">
+              {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
+            </span>
+            <span className="text-xs bg-background/30 px-2 py-0.5 rounded-full">
+              {calculateDuration(currentProgram.start, currentProgram.end)} min
             </span>
           </div>
-          <h3 className="text-lg font-medium mt-2">{currentProgram.title}</h3>
+          <h3 className="text-xl font-bold mt-2">{currentProgram.title}</h3>
           {currentProgram.description && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
-              {currentProgram.description}
-            </p>
+            <div className="mt-3 bg-black/20 p-3 rounded-md border border-gray-800">
+              <p className="text-sm text-muted-foreground">
+                {currentProgram.description}
+              </p>
+            </div>
           )}
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="flex items-center mt-3 text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3 mr-1" />
             {formatDate(currentProgram.start)}
           </div>
         </div>
@@ -112,24 +119,37 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
         <div className="space-y-4">
           <h4 className="text-base font-medium text-muted-foreground flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            Up Next
+            Upcoming Programs
           </h4>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3">
             {nextPrograms.map((program, index) => (
-              <div key={index} className="text-sm border-l-2 border-primary/30 pl-3 py-1">
-                <div className="text-sm text-muted-foreground flex justify-between">
-                  <span>{formatTime(program.start)} - {formatTime(program.end)}</span>
-                  <span className="text-xs text-muted-foreground">
+              <div 
+                key={index} 
+                className={`text-sm border-l-2 ${index === 0 ? 'border-primary' : 'border-primary/30'} pl-4 py-2 hover:bg-secondary/10 rounded-r-md transition-colors`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="font-medium text-base">{program.title}</div>
+                  <div className="text-xs bg-background/30 px-2 py-0.5 rounded-full">
                     {calculateDuration(program.start, program.end)} min
-                  </span>
+                  </div>
                 </div>
-                <div className="font-medium text-base mt-1">{program.title}</div>
+                <div className="text-sm text-muted-foreground flex items-center mt-1">
+                  <Clock className="w-3 h-3 mr-1 text-muted-foreground" />
+                  {formatTime(program.start)} - {formatTime(program.end)}
+                </div>
                 {program.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {program.description}
-                  </p>
+                  <div className="mt-2 group relative">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-primary">
+                      <Info className="w-3 h-3" />
+                      <span>Show description</span>
+                    </div>
+                    <div className="hidden group-hover:block absolute z-20 top-0 left-full ml-2 w-64 p-3 bg-popover border border-border rounded-md shadow-md">
+                      <p className="text-xs">{program.description}</p>
+                    </div>
+                  </div>
                 )}
-                <div className="text-xs text-muted-foreground/70 mt-1">
+                <div className="text-xs text-muted-foreground/70 mt-1 flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
                   {formatDate(program.start)}
                 </div>
               </div>
