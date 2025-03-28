@@ -8,12 +8,14 @@ interface SeriesPlayerProps {
   episode: Episode | null;
   series: Series | null;
   autoPlay?: boolean;
+  onEpisodeEnded?: () => void;
 }
 
 const SeriesPlayer: React.FC<SeriesPlayerProps> = ({ 
   episode,
   series,
-  autoPlay = true 
+  autoPlay = true,
+  onEpisodeEnded
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   
@@ -37,10 +39,20 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     group: series?.group
   } : null;
 
+  const handleVideoEnded = () => {
+    if (onEpisodeEnded) {
+      onEpisodeEnded();
+    }
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
-        <VideoPlayer channel={channel} autoPlay={autoPlay} />
+        <VideoPlayer 
+          channel={channel} 
+          autoPlay={autoPlay} 
+          onEnded={handleVideoEnded}
+        />
         
         {/* Show info button */}
         <button 

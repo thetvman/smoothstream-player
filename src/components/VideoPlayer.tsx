@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Channel, PlayerState } from "@/lib/types";
@@ -8,9 +7,10 @@ import LoadingSpinner from "./common/LoadingSpinner";
 interface VideoPlayerProps {
   channel: Channel | null;
   autoPlay?: boolean;
+  onEnded?: () => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true, onEnded }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -230,6 +230,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
+    const handleEnded = () => {
+      if (onEnded) {
+        onEnded();
+      }
+    };
+    
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("play", handlePlay);
     video.addEventListener("playing", handlePlay);
@@ -238,6 +244,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
     video.addEventListener("loadstart", handleLoadStart);
     video.addEventListener("canplay", handleCanPlay);
     video.addEventListener("error", handleError);
+    video.addEventListener("ended", handleEnded);
     
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
@@ -248,8 +255,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = true }) =
       video.removeEventListener("loadstart", handleLoadStart);
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [onEnded]);
   
   const handlePlayPause = () => {
     const video = videoRef.current;
