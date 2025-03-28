@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Channel, ChannelListProps } from "@/lib/types";
 import { Search, Tv, Clock, Calendar, ChevronDown, ChevronUp } from "lucide-react";
@@ -37,7 +36,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   
-  // Filter channels based on search term
   useEffect(() => {
     if (!channels) {
       setFilteredChannels([]);
@@ -49,7 +47,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
       (channel.group && channel.group.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     
-    // Sort the filtered channels
     const sorted = [...filtered].sort((a, b) => {
       if (sortField === "name") {
         return sortDirection === "asc" 
@@ -68,12 +65,10 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
     setFilteredChannels(sorted);
   }, [channels, searchTerm, sortField, sortDirection]);
   
-  // Format time for EPG display
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Get current program for a channel
   const getCurrentProgram = (channelId: string) => {
     if (!epgData[channelId]) return null;
     
@@ -83,7 +78,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
     );
   };
   
-  // Get next program for a channel
   const getNextProgram = (channelId: string) => {
     if (!epgData[channelId]) return null;
     
@@ -93,7 +87,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
       .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
   };
   
-  // Load EPG data for a channel
   const loadEpgForChannel = async (channel: Channel) => {
     if (!channel.epg_channel_id || epgData[channel.id] || loadingEpg[channel.id]) {
       return;
@@ -113,7 +106,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
     }
   };
   
-  // Handle sort change
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -123,7 +115,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
     }
   };
   
-  // Render sort icons
   const renderSortIcon = (field: string) => {
     if (sortField !== field) return null;
     
@@ -132,13 +123,10 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
       : <ChevronDown className="h-4 w-4 ml-1 inline" />;
   };
   
-  // Render loading skeleton
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
         <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />
       </div>
@@ -146,22 +134,25 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-card rounded-lg border border-border">
-      {/* Header with search */}
-      <div className="p-3 border-b border-border">
-        <div className="relative mb-3">
+    <div className="flex flex-col h-full overflow-hidden bg-card">
+      <div className="p-2 border-b border-border flex items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="text"
             placeholder="Search channels..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 text-sm"
+            className="w-full pl-9 text-sm h-8"
           />
         </div>
+        {playlist && (
+          <div className="ml-4 text-xs text-muted-foreground shrink-0">
+            <span className="font-medium">{filteredChannels.length}</span> of {playlist.channels.length} channels
+          </div>
+        )}
       </div>
       
-      {/* Table view of channels */}
       <ScrollArea className="flex-1">
         <Table>
           <TableHeader className="sticky top-0 z-10">
@@ -186,13 +177,12 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
           <TableBody>
             {filteredChannels.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                   No channels found
                 </TableCell>
               </TableRow>
             ) : (
               filteredChannels.map(channel => {
-                // Try to load EPG data when the channel is rendered
                 if (channel.epg_channel_id && !epgData[channel.id] && !loadingEpg[channel.id]) {
                   loadEpgForChannel(channel);
                 }
@@ -203,33 +193,33 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
                 return (
                   <TableRow 
                     key={channel.id}
-                    className={`cursor-pointer ${selectedChannel?.id === channel.id ? 'bg-accent' : ''}`}
+                    className={`cursor-pointer ${selectedChannel?.id === channel.id ? 'bg-accent' : ''} h-12`}
                     onClick={() => onSelectChannel(channel)}
                   >
-                    <TableCell className="p-2">
+                    <TableCell className="p-1 w-10">
                       {channel.logo ? (
                         <img 
                           src={channel.logo} 
                           alt={channel.name} 
-                          className="w-8 h-8 object-contain rounded"
+                          className="w-7 h-7 object-contain rounded"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       ) : (
-                        <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center text-xs font-medium">
+                        <div className="w-7 h-7 bg-secondary rounded flex items-center justify-center text-xs font-medium">
                           {channel.name.substring(0, 2).toUpperCase()}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-sm py-1">
                       <div className="flex items-center">
-                        {channel.name}
+                        <span className="truncate max-w-[150px]">{channel.name}</span>
                         {channel.epg_channel_id && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Tv className="w-3 h-3 text-primary ml-2" />
+                                <Tv className="w-3 h-3 text-primary ml-2 shrink-0" />
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>EPG available</p>
@@ -239,22 +229,22 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1">
                       {channel.group ? (
-                        <Badge variant="outline" className="font-normal">
+                        <Badge variant="outline" className="font-normal text-xs">
                           {channel.group}
                         </Badge>
                       ) : <span className="text-muted-foreground text-xs">—</span>}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1">
                       {loadingEpg[channel.id] ? (
-                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-4 w-24" />
                       ) : channel.epg_channel_id ? (
                         currentProgram ? (
                           <div className="flex items-center">
-                            <Clock className="w-3 h-3 text-primary mr-1.5" />
+                            <Clock className="w-3 h-3 text-primary mr-1.5 shrink-0" />
                             <div>
-                              <div className="text-sm font-medium truncate max-w-[180px]">
+                              <div className="text-xs font-medium truncate max-w-[150px]">
                                 {currentProgram.title}
                               </div>
                               <div className="text-xs text-muted-foreground">
@@ -269,14 +259,14 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
                         <span className="text-muted-foreground text-xs">No EPG</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1">
                       {loadingEpg[channel.id] ? (
-                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-4 w-24" />
                       ) : channel.epg_channel_id && nextProgram ? (
                         <div className="flex items-center">
-                          <Calendar className="w-3 h-3 text-muted-foreground mr-1.5" />
+                          <Calendar className="w-3 h-3 text-muted-foreground mr-1 shrink-0" />
                           <div>
-                            <div className="text-sm truncate max-w-[180px]">
+                            <div className="text-xs truncate max-w-[150px]">
                               {nextProgram.title}
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -295,17 +285,6 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
           </TableBody>
         </Table>
       </ScrollArea>
-      
-      {/* Footer with playlist info */}
-      {playlist && (
-        <div className="p-3 border-t border-border bg-secondary/30">
-          <div className="text-xs text-muted-foreground">
-            <span className="font-medium">{playlist.name}</span> • {playlist.channels.length} channels
-            {filteredChannels.length !== playlist.channels.length && 
-              ` • ${filteredChannels.length} filtered`}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

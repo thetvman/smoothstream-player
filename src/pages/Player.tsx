@@ -135,10 +135,10 @@ const Player = () => {
       </div>
       
       <div className="h-full flex flex-col">
-        {/* Main content area with video and channel table */}
-        <div className={`flex-1 ${showInfo ? (isMobile ? 'h-1/2' : 'pr-[600px]') : ''} transition-all duration-300`}>
-          {/* Video Player */}
-          <div className="h-2/3 w-full flex items-center justify-center p-4">
+        {/* Main content area with video player */}
+        <div className={`flex-1 flex flex-col ${showInfo ? (isMobile ? 'h-1/2' : 'pr-[600px]') : ''} transition-all duration-300`}>
+          {/* Video Player (takes up top portion) */}
+          <div className="flex-1 w-full flex items-center justify-center p-4">
             <div className="w-full max-w-screen-2xl mx-auto relative">
               <VideoPlayer channel={channel} autoPlay />
               
@@ -153,9 +153,9 @@ const Player = () => {
             </div>
           </div>
           
-          {/* Channel table under video */}
+          {/* Channel table below video */}
           {playlist && (
-            <div className="h-1/3 border-t border-gray-800 bg-gray-900 overflow-hidden">
+            <div className="h-72 border-t border-gray-800 bg-gray-900 overflow-hidden">
               <ChannelTableView
                 playlist={playlist}
                 channels={playlist.channels}
