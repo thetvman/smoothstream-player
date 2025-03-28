@@ -8,7 +8,6 @@ import { ArrowLeft, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
-import ProxySettings from "@/components/ProxySettings";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { fetchEPGData, EPGProgram } from "@/lib/epg";
@@ -113,7 +112,6 @@ const Player = () => {
       </div>
       
       <div className="absolute top-6 right-6 z-10 flex gap-2">
-        <ProxySettings />
         <EPGSettings />
         
         <Button

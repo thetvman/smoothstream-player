@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -8,7 +7,6 @@ import ChannelTableView from "@/components/ChannelTableView";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
-import ProxySettings from "@/components/ProxySettings";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
@@ -17,7 +15,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Film, Tv, BarChart2, List, Table as TableIcon, Settings } from "lucide-react";
+import { Moon, Sun, Film, Tv, BarChart2, List, Table as TableIcon } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -247,7 +245,6 @@ const Index = () => {
               </Button>
             </div>
             <div className="flex items-center gap-2">
-              <ProxySettings />
               <EPGSettings />
               <Button
                 variant="outline"

@@ -1,6 +1,5 @@
 import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
-import { getProxiedUrl, needsProxying } from "./proxyUtils";
 
 /**
  * Parses an M3U8 playlist string into a structured Playlist object
@@ -127,12 +126,9 @@ export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Prom
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
-    // Apply proxy if needed and running on HTTPS
-    const fetchUrl = needsProxying() ? getProxiedUrl(url) : url;
-    
     // Try direct fetch first
     try {
-      const response = await fetch(fetchUrl, { 
+      const response = await fetch(url, { 
         signal: controller.signal,
         headers: {
           'Accept': '*/*',
@@ -154,17 +150,7 @@ export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Prom
         throw new Error("Invalid playlist format");
       }
       
-      // Parse the playlist normally
       const playlist = parseM3U8(content, name);
-      
-      // Apply proxy to channel URLs if needed
-      if (needsProxying()) {
-        playlist.channels = playlist.channels.map(channel => ({
-          ...channel,
-          proxy_required: channel.url.startsWith('http:')
-        }));
-      }
-      
       console.log("Playlist parsed successfully, channels:", playlist.channels.length);
       return playlist;
     } catch (error) {
