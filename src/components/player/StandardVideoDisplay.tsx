@@ -57,7 +57,7 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
     if (onStatsUpdate) {
       startCollectingStats();
     }
-  }, [onStatsUpdate]);
+  }, [onStatsUpdate, startCollectingStats]);
 
   return (
     <>
@@ -82,6 +82,17 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
         onError={onError}
         onPlay={onPlay}
         onPause={onPause}
+        config={{
+          file: {
+            forceHLS: channel.url.includes('.m3u8'),
+            hlsOptions: {
+              backBufferLength: 10,
+              maxBufferLength: 15,
+              maxMaxBufferLength: 30,
+              lowLatencyMode: false
+            }
+          }
+        }}
       />
     </>
   );

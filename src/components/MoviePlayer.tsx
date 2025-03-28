@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
@@ -80,14 +81,15 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
       if (isHlsStream && Hls.isSupported()) {
         const hls = new Hls({
           startLevel: -1,
-          manifestLoadingMaxRetry: 5,
-          levelLoadingMaxRetry: 5,
-          fragLoadingMaxRetry: 5,
+          manifestLoadingMaxRetry: 3,
+          levelLoadingMaxRetry: 3,
+          fragLoadingMaxRetry: 3,
           lowLatencyMode: false,
           enableWorker: true,
-          backBufferLength: 30,
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60
+          // Reduced buffer settings
+          backBufferLength: 10,
+          maxBufferLength: 15,
+          maxMaxBufferLength: 30
         });
         
         hlsRef.current = hls;
