@@ -1,0 +1,34 @@
+
+server {
+    listen 80;
+    server_name web.deliverynetwork.online;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name web.deliverynetwork.online;
+    root /var/www/smoothstream/dist;
+
+    # SSL certificates will be added here by certbot
+    # ssl_certificate /etc/letsencrypt/live/web.deliverynetwork.online/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/web.deliverynetwork.online/privkey.pem;
+    
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+}
