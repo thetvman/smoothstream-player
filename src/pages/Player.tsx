@@ -126,7 +126,7 @@ const Player = () => {
       </div>
       
       <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
-        <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-4`}>
+        <div className={`${showInfo ? (isMobile ? 'h-1/2' : 'flex-1 pr-[400px]') : 'flex-1'} flex items-center justify-center p-4 transition-all duration-300`}>
           <div className="w-full max-w-screen-2xl mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />
             
@@ -142,9 +142,13 @@ const Player = () => {
         </div>
         
         {showInfo && (
-          <div className={`${isMobile ? 'h-1/2' : 'w-80'} bg-gray-900 ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up`}>
-            <ScrollArea className="h-full p-4">
-              <div className="flex justify-between items-center mb-4">
+          <div 
+            className={`${isMobile ? 'h-1/2' : 'fixed top-0 bottom-0 right-0 w-[400px]'} bg-gray-900 
+            ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden 
+            transition-all duration-300 animate-slide-up z-10`}
+          >
+            <ScrollArea className="h-full p-6">
+              <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-white">Channel Info</h2>
                 <Button 
                   variant="ghost" 
@@ -156,9 +160,9 @@ const Player = () => {
                 </Button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium text-white">{channel.name}</h3>
+                  <h3 className="text-xl font-medium text-white">{channel.name}</h3>
                   {channel.group && (
                     <div className="text-sm text-gray-400 mt-1">{channel.group}</div>
                   )}
@@ -168,11 +172,11 @@ const Player = () => {
                 </div>
 
                 {channel.logo && (
-                  <div className="flex justify-center p-2 bg-black/30 rounded-lg">
+                  <div className="flex justify-center p-4 bg-black/30 rounded-lg">
                     <img 
                       src={channel.logo} 
                       alt={`${channel.name} logo`} 
-                      className="h-20 object-contain" 
+                      className="h-24 object-contain" 
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -180,8 +184,8 @@ const Player = () => {
                   </div>
                 )}
                 
-                <div className="pt-2 border-t border-gray-800">
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Program Guide</h4>
+                <div className="pt-4 border-t border-gray-800">
+                  <h4 className="text-lg font-medium text-gray-300 mb-4">Program Guide</h4>
                   <EPGGuide 
                     channel={channel} 
                     epgData={epgData} 

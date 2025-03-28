@@ -14,17 +14,17 @@ interface EPGGuideProps {
 const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="mt-2 space-y-2">
-        <Skeleton className="h-5 w-1/3" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-12 w-3/4" />
+      <div className="mt-4 space-y-4">
+        <Skeleton className="h-6 w-1/3" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-16 w-3/4" />
       </div>
     );
   }
 
   if (!channel) {
     return (
-      <div className="mt-2 py-2 text-sm text-muted-foreground">
+      <div className="mt-4 py-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Tv className="w-4 h-4" />
           <p>Select a channel to view program information.</p>
@@ -35,7 +35,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
   if (!channel.epg_channel_id) {
     return (
-      <div className="mt-2 py-2 text-sm text-muted-foreground">
+      <div className="mt-4 py-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Tv className="w-4 h-4" />
           <p>No program information available for this channel.</p>
@@ -46,7 +46,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
 
   if (!epgData || epgData.length === 0) {
     return (
-      <div className="mt-2 py-2 text-sm text-muted-foreground">
+      <div className="mt-4 py-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
           <p>Loading program information for {channel.name}...</p>
@@ -65,7 +65,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   const nextPrograms = epgData
     .filter(program => program.start > now)
     .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .slice(0, 3); // Show the next 3 upcoming programs
+    .slice(0, 5); // Show more upcoming programs (increased from 3 to 5)
 
   // Format time function
   const formatTime = (date: Date) => {
@@ -84,52 +84,57 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
   };
 
   return (
-    <div className="mt-2 space-y-3">
+    <div className="mt-4 space-y-6">
       {currentProgram && (
-        <div className="rounded-md bg-secondary/40 p-3">
+        <div className="rounded-md bg-secondary/40 p-4 shadow-inner">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium">
-              NOW: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
+            <Clock className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium">
+              NOW PLAYING: {formatTime(currentProgram.start)} - {formatTime(currentProgram.end)}
               <span className="ml-2 text-muted-foreground">
                 ({calculateDuration(currentProgram.start, currentProgram.end)} min)
               </span>
             </span>
           </div>
-          <h3 className="font-medium mt-1">{currentProgram.title}</h3>
+          <h3 className="text-lg font-medium mt-2">{currentProgram.title}</h3>
           {currentProgram.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
               {currentProgram.description}
             </p>
           )}
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-muted-foreground mt-2">
             {formatDate(currentProgram.start)}
           </div>
         </div>
       )}
 
       {nextPrograms.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+        <div className="space-y-4">
+          <h4 className="text-base font-medium text-muted-foreground flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
             Up Next
           </h4>
-          {nextPrograms.map((program, index) => (
-            <div key={index} className="text-sm border-l-2 border-primary/30 pl-2">
-              <div className="text-xs text-muted-foreground flex justify-between">
-                <span>{formatTime(program.start)} - {formatTime(program.end)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {calculateDuration(program.start, program.end)} min
-                </span>
+          <div className="space-y-4">
+            {nextPrograms.map((program, index) => (
+              <div key={index} className="text-sm border-l-2 border-primary/30 pl-3 py-1">
+                <div className="text-sm text-muted-foreground flex justify-between">
+                  <span>{formatTime(program.start)} - {formatTime(program.end)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {calculateDuration(program.start, program.end)} min
+                  </span>
+                </div>
+                <div className="font-medium text-base mt-1">{program.title}</div>
+                {program.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {program.description}
+                  </p>
+                )}
+                <div className="text-xs text-muted-foreground/70 mt-1">
+                  {formatDate(program.start)}
+                </div>
               </div>
-              <div className="font-medium">{program.title}</div>
-              {program.description && (
-                <p className="text-xs text-muted-foreground line-clamp-1">
-                  {program.description}
-                </p>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
