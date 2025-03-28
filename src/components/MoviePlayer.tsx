@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
@@ -34,7 +35,13 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
   
   useEffect(() => {
     if (movie?.url) {
-      setStreamUrl(movie.url);
+      // Ensure movie URL uses HTTPS to prevent mixed content warnings
+      let secureUrl = movie.url;
+      if (secureUrl.startsWith('http:')) {
+        secureUrl = secureUrl.replace('http:', 'https:');
+        console.log('Converted movie URL to HTTPS:', secureUrl);
+      }
+      setStreamUrl(secureUrl);
       setError(null);
     }
   }, [movie]);
