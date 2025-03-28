@@ -72,45 +72,17 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   return (
     <div 
       className={cn(
-        "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white flex items-center",
+        "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent text-white flex flex-col gap-2 z-20",
         isMobile ? "transition-opacity duration-300" : "",
         isMobile && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"
       )}
+      style={{ 
+        marginBottom: isFullscreen ? '16px' : '0', // Add padding in fullscreen mode
+        paddingBottom: isFullscreen ? '8px' : '4px'
+      }}
     >
-      <div className="flex items-center gap-2 mr-4">
-        <Button variant="ghost" size="icon" onClick={onPlayPause}>
-          {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </Button>
-
-        {!isMobile && (
-          <>
-            <Button variant="ghost" size="icon" onClick={onMuteUnmute}>
-              {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </Button>
-
-            <div className="w-24 hidden sm:block">
-              <Slider
-                value={[muted ? 0 : volume]}
-                max={1}
-                step={0.01}
-                onValueChange={onVolumeChange}
-              />
-            </div>
-          </>
-        )}
-      </div>
-
-      {isMobile ? (
-        <div className="flex-1 text-xs">
-          <span>{formatTime(currentTime)}</span>
-        </div>
-      ) : (
-        <div className="flex-1 text-sm">
-          <span>{formatTime(currentTime)}</span> / <span>{formatTime(duration)}</span>
-        </div>
-      )}
-
-      <div className={cn("mr-4", isMobile ? "w-24" : "w-48")}>
+      {/* Progress slider */}
+      <div className="w-full px-2">
         <Slider
           value={[currentTime]}
           max={duration || 1}
@@ -118,12 +90,51 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           onValueChange={onSeek}
           onMouseDown={onSeekStart}
           onValueCommit={onSeekEnd}
+          className={cn(isFullscreen ? "h-2" : "h-1.5")} // Slightly larger in fullscreen
         />
       </div>
+      
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onPlayPause} className={isFullscreen ? "h-10 w-10" : ""}>
+            {playing ? <Pause className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : <Play className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />}
+          </Button>
 
-      <Button variant="ghost" size="icon" onClick={onToggleFullscreen}>
-        {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-      </Button>
+          {!isMobile && (
+            <>
+              <Button variant="ghost" size="icon" onClick={onMuteUnmute} className={isFullscreen ? "h-10 w-10" : ""}>
+                {muted ? <VolumeX className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : <Volume2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />}
+              </Button>
+
+              <div className={cn("hidden sm:block", isFullscreen ? "w-32" : "w-24")}>
+                <Slider
+                  value={[muted ? 0 : volume]}
+                  max={1}
+                  step={0.01}
+                  onValueChange={onVolumeChange}
+                />
+              </div>
+            </>
+          )}
+          
+          <div className={cn("text-sm", isFullscreen && "text-base ml-2")}>
+            <span>{formatTime(currentTime)}</span> 
+            {!isMobile && <span> / {formatTime(duration)}</span>}
+          </div>
+        </div>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onToggleFullscreen}
+          className={isFullscreen ? "h-10 w-10" : ""}
+        >
+          {isFullscreen ? 
+            <Minimize2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : 
+            <Maximize2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />
+          }
+        </Button>
+      </div>
     </div>
   );
 };

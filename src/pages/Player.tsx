@@ -26,6 +26,7 @@ const Player = () => {
   const [showControls, setShowControls] = useState(true);
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -55,11 +56,19 @@ const Player = () => {
   useEffect(() => {
     document.documentElement.classList.add('dark');
     
+    // Check fullscreen status
+    const checkFullscreen = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    
     return () => {
       const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
       if (!darkModePreference) {
         document.documentElement.classList.remove('dark');
       }
+      document.removeEventListener('fullscreenchange', checkFullscreen);
     };
   }, []);
   
@@ -151,7 +160,7 @@ const Player = () => {
   
   return (
     <div className="fixed inset-0 bg-black">
-      <div className="absolute top-6 left-6 z-10">
+      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         <button 
           className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors text-white"
           onClick={() => navigate("/")}
@@ -161,7 +170,7 @@ const Player = () => {
         </button>
       </div>
       
-      <div className="absolute top-6 right-6 z-10 flex gap-2">
+      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         <EPGSettings />
         
         <Button
@@ -177,7 +186,7 @@ const Player = () => {
       
       {/* Channel navigation controls */}
       <div 
-        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
       >
         <Button
           variant="ghost"
@@ -201,11 +210,11 @@ const Player = () => {
       </div>
       
       <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
-        <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-4`}>
-          <div className="w-full max-w-screen-2xl mx-auto relative">
+        <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-0 z-10`}>
+          <div className="w-full h-full mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />
             
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+            <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-20 transition-opacity duration-300 ${showControls || !isFullscreen ? 'opacity-100' : 'opacity-0'}`}>
               <h1 className={`text-white font-bold mb-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{channel.name}</h1>
               {channel.group && (
                 <div className="inline-block bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
@@ -217,7 +226,7 @@ const Player = () => {
         </div>
         
         {showInfo && (
-          <div className={`${isMobile ? 'h-1/2' : 'w-80'} bg-gray-900 ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up`}>
+          <div className={`${isMobile ? 'h-1/2' : 'w-80'} bg-gray-900 ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up ${isFullscreen ? 'z-50' : 'z-20'}`}>
             <ScrollArea className="h-full p-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-white">Channel Info</h2>

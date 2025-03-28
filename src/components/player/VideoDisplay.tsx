@@ -18,6 +18,7 @@ interface VideoDisplayProps {
   onPlay: () => void;
   onPause: () => void;
   isLoading: boolean;
+  isFullscreen?: boolean;
 }
 
 const VideoDisplay: React.FC<VideoDisplayProps> = ({
@@ -32,7 +33,8 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   onError,
   onPlay,
   onPause,
-  isLoading
+  isLoading,
+  isFullscreen = false
 }) => {
   const playerRef = useRef<ReactPlayer>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

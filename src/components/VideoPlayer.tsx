@@ -203,6 +203,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onPlay={handlePlay}
         onPause={handlePause}
         isLoading={isLoading}
+        isFullscreen={isFullscreen}
       />
 
       {/* Only show custom controls for non-iOS devices */}
