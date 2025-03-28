@@ -133,17 +133,26 @@ const Player = () => {
     setShowControls(false);
     setIsShowingInfo(true);
     
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setShowInfo(true);
-      setIsShowingInfo(false);
+      setTimeout(() => {
+        setIsShowingInfo(false);
+      }, 300);
     }, 300);
+    
+    return () => clearTimeout(timer);
   };
   
   const handleHideInfo = () => {
     setShowInfo(false);
-    setTimeout(() => {
+    setIsShowingInfo(true);
+    
+    const timer = setTimeout(() => {
       setShowControls(true);
+      setIsShowingInfo(false);
     }, 300);
+    
+    return () => clearTimeout(timer);
   };
   
   const navigateToChannel = (direction: 'next' | 'prev') => {
@@ -169,7 +178,7 @@ const Player = () => {
   
   return (
     <div className="fixed inset-0 bg-black">
-      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <button 
           className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors text-white"
           onClick={() => navigate("/")}
@@ -179,7 +188,7 @@ const Player = () => {
         </button>
       </div>
       
-      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${showControls && !isShowingInfo ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <EPGSettings />
         
         <Button
@@ -194,7 +203,7 @@ const Player = () => {
       </div>
       
       <div 
-        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${showControls && !showInfo && !isShowingInfo ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${showControls && !showInfo && !isShowingInfo ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <Button
           variant="ghost"
