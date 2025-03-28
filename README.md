@@ -80,9 +80,9 @@ npm run build
 # Deploy these files to your web server
 ```
 
-### Production Deployment Guide
+### Production Deployment Guide (No SSL)
 
-For a production deployment, follow these additional steps:
+For a production deployment without SSL encryption, follow these steps:
 
 1. **Configure Environment Variables**:
    - Create a `.env.production` file with your production environment variables
@@ -126,26 +126,10 @@ For a production deployment, follow these additional steps:
      </IfModule>
      ```
 
-4. **SSL Configuration**:
-   - Obtain an SSL certificate from Let's Encrypt or another provider
-   - Configure your server to use HTTPS:
-     ```
-     # Nginx SSL Configuration
-     server {
-       listen 443 ssl http2;
-       server_name yourdomain.com;
-       
-       ssl_certificate /path/to/fullchain.pem;
-       ssl_certificate_key /path/to/privkey.pem;
-       
-       # Modern SSL configuration
-       ssl_protocols TLSv1.2 TLSv1.3;
-       ssl_prefer_server_ciphers on;
-       ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
-       
-       # Rest of configuration...
-     }
-     ```
+4. **Security Notice**:
+   - Running without SSL means all data between the server and clients is transmitted in plain text
+   - This configuration is not recommended for applications handling sensitive data
+   - Consider adding IP restrictions or basic authentication if needed for added security
 
 5. **Continuous Deployment**:
    - Consider setting up CI/CD using GitHub Actions, GitLab CI, or similar
