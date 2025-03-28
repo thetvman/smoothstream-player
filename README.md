@@ -1,69 +1,89 @@
-# Welcome to your Lovable project
 
-## Project info
+# SmoothStream Player
 
-**URL**: https://lovable.dev/projects/5b851182-0dbb-4015-a041-d7dde1221dc5
+SmoothStream Player is a modern, web-based streaming application designed to handle various media streaming formats including HLS (m3u8) and regular transport streams (ts). The player offers a clean interface for watching live TV channels, movies, and series with a responsive design that works across devices.
 
-## How can I edit this code?
+## Project Features
 
-There are several ways of editing your application.
+- **Multi-Format Video Player**: Supports HLS (m3u8), TS, and other common streaming formats
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Channel Management**: Easy navigation through channel lists and categories
+- **Movie & Series Support**: Watch movies and TV series with episode tracking
+- **Customizable Layout**: Clean, modern UI with dark mode support
+- **Playlist Import**: Support for various playlist formats 
 
-**Use Lovable**
+## Technical Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5b851182-0dbb-4015-a041-d7dde1221dc5) and start prompting.
+- **Frontend**: React, TypeScript, Vite
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Video Playback**: hls.js for HLS stream handling
+- **State Management**: React Context and React Query
+- **Routing**: React Router
 
-Changes made via Lovable will be committed automatically to this repo.
+## VPS Requirements for 50-100 Concurrent Users
 
-**Use your preferred IDE**
+For a deployment serving 50-100 concurrent users of this web application, here are the recommended specifications:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Minimum VPS Specifications
+- **CPU**: 4 vCPUs (2.5GHz+)
+- **RAM**: 8GB
+- **Storage**: 50GB SSD (more if storing media files locally)
+- **Bandwidth**: 500GB/month minimum (streaming is bandwidth-intensive)
+- **Network**: 1Gbps connection recommended
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Recommended VPS Specifications
+- **CPU**: 8 vCPUs (3.0GHz+)
+- **RAM**: 16GB
+- **Storage**: 100GB SSD 
+- **Bandwidth**: 1TB/month or unmetered if possible
+- **Network**: 1Gbps+ connection
 
-Follow these steps:
+### Additional Considerations
+- **CDN Integration**: Consider using a CDN for static assets to reduce server load
+- **Load Balancing**: For higher reliability, consider multiple smaller VPS instances with a load balancer
+- **Scaling Strategy**: Be prepared to scale vertically (upgrade VPS) or horizontally (add more servers) as user base grows
+- **Monitoring**: Implement server monitoring to track resource usage and performance
+- **Backup Strategy**: Regular backups of configuration and user data
+
+### Recommended VPS Providers
+- Digital Ocean
+- Linode / Akamai
+- AWS (EC2)
+- Google Cloud Platform
+- Vultr
+
+## Development Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone <repository-url>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd smoothstream-player
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+This application can be deployed to any static hosting service or VPS:
 
-**Use GitHub Codespaces**
+```sh
+# Build for production
+npm run build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# The build output will be in the 'dist' directory
+# Deploy these files to your web server
+```
 
-## What technologies are used for this project?
+## License
 
-This project is built with .
+[Specify your license here]
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contact
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5b851182-0dbb-4015-a041-d7dde1221dc5) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+[Your contact information]
