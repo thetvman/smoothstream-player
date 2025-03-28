@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import SeriesPlayer from "@/components/SeriesPlayer";
-import type { Episode, Series } from "@/lib/types";
+import type { Episode } from "@/lib/types";
 import { getSeriesById, getEpisodeById } from "@/lib/mediaService";
 import { ArrowLeft, SkipForward, Tv, Film } from "lucide-react";
 import { toast } from "sonner";
@@ -21,15 +21,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchAllSeries, fetchSeriesWithEpisodes, storeEpisodeForPlayback, clearOldSeriesData } from "@/lib/mediaService";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonParse } from "@/lib/utils";
-import type { XtreamCredentials } from "@/lib/types";
+import type { XtreamCredentials, Series as SeriesType } from "@/lib/types";
 import AdvancedSearch, { AdvancedSearchParams } from "@/components/AdvancedSearch";
 
 const Series = () => {
   const navigate = useNavigate();
-  const [selectedSeries, setSelectedSeries] = useState<Series | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<SeriesType | null>(null);
   const [activeTab, setActiveTab] = useState<string>("browse");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [featuredSeries, setFeaturedSeries] = useState<Series | null>(null);
+  const [featuredSeries, setFeaturedSeries] = useState<SeriesType | null>(null);
   const [searchParams, setSearchParams] = useState<AdvancedSearchParams>({
     title: "",
     genre: "",
@@ -37,7 +37,7 @@ const Series = () => {
     yearTo: new Date().getFullYear(),
     ratingMin: 0
   });
-  const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
+  const [filteredSeries, setFilteredSeries] = useState<SeriesType[]>([]);
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
   
   const getCredentials = (): XtreamCredentials | null => {
@@ -79,13 +79,15 @@ const Series = () => {
       const categoriesWithSeries = seriesCategories.filter(cat => cat.series.length > 0);
       if (categoriesWithSeries.length > 0) {
         const randomCategory = categoriesWithSeries[Math.floor(Math.random() * categoriesWithSeries.length)];
-        const randomSeries = randomCategory.series[Math.floor(Math.random() * randomCategory.series.length)];
-        setFeaturedSeries(randomSeries);
+        if (randomCategory && randomCategory.series.length > 0) {
+          const randomSeries = randomCategory.series[Math.floor(Math.random() * randomCategory.series.length)];
+          setFeaturedSeries(randomSeries);
+        }
       }
     }
   }, [seriesCategories, featuredSeries]);
   
-  const handleSelectSeries = (series: Series) => {
+  const handleSelectSeries = (series: SeriesType) => {
     setSelectedSeries(series);
     setActiveTab("details");
   };
@@ -94,7 +96,7 @@ const Series = () => {
     clearOldSeriesData();
   }, []);
   
-  const handleLoadSeasons = async (series: Series) => {
+  const handleLoadSeasons = async (series: SeriesType) => {
     if (!credentials) {
       toast.error("No Xtream credentials found");
       return;
@@ -116,7 +118,7 @@ const Series = () => {
     }
   };
   
-  const handlePlayEpisode = (episode: Episode, series: Series) => {
+  const handlePlayEpisode = (episode: Episode, series: SeriesType) => {
     if (!episode) {
       toast.error("No episode selected");
       return;
@@ -135,10 +137,10 @@ const Series = () => {
     setActiveCategory(categoryId);
   };
 
-  const getSuggestedSeries = (): Series[] => {
+  const getSuggestedSeries = (): SeriesType[] => {
     if (!seriesCategories) return [];
     
-    const allSeries: Series[] = [];
+    const allSeries: SeriesType[] = [];
     seriesCategories.forEach(category => {
       allSeries.push(...category.series);
     });
@@ -154,7 +156,7 @@ const Series = () => {
     setSearchParams(params);
     setIsAdvancedSearch(true);
     
-    let results: Series[] = [];
+    let results: SeriesType[] = [];
     
     seriesCategories.forEach(category => {
       results = [...results, ...category.series];
@@ -491,29 +493,31 @@ const Series = () => {
           </div>
         </div>
 
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh] animate-scale-in">
-            <div className="p-4 flex justify-between items-center border-b border-gray-800">
-              <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
-              <button 
-                onClick={() => setSelectedSeries(null)}
-                className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="overflow-y-auto max-h-[calc(90vh-4rem)]">
-              <SeriesDetails 
-                series={selectedSeries}
-                onPlayEpisode={handlePlayEpisode}
-                onLoadSeasons={handleLoadSeasons}
-                isLoading={isLoading && !selectedSeries.seasons}
-              />
+        {selectedSeries && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+            <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh] animate-scale-in">
+              <div className="p-4 flex justify-between items-center border-b border-gray-800">
+                <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
+                <button 
+                  onClick={() => setSelectedSeries(null)}
+                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(90vh-4rem)]">
+                <SeriesDetails 
+                  series={selectedSeries}
+                  onPlayEpisode={handlePlayEpisode}
+                  onLoadSeasons={handleLoadSeasons}
+                  isLoading={isLoading && !selectedSeries.seasons}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
