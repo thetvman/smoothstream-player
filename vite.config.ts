@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser', // Use terser for better minification
     sourcemap: false, // Disable sourcemaps in production for better performance
     chunkSizeWarningLimit: 1000, // Increase warning limit for larger chunks
+    // Set explicit build target
+    target: 'es2015',
+    // Ensure the build is completing
+    reportCompressedSize: false,
   },
   plugins: [
     react(),
@@ -28,4 +32,6 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Add base path configuration
+  base: '/',
 }));
