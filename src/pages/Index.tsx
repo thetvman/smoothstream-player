@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -130,6 +131,14 @@ const Index = () => {
   
   const handleSelectChannel = (channel: Channel) => {
     setSelectedChannel(channel);
+  };
+  
+  const handleClearPlaylist = () => {
+    localStorage.removeItem("iptv-playlist");
+    localStorage.removeItem("iptv-last-channel");
+    setPlaylist(null);
+    setSelectedChannel(null);
+    setPaginatedChannels(null);
   };
   
   const openFullscreenPlayer = () => {
@@ -302,6 +311,7 @@ const Index = () => {
               selectedChannel={selectedChannel}
               onSelectChannel={handleSelectChannel}
               isLoading={isLoading}
+              onClearPlaylist={handleClearPlaylist}
             />
             
             {paginatedChannels && paginatedChannels.totalPages > 1 && (

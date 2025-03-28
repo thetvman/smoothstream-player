@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { Channel, ChannelListProps } from "@/lib/types";
-import { Search, Tv, Grid2X2, List, ChevronRight, ChevronDown } from "lucide-react";
+import { Search, Tv, Grid2X2, List, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { paginateChannels, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -15,13 +14,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
+interface ChannelListProps {
+  playlist: Playlist | null;
+  paginatedChannels: PaginatedChannels | null;
+  selectedChannel: Channel | null;
+  onSelectChannel: (channel: Channel) => void;
+  isLoading?: boolean;
+  onClearPlaylist?: () => void;
+}
 
 const ChannelList: React.FC<ChannelListProps> = ({
   playlist,
   paginatedChannels,
   selectedChannel,
   onSelectChannel,
-  isLoading = false
+  isLoading = false,
+  onClearPlaylist
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
@@ -29,6 +49,8 @@ const ChannelList: React.FC<ChannelListProps> = ({
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [showAllGroups, setShowAllGroups] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const { toast } = useToast();
   
   const groups = useMemo(() => {
     if (!playlist?.channels) return [];
@@ -65,23 +87,34 @@ const ChannelList: React.FC<ChannelListProps> = ({
     setFilteredPagination(newPagination);
   }, [playlist, searchTerm, activeGroup, paginatedChannels?.currentPage]);
   
-  // Handle group selection
   const handleGroupSelect = (group: string | null) => {
     setActiveGroup(group);
     setGroupDialogOpen(false);
   };
 
-  // Toggle between list and grid view
   const toggleViewMode = () => {
     setViewMode(prev => prev === "list" ? "grid" : "list");
   };
 
-  // Show more/less groups
   const toggleShowAllGroups = () => {
     setShowAllGroups(!showAllGroups);
   };
 
-  // Render skeleton loading state
+  const handleClearPlaylistClick = () => {
+    setClearConfirmOpen(true);
+  };
+
+  const confirmClearPlaylist = () => {
+    if (onClearPlaylist) {
+      onClearPlaylist();
+      toast({
+        title: "Playlist cleared",
+        description: "Your playlist has been removed",
+      });
+    }
+    setClearConfirmOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col h-full justify-center items-center bg-card rounded-lg border border-border p-4">
@@ -103,13 +136,11 @@ const ChannelList: React.FC<ChannelListProps> = ({
     );
   }
 
-  // Determine which groups to show based on showAllGroups state
   const displayedGroups = showAllGroups ? groups : groups.slice(0, 7);
   const hasMoreGroups = groups.length > 7;
   
   return (
     <div className="flex flex-col h-full overflow-hidden bg-card rounded-lg border border-border">
-      {/* Header with search and view toggle */}
       <div className="p-3 border-b border-border">
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -135,13 +166,28 @@ const ChannelList: React.FC<ChannelListProps> = ({
             </Button>
           </div>
           
-          <Button variant="ghost" size="icon" onClick={toggleViewMode} title={`Switch to ${viewMode === "list" ? "grid" : "list"} view`}>
-            {viewMode === "list" ? <Grid2X2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="text-destructive hover:bg-destructive/10"
+              onClick={handleClearPlaylistClick}
+              title="Clear playlist"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleViewMode} 
+              title={`Switch to ${viewMode === "list" ? "grid" : "list"} view`}
+            >
+              {viewMode === "list" ? <Grid2X2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </div>
       
-      {/* Channel list/grid */}
       <ScrollArea className="flex-1">
         {(!filteredPagination || !filteredPagination.items || filteredPagination.items.length === 0) ? (
           <div className="p-4 text-center">
@@ -236,7 +282,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
         )}
       </ScrollArea>
       
-      {/* Footer with playlist info */}
       <div className="p-3 border-t border-border bg-secondary/30">
         <div className="text-xs text-muted-foreground">
           <span className="font-medium">{playlist.name}</span> • {playlist.channels.length} channels
@@ -248,7 +293,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
         </div>
       </div>
 
-      {/* Group selection dialog */}
       <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -278,6 +322,23 @@ const ChannelList: React.FC<ChannelListProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Playlist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear the current playlist? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearPlaylist} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear Playlist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
