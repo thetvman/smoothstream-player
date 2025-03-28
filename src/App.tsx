@@ -7,18 +7,25 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
-// Lazy load page components with proper preloading hints
-const Index = lazy(() => {
-  // No preloading of EPG data anymore
-  return import("./pages/Index");
-});
-const Player = lazy(() => import("./pages/Player"));
-const Movies = lazy(() => import("./pages/Movies"));
-const Series = lazy(() => import("./pages/Series"));
-const MoviePlayer = lazy(() => import("./pages/MoviePlayer"));
-const EpisodePlayer = lazy(() => import("./pages/EpisodePlayer"));
-const Connections = lazy(() => import("./pages/Connections"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Create a consistent import error handler for lazy-loaded components
+const lazyLoad = (importFunc) => {
+  return lazy(() => 
+    importFunc().catch(error => {
+      console.error("Error loading component:", error);
+      return import("./pages/NotFound");
+    })
+  );
+};
+
+// Lazy load page components with proper error handling
+const Index = lazyLoad(() => import("./pages/Index"));
+const Player = lazyLoad(() => import("./pages/Player"));
+const Movies = lazyLoad(() => import("./pages/Movies"));
+const Series = lazyLoad(() => import("./pages/Series"));
+const MoviePlayer = lazyLoad(() => import("./pages/MoviePlayer"));
+const EpisodePlayer = lazyLoad(() => import("./pages/EpisodePlayer"));
+const Connections = lazyLoad(() => import("./pages/Connections"));
+const NotFound = lazyLoad(() => import("./pages/NotFound"));
 
 // Configure query client with faster stale time for better responsiveness
 const queryClient = new QueryClient({
