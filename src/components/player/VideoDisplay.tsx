@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from "react";
 import ReactPlayer from 'react-player';
 import { Loader2 } from 'lucide-react';
@@ -46,6 +47,8 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useIsMobile();
   const [isIOS, setIsIOS] = useState(false);
+  const [isCollectingStats, setIsCollectingStats] = useState(false);
+  const statsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const checkIOS = () => {
@@ -57,9 +60,39 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   }, []);
 
   useEffect(() => {
+    // Clear any existing timeout when component unmounts
+    return () => {
+      if (statsTimeoutRef.current) {
+        clearTimeout(statsTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!onStatsUpdate) return;
     
     const collectStats = () => {
+      if (!isCollectingStats) {
+        // Start collecting stats for a limited time
+        setIsCollectingStats(true);
+        
+        if (statsTimeoutRef.current) {
+          clearTimeout(statsTimeoutRef.current);
+        }
+        
+        // Stop collecting stats after 10 seconds
+        statsTimeoutRef.current = setTimeout(() => {
+          setIsCollectingStats(false);
+          // Send null stats after timeout to hide the stats display
+          onStatsUpdate({
+            resolution: undefined,
+            frameRate: undefined,
+            audioBitrate: undefined,
+            audioChannels: undefined
+          });
+        }, 10000); // 10 seconds
+      }
+      
       const video = videoRef.current;
       if (!video) {
         const player = playerRef.current;
@@ -117,9 +150,15 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
       }
     };
     
-    const intervalId = setInterval(collectStats, 1000);
-    return () => clearInterval(intervalId);
-  }, [onStatsUpdate]);
+    // Only collect and update stats when actively collecting
+    if (isCollectingStats) {
+      const intervalId = setInterval(collectStats, 1000);
+      return () => clearInterval(intervalId);
+    } else {
+      // Start collection when this effect runs
+      collectStats();
+    }
+  }, [onStatsUpdate, isCollectingStats]);
 
   useEffect(() => {
     const video = videoRef.current;
