@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
-import ChannelTableView from "@/components/ChannelTableView";
 import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
@@ -15,7 +14,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Film, Tv, BarChart2, List, Table as TableIcon } from "lucide-react";
+import { Moon, Sun, Film, Tv, BarChart2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -33,12 +32,6 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -50,7 +43,6 @@ const Index = () => {
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "table">("list");
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -69,11 +61,6 @@ const Index = () => {
 
     const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
     setIsDarkMode(darkModePreference);
-    
-    const savedViewMode = localStorage.getItem("iptv-view-mode");
-    if (savedViewMode === "table" || savedViewMode === "list") {
-      setViewMode(savedViewMode);
-    }
   }, []);
   
   useEffect(() => {
@@ -126,10 +113,6 @@ const Index = () => {
     getEPGData();
   }, [selectedChannel]);
   
-  useEffect(() => {
-    localStorage.setItem("iptv-view-mode", viewMode);
-  }, [viewMode]);
-  
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
     
@@ -162,10 +145,6 @@ const Index = () => {
   
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-  };
-  
-  const toggleViewMode = () => {
-    setViewMode(viewMode === "list" ? "table" : "list");
   };
   
   const renderPaginationLinks = () => {
@@ -246,15 +225,6 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               <EPGSettings />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={toggleViewMode}
-                aria-label={`Switch to ${viewMode === "list" ? "table" : "list"} view`}
-              >
-                {viewMode === "list" ? <TableIcon className="h-4 w-4" /> : <List className="h-4 w-4" />}
-              </Button>
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
@@ -326,23 +296,13 @@ const Index = () => {
           </div>
           
           <div className="h-full flex flex-col overflow-hidden">
-            {viewMode === "list" ? (
-              <ChannelList
-                playlist={playlist}
-                paginatedChannels={paginatedChannels}
-                selectedChannel={selectedChannel}
-                onSelectChannel={handleSelectChannel}
-                isLoading={isLoading}
-              />
-            ) : (
-              <ChannelTableView
-                playlist={playlist}
-                channels={paginatedChannels?.items || []}
-                selectedChannel={selectedChannel}
-                onSelectChannel={handleSelectChannel}
-                isLoading={isLoading}
-              />
-            )}
+            <ChannelList
+              playlist={playlist}
+              paginatedChannels={paginatedChannels}
+              selectedChannel={selectedChannel}
+              onSelectChannel={handleSelectChannel}
+              isLoading={isLoading}
+            />
             
             {paginatedChannels && paginatedChannels.totalPages > 1 && (
               <div className="py-4 border-t">

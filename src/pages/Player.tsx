@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
 import { Channel, Playlist } from "@/lib/types";
 import { safeJsonParse } from "@/lib/utils";
-import { ArrowLeft, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
@@ -23,16 +23,12 @@ const Player = () => {
   const [epgLoaded, setEpgLoaded] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
     if (savedPlaylist && channelId) {
       const parsedPlaylist = safeJsonParse<Playlist | null>(savedPlaylist, null);
       if (parsedPlaylist) {
-        setPlaylist(parsedPlaylist);
         const foundChannel = parsedPlaylist.channels.find(c => c.id === channelId) || null;
         setChannel(foundChannel);
         
@@ -59,46 +55,6 @@ const Player = () => {
       const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
       if (!darkModePreference) {
         document.documentElement.classList.remove('dark');
-      }
-    };
-  }, []);
-  
-  // Auto-hide controls after inactivity
-  useEffect(() => {
-    const showControlsTemporarily = () => {
-      setControlsVisible(true);
-      
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      controlsTimeoutRef.current = setTimeout(() => {
-        setControlsVisible(false);
-      }, 3000);
-    };
-    
-    // Show controls when mouse moves
-    const handleMouseMove = () => {
-      showControlsTemporarily();
-    };
-    
-    // Show controls when screen is tapped (for touch devices)
-    const handleTouch = () => {
-      setControlsVisible(prev => !prev);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('touchstart', handleTouch);
-    
-    // Initial timeout
-    showControlsTemporarily();
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('touchstart', handleTouch);
-      
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
       }
     };
   }, []);
@@ -139,41 +95,13 @@ const Player = () => {
     setShowInfo(true);
   };
   
-  const navigateToNextChannel = () => {
-    if (!playlist || !channel) return;
-    
-    const currentIndex = playlist.channels.findIndex(c => c.id === channel.id);
-    if (currentIndex === -1) return;
-    
-    const nextIndex = (currentIndex + 1) % playlist.channels.length;
-    const nextChannel = playlist.channels[nextIndex];
-    
-    navigate(`/player/${nextChannel.id}`);
-  };
-  
-  const navigateToPreviousChannel = () => {
-    if (!playlist || !channel) return;
-    
-    const currentIndex = playlist.channels.findIndex(c => c.id === channel.id);
-    if (currentIndex === -1) return;
-    
-    const previousIndex = (currentIndex - 1 + playlist.channels.length) % playlist.channels.length;
-    const previousChannel = playlist.channels[previousIndex];
-    
-    navigate(`/player/${previousChannel.id}`);
-  };
-  
   if (!channel) {
     return null;
   }
   
   return (
     <div className="fixed inset-0 bg-black">
-      <div 
-        className={`absolute top-6 left-6 z-10 transition-opacity duration-300 ${
-          controlsVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
+      <div className="absolute top-6 left-6 z-10">
         <button 
           className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors text-white"
           onClick={() => navigate("/")}
@@ -183,11 +111,7 @@ const Player = () => {
         </button>
       </div>
       
-      <div 
-        className={`absolute top-6 right-6 z-10 flex gap-2 transition-opacity duration-300 ${
-          controlsVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
+      <div className="absolute top-6 right-6 z-10 flex gap-2">
         <EPGSettings />
         
         <Button
@@ -201,49 +125,12 @@ const Player = () => {
         </Button>
       </div>
       
-      {/* Channel navigation controls */}
-      <div 
-        className={`absolute top-1/2 left-4 z-10 transform -translate-y-1/2 transition-opacity duration-300 ${
-          controlsVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="bg-black/50 hover:bg-black/70 text-white rounded-full"
-          onClick={navigateToPreviousChannel}
-          aria-label="Previous channel"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </Button>
-      </div>
-      
-      <div 
-        className={`absolute top-1/2 right-4 z-10 transform -translate-y-1/2 transition-opacity duration-300 ${
-          controlsVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="bg-black/50 hover:bg-black/70 text-white rounded-full"
-          onClick={navigateToNextChannel}
-          aria-label="Next channel"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </Button>
-      </div>
-      
       <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
         <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-4`}>
           <div className="w-full max-w-screen-2xl mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />
             
-            <div 
-              className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none transition-opacity duration-300 ${
-                controlsVisible ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
               <h1 className={`text-white font-bold mb-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{channel.name}</h1>
               {channel.group && (
                 <div className="inline-block bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
