@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
 // Create a consistent import error handler for lazy-loaded components
@@ -44,7 +44,7 @@ const App = () => (
       <div className="min-h-screen bg-background text-foreground antialiased">
         <Toaster />
         <Sonner position="top-right" closeButton />
-        <BrowserRouter>
+        <HashRouter>
           <Suspense fallback={
             <div className="h-screen w-full flex items-center justify-center">
               <div className="flex flex-col items-center gap-4">
@@ -64,7 +64,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-        </BrowserRouter>
+        </HashRouter>
       </div>
     </TooltipProvider>
   </QueryClientProvider>
