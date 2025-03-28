@@ -40,8 +40,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Check if device is iOS
   useEffect(() => {
     const checkIOS = () => {
-      const userAgent = navigator.userAgent || navigator.vendor;
-      return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+      const userAgent = navigator.userAgent || navigator.vendor || '';
+      return /iPad|iPhone|iPod/.test(userAgent);
     };
     
     setIsIOS(checkIOS());
