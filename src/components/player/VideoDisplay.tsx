@@ -4,6 +4,7 @@ import ReactPlayer from 'react-player';
 import { Loader2 } from 'lucide-react';
 import { Channel } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getProxiedUrl, needsProxying } from "@/lib/proxyUtils";
 
 interface VideoDisplayProps {
   channel: Channel;
@@ -38,6 +39,9 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const isMobile = useIsMobile();
   const [isIOS, setIsIOS] = useState(false);
+  
+  // Process the URL to use proxy if needed
+  const processedUrl = needsProxying() ? getProxiedUrl(channel.url) : channel.url;
   
   // Check if device is iOS
   useEffect(() => {
@@ -102,7 +106,7 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
         )}
         <video
           ref={videoRef}
-          src={channel.url}
+          src={processedUrl}
           className="w-full h-full"
           controls
           playsInline
@@ -131,7 +135,7 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
       )}
       <ReactPlayer
         ref={playerRef}
-        url={channel.url}
+        url={processedUrl}
         playing={playing}
         muted={muted}
         volume={volume}

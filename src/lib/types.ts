@@ -6,6 +6,7 @@ export interface Channel {
   group?: string;
   epg_channel_id?: string; // For EPG support
   stream_type?: string; // To track the stream type (ts, m3u8, etc)
+  proxy_required?: boolean; // Track if this channel needs proxying
 }
 
 export interface Playlist {
