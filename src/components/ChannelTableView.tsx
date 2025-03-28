@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChannelTableViewProps extends Omit<ChannelListProps, 'paginatedChannels'> {
   channels: Channel[];
@@ -225,7 +226,16 @@ const ChannelTableView: React.FC<ChannelTableViewProps> = ({
                       <div className="flex items-center">
                         {channel.name}
                         {channel.epg_channel_id && (
-                          <Tv className="w-3 h-3 text-primary ml-2" title="EPG available" />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Tv className="w-3 h-3 text-primary ml-2" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>EPG available</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     </TableCell>
