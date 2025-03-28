@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef } from "react";
+
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import screenfull from 'screenfull';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Channel } from "@/lib/types";
@@ -32,8 +33,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [isIOS, setIsIOS] = useState(false);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  
+  // Check if device is iOS
+  useEffect(() => {
+    const checkIOS = () => {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+    };
+    
+    setIsIOS(checkIOS());
+  }, []);
   
   const { handlePlaybackEnd } = useWatchTime({
     id: channel?.id || '',
@@ -193,21 +205,24 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         isLoading={isLoading}
       />
 
-      <PlayerControls
-        playing={playerState.playing}
-        muted={playerState.muted}
-        volume={playerState.volume}
-        currentTime={playerState.currentTime}
-        duration={playerState.duration}
-        isFullscreen={isFullscreen}
-        onPlayPause={handlePlayPause}
-        onMuteUnmute={handleMuteUnmute}
-        onVolumeChange={handleVolumeChange}
-        onSeek={handleSeek}
-        onSeekStart={handleSeekMouseDown}
-        onSeekEnd={handleSeekMouseUp}
-        onToggleFullscreen={handleToggleFullscreen}
-      />
+      {/* Only show custom controls for non-iOS devices */}
+      {!isIOS && (
+        <PlayerControls
+          playing={playerState.playing}
+          muted={playerState.muted}
+          volume={playerState.volume}
+          currentTime={playerState.currentTime}
+          duration={playerState.duration}
+          isFullscreen={isFullscreen}
+          onPlayPause={handlePlayPause}
+          onMuteUnmute={handleMuteUnmute}
+          onVolumeChange={handleVolumeChange}
+          onSeek={handleSeek}
+          onSeekStart={handleSeekMouseDown}
+          onSeekEnd={handleSeekMouseUp}
+          onToggleFullscreen={handleToggleFullscreen}
+        />
+      )}
     </div>
   );
 };
