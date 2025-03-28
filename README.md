@@ -80,6 +80,136 @@ npm run build
 # Deploy these files to your web server
 ```
 
+### Production Deployment Guide
+
+For a production deployment, follow these additional steps:
+
+1. **Configure Environment Variables**:
+   - Create a `.env.production` file with your production environment variables
+   - Make sure to set `NODE_ENV=production` and any API endpoints or service URLs
+
+2. **Optimize Build**:
+   ```sh
+   # For production build with optimizations
+   npm run build
+   ```
+
+3. **Server Configuration**:
+   - For Nginx:
+     ```
+     server {
+       listen 80;
+       server_name yourdomain.com;
+       root /path/to/smoothstream-player/dist;
+       
+       location / {
+         try_files $uri $uri/ /index.html;
+       }
+       
+       # Cache static assets
+       location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+         expires 30d;
+         add_header Cache-Control "public, no-transform";
+       }
+     }
+     ```
+   
+   - For Apache, create a `.htaccess` file in your dist directory:
+     ```
+     <IfModule mod_rewrite.c>
+       RewriteEngine On
+       RewriteBase /
+       RewriteRule ^index\.html$ - [L]
+       RewriteCond %{REQUEST_FILENAME} !-f
+       RewriteCond %{REQUEST_FILENAME} !-d
+       RewriteRule . /index.html [L]
+     </IfModule>
+     ```
+
+4. **SSL Configuration**:
+   - Obtain an SSL certificate from Let's Encrypt or another provider
+   - Configure your server to use HTTPS:
+     ```
+     # Nginx SSL Configuration
+     server {
+       listen 443 ssl http2;
+       server_name yourdomain.com;
+       
+       ssl_certificate /path/to/fullchain.pem;
+       ssl_certificate_key /path/to/privkey.pem;
+       
+       # Modern SSL configuration
+       ssl_protocols TLSv1.2 TLSv1.3;
+       ssl_prefer_server_ciphers on;
+       ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+       
+       # Rest of configuration...
+     }
+     ```
+
+5. **Continuous Deployment**:
+   - Consider setting up CI/CD using GitHub Actions, GitLab CI, or similar
+   - Example GitHub Action workflow:
+     ```yaml
+     name: Deploy
+     
+     on:
+       push:
+         branches: [ main ]
+         
+     jobs:
+       build-and-deploy:
+         runs-on: ubuntu-latest
+         steps:
+           - uses: actions/checkout@v3
+           - name: Use Node.js
+             uses: actions/setup-node@v3
+             with:
+               node-version: '18'
+           - name: Install dependencies
+             run: npm ci
+           - name: Build
+             run: npm run build
+           - name: Deploy
+             uses: appleboy/scp-action@master
+             with:
+               host: ${{ secrets.HOST }}
+               username: ${{ secrets.USERNAME }}
+               key: ${{ secrets.SSH_KEY }}
+               source: "dist/"
+               target: "/path/on/your/server/"
+     ```
+
+### VPS Provider Details
+
+1. **DigitalOcean**
+   - Pricing: Starts at $5/month for basic VPS
+   - For 50-100 users: Consider their $48/month plan (8GB RAM, 4 vCPUs, 160GB SSD)
+   - Pros: Simple interface, good documentation, global data centers
+   - Managed database options available
+
+2. **Linode/Akamai**
+   - Pricing: Starts at $5/month for basic VPS
+   - For 50-100 users: Their $48/month plan (8GB RAM, 4 vCPUs, 160GB SSD)
+   - Pros: High performance, good network, developer-friendly
+
+3. **AWS EC2**
+   - Pricing: Variable based on usage
+   - For 50-100 users: t3.large or t3.xlarge instances
+   - Pros: Extensive ecosystem, highly scalable, global presence
+   - Cons: More complex setup, potential for unexpected costs
+
+4. **Google Cloud Platform**
+   - Pricing: Variable based on usage
+   - For 50-100 users: e2-standard-4 instances
+   - Pros: Good performance, integrates well with other Google services
+   - Cons: Similar complexity to AWS
+
+5. **Vultr**
+   - Pricing: Starts at $5/month
+   - For 50-100 users: Their $48/month High Frequency plan
+   - Pros: High performance, global network, simple interface
+
 ## License
 
 [Specify your license here]
