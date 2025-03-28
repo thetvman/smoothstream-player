@@ -1,16 +1,10 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import type { Series, SeriesCategory, Episode, XtreamCredentials } from "@/lib/types";
-import { fetchAllSeries, fetchSeriesWithEpisodes, storeEpisodeForPlayback, clearOldSeriesData } from "@/lib/mediaService";
-import SeriesList from "@/components/SeriesList";
-import SeriesDetails from "@/components/SeriesDetails";
-import SeriesSuggestions from "@/components/SeriesSuggestions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Film, Tv } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import SeriesPlayer from "@/components/SeriesPlayer";
+import { Episode, Series } from "@/lib/types";
+import { getSeriesById, getEpisodeById } from "@/lib/mediaService";
+import { ArrowLeft, SkipForward, Tv } from "lucide-react";
 import { toast } from "sonner";
-import { safeJsonParse } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -20,6 +14,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import SeriesList from "@/components/SeriesList";
+import SeriesDetails from "@/components/SeriesDetails";
+import SeriesSuggestions from "@/components/SeriesSuggestions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { fetchAllSeries, fetchSeriesWithEpisodes, storeEpisodeForPlayback, clearOldSeriesData } from "@/lib/mediaService";
+import { useQuery } from "@tanstack/react-query";
+import { safeJsonParse } from "@/lib/utils";
+import type { XtreamCredentials } from "@/lib/types";
+import AdvancedSearch, { AdvancedSearchParams } from "@/components/AdvancedSearch";
 
 const Series = () => {
   const navigate = useNavigate();
@@ -27,6 +30,15 @@ const Series = () => {
   const [activeTab, setActiveTab] = useState<string>("browse");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [featuredSeries, setFeaturedSeries] = useState<Series | null>(null);
+  const [searchParams, setSearchParams] = useState<AdvancedSearchParams>({
+    title: "",
+    genre: "",
+    yearFrom: 1950,
+    yearTo: new Date().getFullYear(),
+    ratingMin: 0
+  });
+  const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
+  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
   
   const getCredentials = (): XtreamCredentials | null => {
     const playlist = localStorage.getItem("iptv-playlist");
@@ -141,6 +153,67 @@ const Series = () => {
     const filteredSeries = allSeries.filter(series => series.id !== selectedSeries?.id);
     const shuffled = [...filteredSeries].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 10);
+  };
+  
+  // Apply advanced search filters to series
+  const applyAdvancedSearch = (params: AdvancedSearchParams) => {
+    if (!seriesCategories) return;
+    
+    setSearchParams(params);
+    setIsAdvancedSearch(true);
+    
+    let results: Series[] = [];
+    
+    // Gather all series from all categories
+    seriesCategories.forEach(category => {
+      results = [...results, ...category.series];
+    });
+    
+    // Apply filters
+    results = results.filter(series => {
+      // Title filter
+      if (params.title && !series.name.toLowerCase().includes(params.title.toLowerCase())) {
+        return false;
+      }
+      
+      // Genre filter
+      if (params.genre && series.genre && 
+          !series.genre.toLowerCase().includes(params.genre.toLowerCase())) {
+        return false;
+      }
+      
+      // Year filter
+      if (series.year) {
+        const year = parseInt(series.year);
+        if (year < params.yearFrom || year > params.yearTo) {
+          return false;
+        }
+      }
+      
+      // Rating filter
+      if (series.rating) {
+        const rating = parseFloat(series.rating);
+        if (rating < params.ratingMin) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    setFilteredSeries(results);
+  };
+  
+  // Clear advanced search
+  const clearAdvancedSearch = () => {
+    setIsAdvancedSearch(false);
+    setSearchParams({
+      title: "",
+      genre: "",
+      yearFrom: 1950,
+      yearTo: new Date().getFullYear(),
+      ratingMin: 0
+    });
   };
   
   if (!credentials) {
@@ -259,21 +332,50 @@ const Series = () => {
                   ))}
                 </div>
               ) : (
-                <ul className="space-y-2">
-                  {seriesCategories?.map((category) => (
-                    <li key={category.id}>
-                      <button
-                        onClick={() => handleCategoryChange(category.id)}
-                        className={cn(
-                          "w-full text-left py-2 px-3 rounded-md text-sm transition-colors hover:bg-gray-800",
-                          activeCategory === category.id ? "bg-gray-800 font-medium" : "text-gray-400"
-                        )}
-                      >
-                        {category.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {/* Advanced Search Button */}
+                  <div className="mb-4">
+                    <AdvancedSearch 
+                      onSearch={applyAdvancedSearch}
+                      initialParams={searchParams}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {isAdvancedSearch && (
+                    <div className="mb-4 p-2 bg-gray-800/50 rounded-md animate-fade-in">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-300">
+                          {filteredSeries.length} results
+                        </span>
+                        <button
+                          onClick={clearAdvancedSearch}
+                          className="text-xs text-gray-400 hover:text-white transition-colors"
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!isAdvancedSearch && (
+                    <ul className="space-y-2">
+                      {seriesCategories?.map((category) => (
+                        <li key={category.id}>
+                          <button
+                            onClick={() => handleCategoryChange(category.id)}
+                            className={cn(
+                              "w-full text-left py-2 px-3 rounded-md text-sm transition-colors hover:bg-gray-800",
+                              activeCategory === category.id ? "bg-gray-800 font-medium" : "text-gray-400"
+                            )}
+                          >
+                            {category.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -283,23 +385,28 @@ const Series = () => {
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             {/* Series Suggestions Carousel */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4">Suggested Series</h2>
-              <SeriesSuggestions 
-                suggestions={getSuggestedSeries()} 
-                onSelectSeries={(series) => {
-                  setSelectedSeries(series);
-                  handleLoadSeasons(series);
-                }} 
-              />
-            </div>
+            {!isAdvancedSearch && (
+              <div className="mb-8 animate-fade-in">
+                <h2 className="text-xl font-bold mb-4">Suggested Series</h2>
+                <SeriesSuggestions 
+                  suggestions={getSuggestedSeries()} 
+                  onSelectSeries={(series) => {
+                    setSelectedSeries(series);
+                    handleLoadSeasons(series);
+                  }} 
+                />
+              </div>
+            )}
 
             {/* Series Grid */}
-            <div className="mb-6">
+            <div className="mb-6 animate-fade-in">
               <h2 className="text-xl font-bold mb-4">
-                {activeCategory && seriesCategories 
-                  ? seriesCategories.find(cat => cat.id === activeCategory)?.name || "All Series"
-                  : "All Series"
+                {isAdvancedSearch 
+                  ? "Search Results" 
+                  : (activeCategory && seriesCategories 
+                      ? seriesCategories.find(cat => cat.id === activeCategory)?.name || "All Series"
+                      : "All Series"
+                    )
                 }
               </h2>
               
@@ -315,47 +422,89 @@ const Series = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {activeCategory && seriesCategories 
-                    ? seriesCategories
-                        .find(cat => cat.id === activeCategory)
-                        ?.series.map(series => (
-                          <div 
-                            key={series.id} 
-                            className="cursor-pointer group"
-                            onClick={() => {
-                              setSelectedSeries(series);
-                              handleLoadSeasons(series);
-                            }}
-                          >
-                            <div className="relative aspect-[2/3] bg-gray-900 rounded-md overflow-hidden mb-2">
-                              {series.logo ? (
-                                <img 
-                                  src={series.logo} 
-                                  alt={series.name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "/placeholder.svg";
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Tv className="h-10 w-10 text-muted-foreground" />
+                  {isAdvancedSearch 
+                    ? (filteredSeries.length > 0 
+                        ? filteredSeries.map(series => (
+                            <div 
+                              key={series.id} 
+                              className="cursor-pointer group animate-fade-in"
+                              onClick={() => {
+                                setSelectedSeries(series);
+                                handleLoadSeasons(series);
+                              }}
+                            >
+                              <div className="relative aspect-[2/3] bg-gray-900 rounded-md overflow-hidden mb-2">
+                                {series.logo ? (
+                                  <img 
+                                    src={series.logo} 
+                                    alt={series.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Tv className="h-10 w-10 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <button className="bg-primary text-white p-2 rounded-full">
+                                    <Tv className="h-6 w-6" />
+                                  </button>
                                 </div>
-                              )}
-                              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button className="bg-primary text-white p-2 rounded-full">
-                                  <Tv className="h-6 w-6" />
-                                </button>
+                              </div>
+                              <h3 className="font-medium text-sm truncate">{series.name}</h3>
+                              <div className="flex text-xs text-gray-400 gap-2">
+                                {series.year && <span>{series.year}</span>}
+                                {series.rating && <span>⭐ {series.rating}</span>}
                               </div>
                             </div>
-                            <h3 className="font-medium text-sm truncate">{series.name}</h3>
-                            <div className="flex text-xs text-gray-400 gap-2">
-                              {series.year && <span>{series.year}</span>}
-                              {series.rating && <span>⭐ {series.rating}</span>}
-                            </div>
-                          </div>
-                        ))
-                    : <p className="text-gray-400">Select a category to view series</p>
+                          ))
+                        : <p className="text-gray-400">No series match your search criteria</p>
+                      )
+                    : (activeCategory && seriesCategories 
+                        ? seriesCategories
+                            .find(cat => cat.id === activeCategory)
+                            ?.series.map(series => (
+                              <div 
+                                key={series.id} 
+                                className="cursor-pointer group animate-fade-in"
+                                onClick={() => {
+                                  setSelectedSeries(series);
+                                  handleLoadSeasons(series);
+                                }}
+                              >
+                                <div className="relative aspect-[2/3] bg-gray-900 rounded-md overflow-hidden mb-2">
+                                  {series.logo ? (
+                                    <img 
+                                      src={series.logo} 
+                                      alt={series.name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Tv className="h-10 w-10 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button className="bg-primary text-white p-2 rounded-full">
+                                      <Tv className="h-6 w-6" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <h3 className="font-medium text-sm truncate">{series.name}</h3>
+                                <div className="flex text-xs text-gray-400 gap-2">
+                                  {series.year && <span>{series.year}</span>}
+                                  {series.rating && <span>⭐ {series.rating}</span>}
+                                </div>
+                              </div>
+                            ))
+                        : <p className="text-gray-400">Select a category to view series</p>
+                      )
                   }
                 </div>
               )}
@@ -365,13 +514,13 @@ const Series = () => {
 
         {/* Series Details Modal */}
         {selectedSeries && (
-          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh]">
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+            <div className="bg-gray-900 w-full max-w-4xl rounded-lg shadow-xl overflow-hidden max-h-[90vh] animate-scale-in">
               <div className="p-4 flex justify-between items-center border-b border-gray-800">
                 <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
                 <button 
                   onClick={() => setSelectedSeries(null)}
-                  className="p-1 hover:bg-gray-800 rounded-full"
+                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -54,7 +54,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           onEnded={handleVideoEnded}
         />
         
-        {/* Show info button */}
+        {/* Show info button with transition */}
         <button 
           className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors z-20"
           onClick={() => setShowInfo(true)}
@@ -64,13 +64,13 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       </div>
       
       {series && episode && showInfo && (
-        <div className="p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md">
+        <div className="p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md animate-fade-in">
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1">
               <h2 className="text-xl font-bold text-white">{series.name}</h2>
             </div>
             <button 
-              className="text-gray-400 hover:text-white text-sm bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded"
+              className="text-gray-400 hover:text-white text-sm bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
               onClick={() => setShowInfo(false)}
             >
               Hide
