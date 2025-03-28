@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
@@ -11,9 +12,10 @@ import { Channel } from "@/lib/types";
 interface VideoPlayerProps {
   channel: Channel | null;
   autoPlay?: boolean;
+  onEnded?: () => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = false }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = false, onEnded }) => {
   const [playing, setPlaying] = useState(autoPlay);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0.5);
@@ -81,6 +83,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = false }) 
     setIsLoading(false);
   }, []);
 
+  const handleEnded = useCallback(() => {
+    if (onEnded) {
+      onEnded();
+    }
+  }, [onEnded]);
+
   const handleError = useCallback(() => {
     setIsLoading(false);
     console.error("Error loading stream for channel:", channel?.name);
@@ -133,6 +141,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = false }) 
         onReady={handleReady}
         onDuration={handleDuration}
         onProgress={handleProgress}
+        onEnded={handleEnded}
         onError={handleError}
       />
 
@@ -167,7 +176,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ channel, autoPlay = false }) 
             step={1}
             onValueChange={handleSeek}
             onMouseDown={handleSeekMouseDown}
-            onMouseUp={handleSeekMouseUp}
+            // Fix the type mismatch by using onValueCommit instead of onMouseUp
+            onValueCommit={handleSeekMouseUp}
           />
         </div>
 
