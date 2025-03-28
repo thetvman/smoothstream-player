@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 
 /**
  * Get the proper URL format for an Xtream movie stream
- * Ensures the URL uses HTTPS to prevent mixed content warnings
  */
 export const getXtreamMovieUrl = (
   baseUrl: string,
@@ -12,13 +11,7 @@ export const getXtreamMovieUrl = (
   streamId: number,
   container: string = "mp4"
 ): string => {
-  // Convert the URL to HTTPS if it's using HTTP
-  let secureBaseUrl = baseUrl;
-  if (secureBaseUrl.startsWith('http:')) {
-    secureBaseUrl = secureBaseUrl.replace('http:', 'https:');
-  }
-  
-  return `${secureBaseUrl}/movie/${username}/${password}/${streamId}.${container}`;
+  return `${baseUrl}/movie/${username}/${password}/${streamId}.${container}`;
 };
 
 /**
@@ -109,11 +102,6 @@ export const fetchMovieInfo = async (
  */
 export const storeMovieForPlayback = (movie: Movie): void => {
   try {
-    // Ensure movie URL uses HTTPS
-    if (movie.url && movie.url.startsWith('http:')) {
-      movie.url = movie.url.replace('http:', 'https:');
-    }
-    
     // Store just this single movie instead of all movies
     localStorage.setItem(`movie-${movie.id}`, JSON.stringify(movie));
     console.log("Movie saved to localStorage for playback:", movie.name);
@@ -192,14 +180,10 @@ export const fetchAllMovies = async (credentials: XtreamCredentials): Promise<Mo
         // Convert Xtream movies to our app format
         const movies: Movie[] = xtreamMovies.map(movie => {
           const container = movie.container_extension || 'mp4';
-          
-          // Ensure we use HTTPS URL
-          let movieUrl = getXtreamMovieUrl(credentials.server, credentials.username, credentials.password, movie.stream_id, container);
-          
           return {
             id: uuidv4(),
             name: movie.name,
-            url: movieUrl,
+            url: getXtreamMovieUrl(credentials.server, credentials.username, credentials.password, movie.stream_id, container),
             logo: movie.stream_icon || undefined,
             backdrop: movie.backdrop_path,
             group: categoryMap[movie.category_id],
