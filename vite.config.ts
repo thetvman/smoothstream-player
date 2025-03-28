@@ -14,6 +14,9 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     assetsDir: 'assets',
+    minify: 'terser', // Use terser for better minification
+    sourcemap: false, // Disable sourcemaps in production for better performance
+    chunkSizeWarningLimit: 1000, // Increase warning limit for larger chunks
   },
   plugins: [
     react(),
