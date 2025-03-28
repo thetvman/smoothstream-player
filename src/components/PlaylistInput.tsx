@@ -89,7 +89,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
     
     if (!validateAllowedUrl(url)) {
-      setUrlError("Only URLs from http://amri.wtf are allowed");
+      setUrlError("Only URLs from amri.wtf or deliverynetwork.online are allowed");
       return false;
     }
     
@@ -157,7 +157,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
     }
     
     if (!validateAllowedUrl(server)) {
-      setServerError("Only servers from http://amri.wtf are allowed");
+      setServerError("Only servers from amri.wtf or deliverynetwork.online are allowed");
       return false;
     }
     
@@ -239,7 +239,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
   
   const loadSamplePlaylist = async (url: string, name: string) => {
     if (!validateAllowedUrl(url)) {
-      toast.error("Only URLs from http://amri.wtf are allowed");
+      toast.error("Only URLs from amri.wtf or deliverynetwork.online are allowed");
       return;
     }
     
@@ -330,7 +330,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
           </div>
           
           <div className="text-xs text-amber-500 mt-2 mb-4">
-            Note: Only playlists with URLs from http://amri.wtf will be allowed to load.
+            Note: Only playlists with URLs from amri.wtf or deliverynetwork.online will be allowed to load.
           </div>
           
           <div>
@@ -384,7 +384,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
                 <p className="text-xs text-red-500 mt-1">{urlError}</p>
               )}
               <p className="text-xs text-amber-500 mt-2">
-                Only URLs from http://amri.wtf are allowed.
+                Only URLs from amri.wtf or deliverynetwork.online are allowed.
               </p>
             </div>
           </form>
@@ -439,7 +439,7 @@ const PlaylistInput: React.FC<PlaylistInputProps> = ({ onPlaylistLoaded, classNa
               </div>
               
               <p className="mt-3 text-xs text-amber-500">
-                Only servers from http://amri.wtf are allowed.
+                Only servers from amri.wtf or deliverynetwork.online are allowed.
               </p>
               
               <p className="mt-1 text-xs text-muted-foreground">

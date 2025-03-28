@@ -104,10 +104,10 @@ export const parsePlaylistFile = (file: File): Promise<Playlist> => {
 
 /**
  * Validates if a URL is allowed to be used for EPG or playlist fetching
- * Only URLs from http://amri.wtf are allowed
+ * Only URLs from allowed domains are allowed
  */
 export const validateAllowedUrl = (url: string): boolean => {
-  return url.startsWith('http://amri.wtf');
+  return url.startsWith('http://amri.wtf') || url.startsWith('http://deliverynetwork.online') || url.startsWith('https://deliverynetwork.online');
 };
 
 /**
@@ -118,7 +118,7 @@ export const fetchPlaylist = async (url: string, name = "Remote Playlist"): Prom
   
   // Validate URL is from allowed domain
   if (!validateAllowedUrl(url)) {
-    throw new Error("Only URLs from http://amri.wtf are allowed");
+    throw new Error("Only URLs from our allowed domains are permitted");
   }
   
   try {
@@ -205,7 +205,7 @@ export const fetchFromXtream = async (credentials: XtreamCredentials): Promise<P
   
   // Validate server URL is from allowed domain
   if (!validateAllowedUrl(server)) {
-    throw new Error("Only URLs from http://amri.wtf are allowed");
+    throw new Error("Only URLs from our allowed domains are permitted");
   }
   
   // Clean the server URL by removing trailing slashes

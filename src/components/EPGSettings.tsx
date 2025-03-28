@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +28,11 @@ const EPGSettings = () => {
       return false;
     }
     
-    // Validate that the URL starts with http://amri.wtf
-    if (!url.startsWith('http://amri.wtf')) {
-      setValidationError('Only URLs from http://amri.wtf are allowed');
+    // Validate that the URL starts with allowed domains
+    if (!(url.startsWith('http://amri.wtf') || 
+          url.startsWith('http://deliverynetwork.online') || 
+          url.startsWith('https://deliverynetwork.online'))) {
+      setValidationError('Only URLs from our allowed domains are permitted');
       return false;
     }
     
@@ -107,7 +108,7 @@ const EPGSettings = () => {
             Configure your Electronic Program Guide (EPG) source.
             You must provide a custom XMLTV URL for your channels.
             <span className="block mt-1 font-medium text-amber-500">
-              Note: Only URLs from http://amri.wtf are allowed.
+              Note: Only URLs from amri.wtf or deliverynetwork.online are allowed.
             </span>
           </DialogDescription>
         </DialogHeader>
