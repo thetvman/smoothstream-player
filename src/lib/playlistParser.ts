@@ -1,3 +1,4 @@
+
 import { Channel, Playlist, XtreamCredentials, XtreamCategory, XtreamStream } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -109,8 +110,7 @@ export const parsePlaylistFile = (file: File): Promise<Playlist> => {
 export const validateAllowedUrl = (url: string): boolean => {
   return url.startsWith('http://amri.wtf') || 
          url.startsWith('http://deliverynetwork.online') || 
-         url.startsWith('https://deliverynetwork.online') ||
-         url.startsWith('https://xerotv.vip');
+         url.startsWith('https://deliverynetwork.online');
 };
 
 /**
