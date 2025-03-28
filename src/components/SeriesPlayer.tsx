@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import type { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 import { Calendar, Clock } from "lucide-react";
+import { updateWatchHistory } from "@/lib/watchHistoryService";
 
 interface SeriesPlayerProps {
   episode: Episode | null;
@@ -18,6 +18,8 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   onEpisodeEnded
 }) => {
   const [showInfo, setShowInfo] = useState(false);
+  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
   
   // Only show info initially when explicitly requested
   useEffect(() => {
@@ -30,6 +32,39 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   }, [showInfo]);
 
+  // Set up tracking for watch time
+  useEffect(() => {
+    if (!episode) return;
+    
+    // Reset watch time when episode changes
+    setWatchStartTime(Date.now());
+    
+    const saveWatchTime = () => {
+      if (watchStartTime && episode && isPlaying) {
+        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
+        if (watchTimeSeconds > 5) { // Only track if watched more than 5 seconds
+          updateWatchHistory(
+            episode.id,
+            `${series?.name || ''} - ${episode.name}`,
+            "episode",
+            watchTimeSeconds,
+            episode.logo
+          );
+          setWatchStartTime(Date.now()); // Reset for next interval
+        }
+      }
+    };
+    
+    // Periodically save watch time
+    const intervalId = setInterval(saveWatchTime, 30000); // Every 30 seconds
+    
+    return () => {
+      // Save final watch time when unmounting
+      saveWatchTime();
+      clearInterval(intervalId);
+    };
+  }, [episode, series, watchStartTime, isPlaying]);
+
   // Convert episode to channel format for VideoPlayer
   const channel = episode ? {
     id: episode.id,
@@ -40,8 +75,49 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   } : null;
 
   const handleVideoEnded = () => {
+    // Save final watch time when episode ends
+    if (watchStartTime && episode) {
+      const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
+      if (watchTimeSeconds > 5) {
+        updateWatchHistory(
+          episode.id,
+          `${series?.name || ''} - ${episode.name}`,
+          "episode",
+          watchTimeSeconds,
+          episode.logo
+        );
+      }
+      setWatchStartTime(null);
+    }
+    
     if (onEpisodeEnded) {
       onEpisodeEnded();
+    }
+  };
+  
+  // Watch video playback status changes
+  const handlePlaybackChange = (isPlaying: boolean) => {
+    setIsPlaying(isPlaying);
+    
+    if (isPlaying) {
+      if (!watchStartTime) {
+        setWatchStartTime(Date.now());
+      }
+    } else {
+      // Save watch time when paused
+      if (watchStartTime && episode) {
+        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
+        if (watchTimeSeconds > 5) {
+          updateWatchHistory(
+            episode.id,
+            `${series?.name || ''} - ${episode.name}`,
+            "episode",
+            watchTimeSeconds,
+            episode.logo
+          );
+        }
+        setWatchStartTime(null);
+      }
     }
   };
 
@@ -52,6 +128,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           channel={channel} 
           autoPlay={autoPlay} 
           onEnded={handleVideoEnded}
+          onPlaybackChange={handlePlaybackChange}
         />
         
         {/* Show info button with transition */}

@@ -1,9 +1,9 @@
-
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
 import PlayerControls from "./PlayerControls";
 import LoadingSpinner from "./common/LoadingSpinner";
+import { updateWatchHistory } from "@/lib/watchHistoryService";
 
 interface MoviePlayerProps {
   movie: Movie | null;
@@ -27,6 +27,10 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
   
   const [error, setError] = useState<string | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  
+  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const watchIntervalRef = useRef<number | null>(null);
+  const previousTimeRef = useRef<number>(0);
   
   useEffect(() => {
     if (movie?.url) {
@@ -187,9 +191,41 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
     
     const handlePlay = () => {
       setPlayerState(prev => ({ ...prev, playing: true }));
+      setWatchStartTime(Date.now());
     };
     
     const handlePause = () => {
+      setPlayerState(prev => ({ ...prev, playing: false }));
+      
+      if (watchStartTime && movie) {
+        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
+        if (watchTimeSeconds > 3) {
+          updateWatchHistory(
+            movie.id,
+            movie.name,
+            "movie",
+            watchTimeSeconds,
+            movie.logo || movie.backdrop
+          );
+        }
+        setWatchStartTime(null);
+      }
+    };
+    
+    const handleEnded = () => {
+      if (watchStartTime && movie) {
+        const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
+        if (watchTimeSeconds > 3) {
+          updateWatchHistory(
+            movie.id,
+            movie.name,
+            "movie",
+            watchTimeSeconds,
+            movie.logo || movie.backdrop
+          );
+        }
+      }
+      
       setPlayerState(prev => ({ ...prev, playing: false }));
     };
     
@@ -222,6 +258,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
     video.addEventListener("loadstart", handleLoadStart);
     video.addEventListener("canplay", handleCanPlay);
     video.addEventListener("error", handleError);
+    video.addEventListener("ended", handleEnded);
     
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
@@ -232,8 +269,9 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
       video.removeEventListener("loadstart", handleLoadStart);
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [movie]);
   
   const handlePlayPause = () => {
     const video = videoRef.current;
