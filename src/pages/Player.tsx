@@ -19,6 +19,7 @@ const Player = () => {
   const [showInfo, setShowInfo] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
+  const [epgLoaded, setEpgLoaded] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -56,10 +57,10 @@ const Player = () => {
     };
   }, []);
   
+  // Load EPG data when the info panel is opened for the first time
   useEffect(() => {
     const loadEpgData = async () => {
-      if (!channel || !channel.epg_channel_id) {
-        setEpgData(null);
+      if (!channel || !channel.epg_channel_id || epgLoaded) {
         return;
       }
       
@@ -74,6 +75,7 @@ const Player = () => {
           console.log(`No EPG data found for ${channel.name}`);
           setEpgData(null);
         }
+        setEpgLoaded(true);
       } catch (error) {
         console.error(`Error fetching EPG data for ${channel.name}:`, error);
         setEpgData(null);
@@ -82,8 +84,14 @@ const Player = () => {
       }
     };
     
-    loadEpgData();
-  }, [channel]);
+    if (showInfo && !epgLoaded) {
+      loadEpgData();
+    }
+  }, [channel, showInfo, epgLoaded]);
+  
+  const handleShowInfo = () => {
+    setShowInfo(true);
+  };
   
   if (!channel) {
     return null;
@@ -108,7 +116,7 @@ const Player = () => {
           variant="ghost"
           size="icon"
           className="bg-black/50 hover:bg-black/70 text-white rounded-full"
-          onClick={() => setShowInfo(!showInfo)}
+          onClick={handleShowInfo}
           aria-label={showInfo ? "Hide info" : "Show info"}
         >
           <Info className="h-5 w-5" />

@@ -15,9 +15,9 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   series,
   autoPlay = true 
 }) => {
-  const [showInfo, setShowInfo] = useState(true);
+  const [showInfo, setShowInfo] = useState(false);
   
-  // Auto-hide the info panel after 7 seconds
+  // Only show info initially when explicitly requested
   useEffect(() => {
     if (showInfo) {
       const timer = setTimeout(() => {
@@ -42,15 +42,13 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
         <VideoPlayer channel={channel} autoPlay={autoPlay} />
         
-        {/* Show info button when info is hidden */}
-        {!showInfo && series && episode && (
-          <button 
-            className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors z-20"
-            onClick={() => setShowInfo(true)}
-          >
-            Show Info
-          </button>
-        )}
+        {/* Show info button */}
+        <button 
+          className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors z-20"
+          onClick={() => setShowInfo(true)}
+        >
+          Show Info
+        </button>
       </div>
       
       {series && episode && showInfo && (

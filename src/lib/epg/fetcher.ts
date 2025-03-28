@@ -92,3 +92,12 @@ export const fetchEPGData = async (channel: Channel | null): Promise<EPGProgram[
     return demoData;
   }
 };
+
+/**
+ * Clear function to remove batch prefetching logic
+ * This is a placeholder to maintain API compatibility with any code that might call it
+ */
+export const prefetchEPGDataForChannels = async (channels: Channel[]): Promise<void> => {
+  console.log("EPG prefetching disabled - EPG data will be loaded on-demand only");
+  return;
+};

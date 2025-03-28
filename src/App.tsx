@@ -9,8 +9,7 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 
 // Lazy load page components with proper preloading hints
 const Index = lazy(() => {
-  // Add preloading hint for main page components
-  const preloadPlaylistInput = import("./components/PlaylistInput");
+  // No preloading of EPG data anymore
   return import("./pages/Index");
 });
 const Player = lazy(() => import("./pages/Player"));

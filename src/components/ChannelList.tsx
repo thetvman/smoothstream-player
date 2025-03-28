@@ -118,7 +118,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
       )}
       
       <div className="flex-1 overflow-y-auto p-1">
-        {(!filteredPagination || filteredPagination.items.length === 0) ? (
+        {(!filteredPagination || !filteredPagination.items || filteredPagination.items.length === 0) ? (
           <div className="p-4 text-center">
             <p className="text-muted-foreground">No channels found</p>
           </div>
@@ -149,8 +149,8 @@ const ChannelList: React.FC<ChannelListProps> = ({
                   <div className="font-medium truncate">
                     {channel.name}
                     {channel.epg_channel_id && (
-                      <span className="ml-1.5 inline-flex items-center">
-                        <Tv className="w-3 h-3 text-primary" />
+                      <span className="ml-1.5 inline-flex items-center" title="EPG info available">
+                        <Tv className="w-3 h-3 text-primary/60" />
                       </span>
                     )}
                   </div>
