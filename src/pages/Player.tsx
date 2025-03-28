@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -26,7 +25,6 @@ const Player = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isShowingInfo, setIsShowingInfo] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -108,51 +106,54 @@ const Player = () => {
         clearTimeout(controlsTimeoutRef.current);
       }
       
-      setShowControls(true);
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
+      if (!showInfo) {
+        setShowControls(true);
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 3000);
+      }
     };
     
-    resetControlsTimeout();
+    if (!showInfo) {
+      resetControlsTimeout();
+    }
     
-    const handleMouseMove = () => resetControlsTimeout();
+    const handleMouseMove = () => !showInfo && resetControlsTimeout();
+    const handleClick = () => !showInfo && resetControlsTimeout();
+    
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('click', handleMouseMove);
+    document.addEventListener('click', handleClick);
     
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('click', handleMouseMove);
+      document.removeEventListener('click', handleClick);
     };
-  }, []);
+  }, [showInfo]);
   
   const handleShowInfo = () => {
     setShowControls(false);
-    setIsShowingInfo(true);
+    setShowInfo(true);
     
-    const timer = setTimeout(() => {
-      setShowInfo(true);
-      setTimeout(() => {
-        setIsShowingInfo(false);
-      }, 300);
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+      controlsTimeoutRef.current = null;
+    }
   };
   
   const handleHideInfo = () => {
     setShowInfo(false);
-    setIsShowingInfo(true);
+    setShowControls(true);
     
-    const timer = setTimeout(() => {
-      setShowControls(true);
-      setIsShowingInfo(false);
-    }, 300);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
     
-    return () => clearTimeout(timer);
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
   };
   
   const navigateToChannel = (direction: 'next' | 'prev') => {
@@ -179,14 +180,16 @@ const Player = () => {
   return (
     <div className="fixed inset-0 bg-black">
       <PlayerHeader 
-        isVisible={showControls && !isShowingInfo}
+        isVisible={showControls}
         onInfoToggle={handleShowInfo}
+        showInfo={showInfo}
       />
       
       <PlayerNavigation 
-        isVisible={showControls && !showInfo && !isShowingInfo}
+        isVisible={showControls}
         onPrevious={() => navigateToChannel('prev')}
         onNext={() => navigateToChannel('next')}
+        showInfo={showInfo}
       />
       
       <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
@@ -196,7 +199,7 @@ const Player = () => {
             
             <PlayerInfo 
               channel={channel}
-              isVisible={(showControls || !isFullscreen) && !showInfo && !isShowingInfo}
+              isVisible={showControls && !showInfo}
               isFullscreen={isFullscreen}
             />
           </div>

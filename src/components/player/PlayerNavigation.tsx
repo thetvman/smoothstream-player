@@ -7,16 +7,21 @@ interface PlayerNavigationProps {
   isVisible: boolean;
   onPrevious: () => void;
   onNext: () => void;
+  showInfo: boolean;
 }
 
 const PlayerNavigation: React.FC<PlayerNavigationProps> = ({
   isVisible,
   onPrevious,
-  onNext
+  onNext,
+  showInfo
 }) => {
+  // Only show navigation when it's visible AND the info panel is not showing
+  const shouldShow = isVisible && !showInfo;
+  
   return (
     <div 
-      className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`absolute left-0 top-1/2 right-0 -translate-y-1/2 flex justify-between px-4 z-30 transition-opacity duration-300 ${shouldShow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
     >
       <Button
         variant="ghost"

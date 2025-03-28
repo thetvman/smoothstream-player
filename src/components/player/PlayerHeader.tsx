@@ -8,17 +8,22 @@ import EPGSettings from "@/components/EPGSettings";
 interface PlayerHeaderProps {
   isVisible: boolean;
   onInfoToggle: () => void;
+  showInfo: boolean;
 }
 
 const PlayerHeader: React.FC<PlayerHeaderProps> = ({
   isVisible,
-  onInfoToggle
+  onInfoToggle,
+  showInfo
 }) => {
   const navigate = useNavigate();
   
+  // Only show the header when it's visible AND the info panel is not showing
+  const shouldShow = isVisible && !showInfo;
+  
   return (
     <>
-      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${shouldShow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <button 
           className="bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors text-white"
           onClick={() => navigate("/")}
@@ -28,7 +33,7 @@ const PlayerHeader: React.FC<PlayerHeaderProps> = ({
         </button>
       </div>
       
-      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute top-6 right-6 z-30 flex gap-2 transition-opacity duration-300 ${shouldShow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <EPGSettings />
         
         <Button
