@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -98,6 +99,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    touch-action: manipulation; /* Optimize for touch */
   }
 
   /* Hide video controls by default */
@@ -134,6 +137,22 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
+  }
+  
+  /* Mobile optimization */
+  @media (max-width: 640px) {
+    html, body {
+      font-size: 14px; /* Slightly smaller font for mobile */
+    }
+    
+    .btn-icon {
+      @apply w-8 h-8; /* Smaller buttons on mobile */
+    }
+    
+    ::-webkit-scrollbar {
+      width: 4px; /* Thinner scrollbars on mobile */
+      height: 4px;
+    }
   }
 }
 
@@ -172,6 +191,15 @@
   
   .player-progress:hover .player-progress-handle {
     @apply opacity-100;
+  }
+  
+  /* Mobile-optimized controls */
+  .mobile-btn-icon {
+    @apply w-9 h-9 flex items-center justify-center rounded-full bg-player-control/30 text-player-foreground;
+  }
+  
+  .mobile-player-progress {
+    @apply h-1.5 bg-white/30 relative overflow-hidden rounded-full;
   }
   
   /* New movie website specific styles */
@@ -230,5 +258,17 @@
   
   .animate-slide-up {
     animation: slide-up 0.3s ease-out forwards;
+  }
+  
+  /* Mobile optimizations */
+  .touch-feedback:active {
+    @apply opacity-70 scale-95 transition-all duration-100;
+  }
+  
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }

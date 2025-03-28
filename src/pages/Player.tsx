@@ -11,6 +11,7 @@ import EPGSettings from "@/components/EPGSettings";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { fetchEPGData, EPGProgram } from "@/lib/epg";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -21,6 +22,7 @@ const Player = () => {
   const [isEpgLoading, setIsEpgLoading] = useState(false);
   const [epgLoaded, setEpgLoaded] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -123,13 +125,13 @@ const Player = () => {
         </Button>
       </div>
       
-      <div className="h-full flex">
-        <div className="flex-1 flex items-center justify-center p-4">
+      <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
+        <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-4`}>
           <div className="w-full max-w-screen-2xl mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />
             
             <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-              <h1 className="text-white text-2xl font-bold mb-2">{channel.name}</h1>
+              <h1 className={`text-white font-bold mb-2 ${isMobile ? 'text-lg' : 'text-2xl'}`}>{channel.name}</h1>
               {channel.group && (
                 <div className="inline-block bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
                   {channel.group}
@@ -140,8 +142,8 @@ const Player = () => {
         </div>
         
         {showInfo && (
-          <div className="w-80 bg-gray-900 border-l border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up">
-            <ScrollArea className="h-screen p-4">
+          <div className={`${isMobile ? 'h-1/2' : 'w-80'} bg-gray-900 ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden transition-all duration-300 animate-slide-up`}>
+            <ScrollArea className="h-full p-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-white">Channel Info</h2>
                 <Button 

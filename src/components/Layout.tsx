@@ -1,6 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,8 @@ const Layout: React.FC<LayoutProps> = ({
   padded = true,
   withSidebar = false,
 }) => {
+  const isMobile = useIsMobile();
+  
   const maxWidthClasses = {
     sm: "max-w-screen-sm",
     md: "max-w-screen-md",
@@ -31,10 +34,10 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div 
       className={cn(
-        "w-full",
+        "w-full mobile-safe-area",
         withSidebar ? "flex h-screen overflow-hidden" : "mx-auto",
         maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
-        padded && !withSidebar ? "px-4 sm:px-6 md:px-8" : "",
+        padded && !withSidebar ? `px-${isMobile ? '3' : '4'} sm:px-6 md:px-8` : "",
         fullHeight && !withSidebar ? "min-h-screen flex flex-col" : "",
         className
       )}

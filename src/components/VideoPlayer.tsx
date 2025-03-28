@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Channel } from "@/lib/types";
 import { updateWatchHistory } from "@/lib/watchHistoryService";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -23,6 +23,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onEnded,
   onPlaybackChange 
 }) => {
+  const isMobile = useIsMobile();
   const [playerState, setPlayerState] = useState({
     playing: autoPlay,
     muted: false,
@@ -36,9 +37,30 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
   const watchIntervalRef = useRef<number | null>(null);
   const playerRef = useRef<ReactPlayer>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    if (isMobile && playerState.playing) {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      setShowControls(true);
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+    
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [isMobile, playerState.playing]);
   
   useEffect(() => {
     if (!channel) return;
@@ -92,7 +114,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (onPlaybackChange) {
       onPlaybackChange(newPlayingState);
     }
-  }, [playerState.playing, onPlaybackChange]);
+    
+    if (isMobile) {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      if (newPlayingState) {
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 3000);
+      }
+    }
+  }, [playerState.playing, onPlaybackChange, isMobile]);
 
   const handleVolumeChange = useCallback((value: number[]) => {
     const newVolume = value[0];
@@ -182,9 +217,34 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, [handleScreenfullChange]);
 
-  useHotkeys('space', handlePlayPause, { preventDefault: true });
-  useHotkeys('m', handleMuteUnmute, { preventDefault: true });
-  useHotkeys('f', handleToggleFullscreen, { preventDefault: true });
+  useHotkeys('space', handlePlayPause, { 
+    preventDefault: true,
+    enabled: !isMobile 
+  });
+  useHotkeys('m', handleVolumeChange, { 
+    preventDefault: true,
+    enabled: !isMobile 
+  });
+  useHotkeys('f', handleToggleFullscreen, { 
+    preventDefault: true,
+    enabled: !isMobile 
+  });
+
+  const handleContainerTap = useCallback(() => {
+    if (isMobile) {
+      setShowControls(prev => !prev);
+      
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      if (!showControls && playerState.playing) {
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 3000);
+      }
+    }
+  }, [isMobile, showControls, playerState.playing]);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -271,7 +331,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }
 
   return (
-    <div className="relative aspect-video bg-black" ref={playerContainerRef}>
+    <div 
+      className="relative aspect-video bg-black" 
+      ref={playerContainerRef}
+      onClick={handleContainerTap}
+    >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <Loader2 className="h-10 w-10 animate-spin text-white" />
@@ -295,31 +359,47 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onPause={handlePause}
       />
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white flex items-center">
+      <div 
+        className={cn(
+          "absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white flex items-center",
+          isMobile ? "transition-opacity duration-300" : "",
+          isMobile && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}
+      >
         <div className="flex items-center gap-2 mr-4">
           <Button variant="ghost" size="icon" onClick={handlePlayPause}>
             {playerState.playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={handleMuteUnmute}>
-            {playerState.muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-          </Button>
+          {!isMobile && (
+            <>
+              <Button variant="ghost" size="icon" onClick={handleMuteUnmute}>
+                {playerState.muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </Button>
 
-          <div className="w-24">
-            <Slider
-              defaultValue={[playerState.volume]}
-              max={1}
-              step={0.01}
-              onValueChange={handleVolumeChange}
-            />
+              <div className="w-24 hidden sm:block">
+                <Slider
+                  defaultValue={[playerState.volume]}
+                  max={1}
+                  step={0.01}
+                  onValueChange={handleVolumeChange}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {isMobile ? (
+          <div className="flex-1 text-xs">
+            <span>{formatTime(playerState.currentTime)}</span>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 text-sm">
+            <span>{formatTime(playerState.currentTime)}</span> / <span>{formatTime(playerState.duration)}</span>
+          </div>
+        )}
 
-        <div className="flex-1 text-sm">
-          <span>{formatTime(playerState.currentTime)}</span> / <span>{formatTime(playerState.duration)}</span>
-        </div>
-
-        <div className="w-48 mr-4">
+        <div className={cn("mr-4", isMobile ? "w-24" : "w-48")}>
           <Slider
             defaultValue={[playerState.currentTime]}
             max={playerState.duration}
