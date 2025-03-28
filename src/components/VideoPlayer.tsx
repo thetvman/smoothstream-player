@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from "react";
 import screenfull from 'screenfull';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -7,7 +6,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWatchTime } from "@/hooks/use-watch-time";
 import PlayerControls from "./player/PlayerControls";
 import VideoDisplay from "./player/VideoDisplay";
-import { cn } from "@/lib/utils";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -35,15 +33,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
   
-  // Use the watch time tracking hook if channel exists
-  const watchTime = channel ? useWatchTime({
-    id: channel.id,
-    name: channel.name,
+  const { handlePlaybackEnd } = useWatchTime({
+    id: channel?.id || '',
+    name: channel?.name || '',
     type: "channel",
     isPlaying: playerState.playing,
     thumbnailUrl: channel?.logo
-  }) : null;
+  });
 
   const handlePlayPause = useCallback(() => {
     const newPlayingState = !playerState.playing;
@@ -105,17 +103,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, []);
 
   const handleEnded = useCallback(() => {
-    watchTime?.handlePlaybackEnd();
+    if (channel) {
+      handlePlaybackEnd();
+    }
     
     if (onEnded) {
       onEnded();
     }
-  }, [onEnded, watchTime]);
+  }, [onEnded, handlePlaybackEnd, channel]);
 
   const handleError = useCallback(() => {
     setIsLoading(false);
-    console.error("Error loading stream for channel:", channel?.name);
-  }, [channel?.name]);
+    if (channel) {
+      console.error("Error loading stream for channel:", channel.name);
+    }
+  }, [channel]);
 
   const handlePlay = useCallback(() => {
     setPlayerState(prev => ({ ...prev, playing: true }));
@@ -133,7 +135,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [onPlaybackChange]);
 
-  // Register hotkeys for non-mobile devices
   useHotkeys('space', (e) => {
     e.preventDefault();
     handlePlayPause();
@@ -149,7 +150,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     handleToggleFullscreen();
   }, { enabled: !isMobile });
 
-  // Effect for fullscreen changes
   React.useEffect(() => {
     if (screenfull.isEnabled) {
       screenfull.on('change', handleScreenfullChange);
