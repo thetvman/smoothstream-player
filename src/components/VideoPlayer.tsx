@@ -34,6 +34,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isIOS, setIsIOS] = useState(false);
+  const [videoStats, setVideoStats] = useState({
+    resolution: undefined,
+    frameRate: undefined,
+    audioBitrate: undefined,
+    audioChannels: undefined
+  });
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   
@@ -147,6 +153,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [onPlaybackChange]);
 
+  const handleStatsUpdate = useCallback((stats: any) => {
+    setVideoStats(stats);
+  }, []);
+
   useHotkeys('space', (e) => {
     e.preventDefault();
     handlePlayPause();
@@ -204,25 +214,38 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onPause={handlePause}
         isLoading={isLoading}
         isFullscreen={isFullscreen}
+        onStatsUpdate={handleStatsUpdate}
       />
 
       {/* Only show custom controls for non-iOS devices */}
       {!isIOS && (
-        <PlayerControls
-          playing={playerState.playing}
-          muted={playerState.muted}
-          volume={playerState.volume}
-          currentTime={playerState.currentTime}
-          duration={playerState.duration}
-          isFullscreen={isFullscreen}
-          onPlayPause={handlePlayPause}
-          onMuteUnmute={handleMuteUnmute}
-          onVolumeChange={handleVolumeChange}
-          onSeek={handleSeek}
-          onSeekStart={handleSeekMouseDown}
-          onSeekEnd={handleSeekMouseUp}
-          onToggleFullscreen={handleToggleFullscreen}
-        />
+        <>
+          <PlayerControls
+            playing={playerState.playing}
+            muted={playerState.muted}
+            volume={playerState.volume}
+            currentTime={playerState.currentTime}
+            duration={playerState.duration}
+            isFullscreen={isFullscreen}
+            onPlayPause={handlePlayPause}
+            onMuteUnmute={handleMuteUnmute}
+            onVolumeChange={handleVolumeChange}
+            onSeek={handleSeek}
+            onSeekStart={handleSeekMouseDown}
+            onSeekEnd={handleSeekMouseUp}
+            onToggleFullscreen={handleToggleFullscreen}
+          />
+
+          {/* Player Info with stats */}
+          {channel && (
+            <PlayerInfo
+              channel={channel}
+              isVisible={showControls}
+              isFullscreen={isFullscreen}
+              stats={videoStats}
+            />
+          )}
+        </>
       )}
     </div>
   );

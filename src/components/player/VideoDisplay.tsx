@@ -19,6 +19,12 @@ interface VideoDisplayProps {
   onPause: () => void;
   isLoading: boolean;
   isFullscreen?: boolean;
+  onStatsUpdate?: (stats: {
+    resolution?: string;
+    frameRate?: number;
+    audioBitrate?: string;
+    audioChannels?: string;
+  }) => void;
 }
 
 const VideoDisplay: React.FC<VideoDisplayProps> = ({
@@ -34,7 +40,8 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
   onPlay,
   onPause,
   isLoading,
-  isFullscreen = false
+  isFullscreen = false,
+  onStatsUpdate
 }) => {
   const playerRef = useRef<ReactPlayer>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -50,6 +57,84 @@ const VideoDisplay: React.FC<VideoDisplayProps> = ({
     
     setIsIOS(checkIOS());
   }, []);
+
+  // Collect video stats periodically
+  useEffect(() => {
+    if (!onStatsUpdate) return;
+    
+    const collectStats = () => {
+      const video = videoRef.current;
+      if (!video) {
+        // Try to get video element from ReactPlayer
+        const player = playerRef.current;
+        if (player) {
+          const internalPlayer = player.getInternalPlayer();
+          if (internalPlayer instanceof HTMLVideoElement) {
+            collectVideoStats(internalPlayer);
+          }
+        }
+        return;
+      }
+      
+      collectVideoStats(video);
+    };
+    
+    const collectVideoStats = (videoElement: HTMLVideoElement) => {
+      try {
+        const stats = {
+          resolution: videoElement.videoWidth && videoElement.videoHeight 
+            ? `${videoElement.videoWidth}×${videoElement.videoHeight}` 
+            : undefined,
+          frameRate: undefined as number | undefined,
+          audioBitrate: undefined as string | undefined,
+          audioChannels: undefined as string | undefined,
+        };
+        
+        // Try to get frame rate if available in webkit stats
+        if ('webkitVideoDecodedByteCount' in videoElement) {
+          const webkitVideoDecodedFrameCount = (videoElement as any).webkitVideoDecodedFrameCount;
+          if (typeof webkitVideoDecodedFrameCount === 'number') {
+            // Use a custom property to track last frame count for FPS calculation
+            const lastStats = (videoElement as any)._lastStats || { 
+              time: Date.now(),
+              frames: webkitVideoDecodedFrameCount 
+            };
+            
+            const now = Date.now();
+            const timeDiff = (now - lastStats.time) / 1000;
+            if (timeDiff > 0) {
+              const frameDiff = webkitVideoDecodedFrameCount - lastStats.frames;
+              stats.frameRate = frameDiff / timeDiff;
+              
+              // Update last stats
+              (videoElement as any)._lastStats = {
+                time: now,
+                frames: webkitVideoDecodedFrameCount
+              };
+            }
+          }
+        }
+        
+        // Get audio information from audio tracks if available
+        if (videoElement.audioTracks && videoElement.audioTracks.length > 0) {
+          const audioTrack = videoElement.audioTracks[0];
+          stats.audioChannels = audioTrack.label || 'Stereo';  // Often contains audio channel info
+        } else {
+          stats.audioChannels = 'Stereo';  // Default assumption
+        }
+        
+        // We can't easily get actual audio bitrate, so this is just a placeholder
+        stats.audioBitrate = '128 kbps';  // Default assumption
+        
+        onStatsUpdate(stats);
+      } catch (error) {
+        console.error("Error collecting video stats:", error);
+      }
+    };
+    
+    const intervalId = setInterval(collectStats, 1000);
+    return () => clearInterval(intervalId);
+  }, [onStatsUpdate]);
 
   useEffect(() => {
     const video = videoRef.current;
