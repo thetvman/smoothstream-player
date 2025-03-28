@@ -135,9 +135,10 @@ const Player = () => {
       </div>
       
       <div className="h-full flex flex-col">
-        <div className={`flex ${isMobile ? 'flex-col' : 'h-[70%]'}`}>
-          {/* Main content area with video player and EPG panel */}
-          <div className={`${showInfo ? (isMobile ? 'h-1/2' : 'flex-1 pr-[600px]') : 'flex-1'} flex items-center justify-center p-4 transition-all duration-300`}>
+        {/* Main content area with video and channel table */}
+        <div className={`flex-1 ${showInfo ? (isMobile ? 'h-1/2' : 'pr-[600px]') : ''} transition-all duration-300`}>
+          {/* Video Player */}
+          <div className="h-2/3 w-full flex items-center justify-center p-4">
             <div className="w-full max-w-screen-2xl mx-auto relative">
               <VideoPlayer channel={channel} autoPlay />
               
@@ -152,74 +153,74 @@ const Player = () => {
             </div>
           </div>
           
-          {/* EPG info panel (right side) - now wider */}
-          {showInfo && (
-            <div 
-              className={`${isMobile ? 'h-1/2' : 'fixed top-0 bottom-0 right-0 w-[600px]'} bg-gray-900 
-              ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden 
-              transition-all duration-300 animate-slide-up z-10`}
-            >
-              <ScrollArea className="h-full p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-white">Program Guide</h2>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-gray-400 hover:text-white"
-                    onClick={() => setShowInfo(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-xl font-medium text-white">{channel.name}</h3>
-                    {channel.group && (
-                      <div className="text-sm text-gray-400 mt-1">{channel.group}</div>
-                    )}
-                    {channel.epg_channel_id && (
-                      <div className="text-xs text-gray-500 mt-1">EPG ID: {channel.epg_channel_id}</div>
-                    )}
-                  </div>
-
-                  {channel.logo && (
-                    <div className="flex justify-center p-4 bg-black/30 rounded-lg">
-                      <img 
-                        src={channel.logo} 
-                        alt={`${channel.name} logo`} 
-                        className="h-24 object-contain" 
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="pt-4 border-t border-gray-800">
-                    <h4 className="text-lg font-medium text-gray-300 mb-4">Program Guide</h4>
-                    <EPGGuide 
-                      channel={channel} 
-                      epgData={epgData} 
-                      isLoading={isEpgLoading}
-                    />
-                  </div>
-                </div>
-              </ScrollArea>
+          {/* Channel table under video */}
+          {playlist && (
+            <div className="h-1/3 border-t border-gray-800 bg-gray-900 overflow-hidden">
+              <ChannelTableView
+                playlist={playlist}
+                channels={playlist.channels}
+                selectedChannel={channel}
+                onSelectChannel={handleSelectChannel}
+                isLoading={false}
+              />
             </div>
           )}
         </div>
         
-        {/* Channel list (bottom section) */}
-        {playlist && (
-          <div className={`${isMobile ? 'h-1/2' : 'h-[30%]'} border-t border-gray-800 bg-gray-900`}>
-            <ChannelTableView
-              playlist={playlist}
-              channels={playlist.channels}
-              selectedChannel={channel}
-              onSelectChannel={handleSelectChannel}
-              isLoading={false}
-            />
+        {/* EPG info panel (right side) */}
+        {showInfo && (
+          <div 
+            className={`${isMobile ? 'h-1/2' : 'fixed top-0 bottom-0 right-0 w-[600px]'} bg-gray-900 
+            ${isMobile ? 'border-t' : 'border-l'} border-gray-800 overflow-hidden 
+            transition-all duration-300 animate-slide-up z-10`}
+          >
+            <ScrollArea className="h-full p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white">Program Guide</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => setShowInfo(false)}
+                >
+                  Close
+                </Button>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-medium text-white">{channel.name}</h3>
+                  {channel.group && (
+                    <div className="text-sm text-gray-400 mt-1">{channel.group}</div>
+                  )}
+                  {channel.epg_channel_id && (
+                    <div className="text-xs text-gray-500 mt-1">EPG ID: {channel.epg_channel_id}</div>
+                  )}
+                </div>
+
+                {channel.logo && (
+                  <div className="flex justify-center p-4 bg-black/30 rounded-lg">
+                    <img 
+                      src={channel.logo} 
+                      alt={`${channel.name} logo`} 
+                      className="h-24 object-contain" 
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t border-gray-800">
+                  <h4 className="text-lg font-medium text-gray-300 mb-4">Program Guide</h4>
+                  <EPGGuide 
+                    channel={channel} 
+                    epgData={epgData} 
+                    isLoading={isEpgLoading}
+                  />
+                </div>
+              </div>
+            </ScrollArea>
           </div>
         )}
       </div>
