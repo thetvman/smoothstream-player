@@ -1,3 +1,4 @@
+
 export interface Channel {
   id: string;
   name: string;
@@ -215,36 +216,7 @@ export interface PaginatedSeries {
   itemsPerPage: number;
 }
 
-export interface UserProfile {
-  id: string;
-  username: string;
-  email?: string;
-  avatar?: string;
-  createdAt: Date;
-  preferences: UserPreferences;
-}
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
-  showEPG: boolean;
-  autoPlayNext: boolean;
-  defaultVolume: number;
-  defaultPlaybackQuality?: string;
-  favoriteChannels: string[]; // Channel IDs
-  favoriteMovies: string[]; // Movie IDs
-  favoriteSeries: string[]; // Series IDs
-  recentlyWatched: RecentItem[];
-}
-
-export interface RecentItem {
-  id: string;
-  type: 'channel' | 'movie' | 'episode';
-  title: string;
-  poster?: string;
-  lastWatched: Date;
-  progress?: number; // Progress in percentage or seconds
-}
-
+// Add new interface for ChannelList props
 export interface ChannelListProps {
   playlist: Playlist | null;
   paginatedChannels: PaginatedChannels | null;

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PlaylistInput from "@/components/PlaylistInput";
 import ChannelList from "@/components/ChannelList";
-import TrackedVideoPlayer from "@/components/TrackedVideoPlayer";
+import VideoPlayer from "@/components/VideoPlayer";
 import EPGGuide from "@/components/EPGGuide";
 import EPGSettings from "@/components/EPGSettings";
 import { Playlist, Channel, PaginatedChannels } from "@/lib/types";
@@ -15,7 +15,7 @@ import {
   type EPGProgram
 } from "@/lib/epg";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Heart, Filter } from "lucide-react";
+import { Moon, Sun, Film, Tv } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -26,23 +26,16 @@ import {
 } from "@/components/ui/pagination";
 import {
   NavigationMenu,
+  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import ProfileHeader from "@/components/ProfileHeader";
-import { useProfile } from "@/context/ProfileContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { profile } = useProfile();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,7 +43,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [epgData, setEpgData] = useState<EPGProgram[] | null>(null);
   const [isEpgLoading, setIsEpgLoading] = useState(false);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -67,39 +60,27 @@ const Index = () => {
       }
     }
 
-    if (profile && profile.preferences.theme) {
-      const isDarkMode = profile.preferences.theme === 'dark';
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+    const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
+    setIsDarkMode(darkModePreference);
+  }, []);
+  
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
     } else {
-      const darkModePreference = localStorage.getItem("iptv-dark-mode") === "true";
-      if (darkModePreference) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      document.documentElement.classList.remove('dark');
     }
-  }, [profile]);
+    
+    localStorage.setItem("iptv-dark-mode", isDarkMode.toString());
+  }, [isDarkMode]);
   
   useEffect(() => {
     if (playlist) {
-      let filteredChannels = [...playlist.channels];
-      
-      // Filter to show only favorites if the option is enabled
-      if (showFavoritesOnly && profile) {
-        filteredChannels = filteredChannels.filter(channel => 
-          profile.preferences.favoriteChannels.includes(channel.id)
-        );
-      }
-      
-      setPaginatedChannels(paginateChannels(filteredChannels, currentPage, ITEMS_PER_PAGE));
+      setPaginatedChannels(paginateChannels(playlist.channels, currentPage, ITEMS_PER_PAGE));
     } else {
       setPaginatedChannels(null);
     }
-  }, [playlist, currentPage, showFavoritesOnly, profile]);
+  }, [playlist, currentPage]);
   
   useEffect(() => {
     if (playlist) {
@@ -118,11 +99,6 @@ const Index = () => {
         return;
       }
       
-      if (profile && !profile.preferences.showEPG) {
-        setEpgData(null);
-        return;
-      }
-      
       setIsEpgLoading(true);
       try {
         const data = await fetchEPGData(selectedChannel);
@@ -136,7 +112,7 @@ const Index = () => {
     };
     
     getEPGData();
-  }, [selectedChannel, profile]);
+  }, [selectedChannel]);
   
   const handlePlaylistLoaded = (newPlaylist: Playlist) => {
     setIsLoading(true);
@@ -168,13 +144,8 @@ const Index = () => {
     window.scrollTo(0, 0);
   };
   
-  const toggleFavoritesFilter = () => {
-    if (!profile) {
-      navigate('/signin');
-      return;
-    }
-    setShowFavoritesOnly(!showFavoritesOnly);
-    setCurrentPage(1);
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
   
   const renderPaginationLinks = () => {
@@ -243,37 +214,20 @@ const Index = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight">Stream Player</h1>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8 rounded-full"
+                onClick={toggleDarkMode}
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <EPGSettings />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuCheckboxItem
-                    checked={showFavoritesOnly}
-                    onCheckedChange={toggleFavoritesFilter}
-                  >
-                    <Heart className="h-4 w-4 mr-2" />
-                    Favorites Only
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
               <NavigationMenu>
                 <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink 
-                      className={navigationMenuTriggerStyle()}
-                      onClick={() => navigate('/favorites')}
-                    >
-                      <Heart className="mr-2 h-4 w-4" />
-                      Favorites
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
                   <NavigationMenuItem>
                     <NavigationMenuLink 
                       className={navigationMenuTriggerStyle()}
@@ -294,7 +248,6 @@ const Index = () => {
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
-              <ProfileHeader />
             </div>
           </div>
           <p className="text-muted-foreground">Watch your IPTV streams with a premium experience</p>
@@ -303,14 +256,7 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
           <div className="lg:col-span-2 flex flex-col space-y-4">
             <div className="animate-fade-in">
-              {selectedChannel && (
-                <TrackedVideoPlayer 
-                  channel={selectedChannel} 
-                  contentType="channel"
-                  title={selectedChannel.name}
-                  posterUrl={selectedChannel.logo}
-                />
-              )}
+              <VideoPlayer channel={selectedChannel} />
               
               {selectedChannel && (
                 <div className="flex justify-end mt-2">

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 import { Calendar, Clock } from "lucide-react";
-import { addToRecentlyWatched } from "@/lib/profileService";
 
 interface SeriesPlayerProps {
   episode: Episode | null;
@@ -17,7 +16,6 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   autoPlay = true 
 }) => {
   const [showInfo, setShowInfo] = useState(true);
-  const [progress, setProgress] = useState(0);
   
   // Auto-hide the info panel after 7 seconds
   useEffect(() => {
@@ -30,54 +28,6 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   }, [showInfo]);
 
-  // Add to recently watched when episode is played
-  useEffect(() => {
-    if (episode && series) {
-      console.log(`[SeriesPlayer] Initializing episode: ${series.name} - ${episode.name}`);
-      
-      const episodeId = `${series.id}_${episode.season_number}_${episode.episode_number}`;
-      console.log(`[SeriesPlayer] Generated episode ID: ${episodeId}`);
-      
-      const watchItem = {
-        id: episodeId,
-        type: 'episode' as const,
-        title: `${series.name} - ${episode.name}`,
-        poster: episode.logo || series.logo,
-        progress: 0 // Initial progress
-      };
-      console.log('[SeriesPlayer] Initial watch item data:', watchItem);
-      
-      addToRecentlyWatched(watchItem)
-        .then(() => console.log('[SeriesPlayer] Successfully added episode to watch history'))
-        .catch(err => console.error('[SeriesPlayer] Error adding episode to watch history:', err));
-    }
-  }, [episode, series]);
-  
-  // Update progress handler
-  const handleProgressUpdate = (currentProgress: number) => {
-    setProgress(currentProgress);
-    console.log(`[SeriesPlayer] Progress update: ${currentProgress}%`);
-    
-    // Save progress every 10 seconds
-    if (episode && series && Math.abs(currentProgress - progress) > 5) {
-      console.log(`[SeriesPlayer] Significant progress change detected, saving to history`);
-      
-      const episodeId = `${series.id}_${episode.season_number}_${episode.episode_number}`;
-      const watchItem = {
-        id: episodeId,
-        type: 'episode' as const,
-        title: `${series.name} - ${episode.name}`,
-        poster: episode.logo || series.logo,
-        progress: currentProgress
-      };
-      console.log('[SeriesPlayer] Updated watch item data:', watchItem);
-      
-      addToRecentlyWatched(watchItem)
-        .then(() => console.log('[SeriesPlayer] Successfully updated episode progress'))
-        .catch(err => console.error('[SeriesPlayer] Error updating episode progress:', err));
-    }
-  };
-
   // Convert episode to channel format for VideoPlayer
   const channel = episode ? {
     id: episode.id,
@@ -87,16 +37,10 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     group: series?.group
   } : null;
 
-  console.log(`[SeriesPlayer] Rendering with channel:`, channel);
-
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
-        <VideoPlayer 
-          channel={channel} 
-          autoPlay={autoPlay} 
-          onProgressUpdate={handleProgressUpdate}
-        />
+        <VideoPlayer channel={channel} autoPlay={autoPlay} />
         
         {/* Show info button when info is hidden */}
         {!showInfo && series && episode && (
