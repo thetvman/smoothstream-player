@@ -23,8 +23,8 @@ const SeriesGrid: React.FC<SeriesGridProps> = ({
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <div className="flex flex-col">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-6">
         {paginatedSeries.items.map((series, index) => (
           <motion.div 
             key={series.id} 
@@ -87,10 +87,12 @@ const SeriesGrid: React.FC<SeriesGridProps> = ({
       </div>
       
       {/* Pagination */}
-      <SeriesPagination 
-        paginatedSeries={paginatedSeries} 
-        onPageChange={onPageChange} 
-      />
+      {paginatedSeries.totalPages > 1 && (
+        <SeriesPagination 
+          paginatedSeries={paginatedSeries} 
+          onPageChange={onPageChange} 
+        />
+      )}
     </div>
   );
 };

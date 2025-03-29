@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div 
       className={cn(
-        "w-full mobile-safe-area",
+        "w-full mobile-safe-area min-h-screen",
         withSidebar ? "flex h-screen overflow-hidden" : "mx-auto",
         maxWidth === "full" || withSidebar ? "" : maxWidthClasses[maxWidth],
         getPadding(),

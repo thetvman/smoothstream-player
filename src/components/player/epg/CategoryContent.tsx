@@ -26,7 +26,7 @@ const CategoryContent: React.FC<CategoryContentProps> = ({
 }) => {
   if (isLoading && selectedTab === groupName) {
     return (
-      <div className="flex items-center justify-center flex-1">
+      <div className="flex items-center justify-center flex-1 bg-background/50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading channels...</span>
       </div>
@@ -34,7 +34,7 @@ const CategoryContent: React.FC<CategoryContentProps> = ({
   }
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="flex-1 bg-background/50">
       {channels.map(channel => (
         <ChannelRow
           key={channel.id}

@@ -50,7 +50,7 @@ const Index = () => {
   };
   
   return (
-    <Layout fullHeight className="py-4 md:py-6 px-3 md:px-6">
+    <Layout fullHeight className="py-4 md:py-6 px-3 md:px-6 bg-background">
       <motion.div 
         className="flex flex-col h-full space-y-4"
         variants={container}
