@@ -49,7 +49,7 @@ const EPGGuide: React.FC<EPGGuideProps> = ({ channel, epgData, isLoading }) => {
       <div className="mt-2 py-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          <p>Loading program information for {channel.name}...</p>
+          <p>No program information available for {channel.name}.</p>
           <p className="text-xs ml-2">EPG ID: {channel.epg_channel_id}</p>
         </div>
       </div>
