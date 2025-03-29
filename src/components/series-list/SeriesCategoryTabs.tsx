@@ -19,15 +19,15 @@ const SeriesCategoryTabs: React.FC<SeriesCategoryTabsProps> = ({
   }
 
   return (
-    <TabsList className="w-full mb-4 flex overflow-x-auto">
+    <TabsList className="w-full mb-4 flex overflow-x-auto space-x-1 bg-black/20 p-1 rounded-lg">
       {seriesCategories.map(category => (
         <TabsTrigger
           key={category.id}
           value={category.id}
-          className="flex-shrink-0"
+          className="flex-shrink-0 text-sm text-gray-300 data-[state=active]:bg-primary data-[state=active]:text-white"
           onClick={() => onCategoryChange(category.id)}
         >
-          {category.name} ({category.series.length})
+          {category.name}
         </TabsTrigger>
       ))}
     </TabsList>

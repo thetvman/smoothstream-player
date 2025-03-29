@@ -25,15 +25,15 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
   }
   
   return (
-    <div className="mt-4">
+    <div className="mt-6">
       <Pagination>
-        <PaginationContent>
+        <PaginationContent className="bg-black/20 p-1 rounded-lg">
           {/* Previous page button */}
           {paginatedSeries.currentPage > 1 && (
             <PaginationItem>
               <PaginationPrevious 
                 onClick={() => onPageChange(paginatedSeries.currentPage - 1)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               />
             </PaginationItem>
           )}
@@ -43,7 +43,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={() => onPageChange(1)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               >
                 1
               </PaginationLink>
@@ -53,7 +53,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
           {/* Ellipsis for many pages */}
           {paginatedSeries.currentPage > 3 && (
             <PaginationItem>
-              <PaginationEllipsis />
+              <PaginationEllipsis className="text-white" />
             </PaginationItem>
           )}
           
@@ -62,7 +62,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={() => onPageChange(paginatedSeries.currentPage - 1)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               >
                 {paginatedSeries.currentPage - 1}
               </PaginationLink>
@@ -73,7 +73,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
           <PaginationItem>
             <PaginationLink 
               isActive 
-              className="cursor-pointer"
+              className="cursor-pointer bg-primary text-white border-0"
             >
               {paginatedSeries.currentPage}
             </PaginationLink>
@@ -84,7 +84,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={() => onPageChange(paginatedSeries.currentPage + 1)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               >
                 {paginatedSeries.currentPage + 1}
               </PaginationLink>
@@ -94,7 +94,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
           {/* Ellipsis for many pages */}
           {paginatedSeries.currentPage < paginatedSeries.totalPages - 2 && (
             <PaginationItem>
-              <PaginationEllipsis />
+              <PaginationEllipsis className="text-white" />
             </PaginationItem>
           )}
           
@@ -103,7 +103,7 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
             <PaginationItem>
               <PaginationLink 
                 onClick={() => onPageChange(paginatedSeries.totalPages)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               >
                 {paginatedSeries.totalPages}
               </PaginationLink>
@@ -115,17 +115,12 @@ const SeriesListPagination: React.FC<SeriesListPaginationProps> = ({
             <PaginationItem>
               <PaginationNext
                 onClick={() => onPageChange(paginatedSeries.currentPage + 1)}
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent hover:bg-white/10 text-white border-0"
               />
             </PaginationItem>
           )}
         </PaginationContent>
       </Pagination>
-      
-      <div className="text-xs text-center text-muted-foreground mt-2">
-        Showing {(paginatedSeries.currentPage - 1) * paginatedSeries.itemsPerPage + 1}-
-        {Math.min(paginatedSeries.currentPage * paginatedSeries.itemsPerPage, paginatedSeries.totalItems)} of {paginatedSeries.totalItems} series
-      </div>
     </div>
   );
 };
