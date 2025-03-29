@@ -1,9 +1,8 @@
-
 import React, { useRef, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie } from "@/lib/types";
 import LoadingSpinner from "../common/LoadingSpinner";
-import PlayerControls from "../PlayerControls";
+import PlayerControls from "./PlayerControls";
 
 interface MovieStreamPlayerProps {
   movie: Movie;
