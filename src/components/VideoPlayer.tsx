@@ -4,8 +4,8 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { Channel } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWatchTime } from "@/hooks/use-watch-time";
-import PlayerControls from "./player/PlayerControls";
 import VideoDisplay from "./player/VideoDisplay";
+import PlayerControls from "./player/PlayerControls";
 import PlayerInfo from "./player/PlayerInfo";
 
 interface VideoPlayerProps {
@@ -204,16 +204,41 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         playing={playerState.playing}
         muted={playerState.muted}
         volume={playerState.volume}
-        onReady={handleReady}
+        onReady={() => setIsLoading(false)}
         onDuration={handleDuration}
         onProgress={handleProgress}
-        onEnded={handleEnded}
-        onError={handleError}
-        onPlay={handlePlay}
-        onPause={handlePause}
+        onEnded={() => {
+          if (channel) {
+            handlePlaybackEnd();
+          }
+          
+          if (onEnded) {
+            onEnded();
+          }
+        }}
+        onError={() => {
+          setIsLoading(false);
+          if (channel) {
+            console.error("Error loading stream for channel:", channel.name);
+          }
+        }}
+        onPlay={() => {
+          setPlayerState(prev => ({ ...prev, playing: true }));
+          
+          if (onPlaybackChange) {
+            onPlaybackChange(true);
+          }
+        }}
+        onPause={() => {
+          setPlayerState(prev => ({ ...prev, playing: false }));
+          
+          if (onPlaybackChange) {
+            onPlaybackChange(false);
+          }
+        }}
         isLoading={isLoading}
         isFullscreen={isFullscreen}
-        onStatsUpdate={handleStatsUpdate}
+        onStatsUpdate={setVideoStats}
       />
 
       {!isIOS && (
