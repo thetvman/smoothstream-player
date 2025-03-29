@@ -55,7 +55,7 @@ const SeriesGridDisplay: React.FC<SeriesGridDisplayProps> = ({
   return (
     <div className="flex flex-col">
       <motion.div 
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8"
+        className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 mb-8"
         variants={container}
         initial="hidden"
         animate="show"
@@ -69,7 +69,7 @@ const SeriesGridDisplay: React.FC<SeriesGridDisplayProps> = ({
             transition={{ duration: 0.2 }}
             onClick={() => handleClick(series)}
           >
-            <div className="relative aspect-[2/3] bg-gradient-to-br from-gray-800/50 to-black rounded-xl overflow-hidden mb-3 shadow-lg border border-white/5 group-hover:border-primary/30 transition-all duration-300">
+            <div className="relative aspect-[2/3] bg-gradient-to-br from-gray-800/50 to-black rounded-lg overflow-hidden mb-2 shadow-lg border border-white/5 group-hover:border-primary/30 transition-all duration-300">
               {series.logo ? (
                 <img 
                   src={series.logo} 
@@ -81,30 +81,30 @@ const SeriesGridDisplay: React.FC<SeriesGridDisplayProps> = ({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-                  <Tv className="h-12 w-12 text-white/20" />
+                  <Tv className="h-10 w-10 text-white/20" />
                 </div>
               )}
               
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3">
                 <Button 
                   variant="default" 
                   size="sm"
-                  className="bg-primary/80 hover:bg-primary shadow-xl w-full gap-2"
+                  className="bg-primary/80 hover:bg-primary shadow-xl w-full gap-2 text-xs py-1"
                 >
-                  <Play className="h-4 w-4" />
-                  Watch Now
+                  <Play className="h-3 w-3" />
+                  Watch
                 </Button>
               </div>
             </div>
             
-            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors duration-300">{series.name}</h3>
+            <h3 className="font-medium text-xs truncate group-hover:text-primary transition-colors duration-300">{series.name}</h3>
             
-            <div className="flex text-xs text-gray-400 gap-2 mt-1">
-              {series.year && <span>{series.year}</span>}
+            <div className="flex text-xs text-gray-400 gap-2 mt-0.5">
+              {series.year && <span className="text-[10px]">{series.year}</span>}
               {series.rating && (
-                <span className="flex items-center">
-                  <Star className="h-3 w-3 text-yellow-400 mr-1" fill="currentColor" /> 
+                <span className="flex items-center text-[10px]">
+                  <Star className="h-2.5 w-2.5 text-yellow-400 mr-0.5" fill="currentColor" /> 
                   {series.rating}
                 </span>
               )}

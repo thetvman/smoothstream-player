@@ -20,7 +20,7 @@ interface SeriesSuggestionsProps {
 
 const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({ suggestions, onSelectSeries }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 18;
   
   if (!suggestions || suggestions.length === 0) {
     return null;
@@ -39,8 +39,8 @@ const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({ suggestions, onSe
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-3">
         {paginatedSuggestions.items.map((series, index) => (
           <motion.div 
             key={series.id} 
@@ -50,7 +50,7 @@ const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({ suggestions, onSe
               opacity: 1, 
               y: 0,
               transition: { 
-                delay: index * 0.05,
+                delay: index * 0.03,
                 duration: 0.5,
                 ease: [0.22, 1, 0.36, 1]
               }
@@ -61,7 +61,7 @@ const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({ suggestions, onSe
             }}
             onClick={() => onSelectSeries(series)}
           >
-            <div className="relative aspect-[2/3] bg-black rounded-xl overflow-hidden mb-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300">
+            <div className="relative aspect-[2/3] bg-black rounded-lg overflow-hidden mb-2 shadow-md group-hover:shadow-lg transition-all duration-300">
               {series.logo ? (
                 <img 
                   src={series.logo} 
@@ -73,26 +73,26 @@ const SeriesSuggestions: React.FC<SeriesSuggestionsProps> = ({ suggestions, onSe
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-                  <Tv className="h-10 w-10 text-white/20" />
+                  <Tv className="h-8 w-8 text-white/20" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-2">
                 <motion.div 
-                  className="bg-primary text-white p-2 rounded-full"
+                  className="bg-primary text-white p-1.5 rounded-full"
                   initial={{ scale: 0.8, opacity: 0 }}
                   whileHover={{ scale: 1 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <Tv className="h-5 w-5" />
+                  <Tv className="h-4 w-4" />
                 </motion.div>
               </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="font-medium text-sm truncate text-white group-hover:text-primary transition-colors duration-300">{series.name}</h3>
-              <div className="flex text-xs text-gray-400 gap-2">
+            <div>
+              <h3 className="font-medium text-xs truncate text-white group-hover:text-primary transition-colors duration-300">{series.name}</h3>
+              <div className="flex text-[10px] text-gray-400 gap-2">
                 {series.year && <span>{series.year}</span>}
-                {series.rating && <span className="flex items-center"><Star className="h-3 w-3 text-yellow-500 mr-0.5" /> {series.rating}</span>}
+                {series.rating && <span className="flex items-center"><Star className="h-2.5 w-2.5 text-yellow-500 mr-0.5" /> {series.rating}</span>}
               </div>
             </div>
           </motion.div>

@@ -25,7 +25,7 @@ const SeriesListItems: React.FC<SeriesListItemsProps> = ({
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,
+        staggerChildren: 0.03,
         delayChildren: 0.1
       }
     }
@@ -67,7 +67,7 @@ const SeriesListItems: React.FC<SeriesListItemsProps> = ({
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 pb-6"
+      className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 pb-6"
     >
       {items.map(series => (
         <motion.div key={series.id} variants={item}>

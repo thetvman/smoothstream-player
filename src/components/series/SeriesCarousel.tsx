@@ -54,13 +54,13 @@ const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
     <div className="relative group">
       <div 
         ref={carouselRef}
-        className="flex gap-4 overflow-x-auto scrollbar-none scroll-smooth pb-4"
+        className="flex gap-3 overflow-x-auto scrollbar-none scroll-smooth pb-4"
         onScroll={(e) => setScrollPosition(e.currentTarget.scrollLeft)}
       >
         {series.map((item, index) => (
           <motion.div
             key={item.id}
-            className="flex-shrink-0 w-48 cursor-pointer group/item"
+            className="flex-shrink-0 w-32 sm:w-36 cursor-pointer group/item"
             initial={{ opacity: 0, y: 20 }}
             animate={{ 
               opacity: 1, 
@@ -91,22 +91,22 @@ const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
                 <Button 
                   variant="default" 
                   size="icon"
-                  className="bg-primary/90 hover:bg-primary shadow-xl rounded-full"
+                  className="bg-primary/90 hover:bg-primary shadow-xl rounded-full h-7 w-7"
                 >
-                  <Play className="h-4 w-4" />
+                  <Play className="h-3 w-3" />
                 </Button>
               </div>
             </div>
             
-            <h3 className="font-medium text-sm truncate group-hover/item:text-primary transition-colors">
+            <h3 className="font-medium text-xs truncate group-hover/item:text-primary transition-colors">
               {item.name}
             </h3>
             
-            <div className="flex text-xs text-gray-400 gap-2 mt-1">
-              {item.year && <span>{item.year}</span>}
+            <div className="flex text-xs text-gray-400 gap-2 mt-0.5">
+              {item.year && <span className="text-[10px]">{item.year}</span>}
               {item.rating && (
-                <span className="flex items-center">
-                  <Star className="h-3 w-3 text-yellow-400 mr-1" fill="currentColor" /> 
+                <span className="flex items-center text-[10px]">
+                  <Star className="h-2.5 w-2.5 text-yellow-400 mr-0.5" fill="currentColor" /> 
                   {item.rating}
                 </span>
               )}
@@ -120,10 +120,10 @@ const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
           onClick={() => handleScroll("left")}
         >
-          <ChevronLeft className="h-6 w-6" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
       )}
       
@@ -131,10 +131,10 @@ const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
           onClick={() => handleScroll("right")}
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
       )}
     </div>
