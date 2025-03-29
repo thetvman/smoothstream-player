@@ -42,7 +42,7 @@ const SeriesMetadata: React.FC<SeriesMetadataProps> = ({ series }) => {
         >
           <h3 className="text-sm font-medium mb-2 text-white/70">Description</h3>
           <div className="text-white/70 text-sm">
-            <p className="break-words whitespace-pre-wrap leading-relaxed">
+            <p className="whitespace-pre-wrap break-words leading-relaxed max-w-full">
               {series.description}
             </p>
           </div>
