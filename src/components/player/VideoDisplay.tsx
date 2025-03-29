@@ -60,6 +60,7 @@ const VideoDisplay: React.FC<VideoDisplayProps> = (props) => {
   return (
     <StandardVideoDisplay
       {...props}
+      isMobile={isMobile}
     />
   );
 };

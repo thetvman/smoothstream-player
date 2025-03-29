@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Channel, Playlist } from "@/lib/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChannelPreloaderProps {
   currentChannel: Channel;
@@ -15,6 +16,7 @@ const ChannelPreloader: React.FC<ChannelPreloaderProps> = ({
     prev: null,
     next: null
   });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!playlist || !currentChannel) return;
@@ -31,8 +33,32 @@ const ChannelPreloader: React.FC<ChannelPreloaderProps> = ({
     });
   }, [currentChannel, playlist]);
 
-  // Preload adjacent channels
+  // Preload adjacent channels with mobile optimizations
   useEffect(() => {
+    // Don't preload on mobile if there are performance issues
+    if (isMobile) {
+      // On mobile, only preload the next channel to save bandwidth
+      const nextChannel = adjacentChannels.next;
+      if (!nextChannel) return;
+      
+      // For HLS streams, preload only the manifest on mobile
+      if (nextChannel.url.includes('.m3u8')) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = nextChannel.url;
+        link.as = 'fetch';
+        link.type = 'application/vnd.apple.mpegurl';
+        document.head.appendChild(link);
+        
+        return () => {
+          document.head.removeChild(link);
+        };
+      }
+      
+      return;
+    }
+    
+    // On desktop, preload both previous and next channels
     const preloadChannel = (channel: Channel | null) => {
       if (!channel) return;
       
@@ -71,15 +97,15 @@ const ChannelPreloader: React.FC<ChannelPreloaderProps> = ({
       if (cleanupPrev) cleanupPrev();
       if (cleanupNext) cleanupNext();
     };
-  }, [adjacentChannels]);
+  }, [adjacentChannels, isMobile]);
 
-  // Hidden iframes to preload channels (only for non-mobile)
+  // Placeholder divs - we don't need iframes for preloading
   return (
     <div className="hidden">
       {adjacentChannels.next && (
         <div data-channel-id={adjacentChannels.next.id} />
       )}
-      {adjacentChannels.prev && (
+      {!isMobile && adjacentChannels.prev && (
         <div data-channel-id={adjacentChannels.prev.id} />
       )}
     </div>

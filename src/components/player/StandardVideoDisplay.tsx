@@ -19,6 +19,7 @@ interface StandardVideoDisplayProps {
   onPause: () => void;
   isLoading: boolean;
   isFullscreen?: boolean;
+  isMobile?: boolean;
   onStatsUpdate?: (stats: {
     resolution?: string;
     frameRate?: number;
@@ -41,23 +42,54 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
   onPause,
   isLoading,
   isFullscreen,
+  isMobile = false,
   onStatsUpdate
 }) => {
   const playerRef = useRef<ReactPlayer>(null);
   
   const { startCollectingStats } = useVideoStats({
-    enabled: !!onStatsUpdate,
+    enabled: !!onStatsUpdate && !isMobile,
     playerRef,
     onStatsUpdate,
     autoHideAfter: 10000
   });
 
-  // Start collecting stats initially
+  // Start collecting stats initially (only on desktop)
   useEffect(() => {
-    if (onStatsUpdate) {
+    if (onStatsUpdate && !isMobile) {
       startCollectingStats();
     }
-  }, [onStatsUpdate, startCollectingStats]);
+  }, [onStatsUpdate, startCollectingStats, isMobile]);
+
+  // Create HLS config based on device type
+  const getHlsConfig = () => {
+    const baseConfig = {
+      forceHLS: channel.url.includes('.m3u8'),
+      hlsOptions: {
+        backBufferLength: isMobile ? 0 : 3,
+        maxBufferLength: isMobile ? 15 : 3,
+        maxMaxBufferLength: isMobile ? 15 : 3,
+        lowLatencyMode: false,
+        debug: false,
+        progressive: true,
+        manifestLoadingTimeOut: 8000,
+        manifestLoadingMaxRetry: isMobile ? 1 : 2,
+        levelLoadingTimeOut: 8000,
+        fragLoadingTimeOut: 8000,
+      }
+    };
+
+    // Mobile-specific optimizations
+    if (isMobile) {
+      baseConfig.hlsOptions.startLevel = 0;
+      baseConfig.hlsOptions.abrEwmaDefaultEstimate = 500000; // Lower initial bandwidth estimate for mobile
+      baseConfig.hlsOptions.liveSyncDurationCount = 1; // Reduce the number of segments to buffer
+      baseConfig.hlsOptions.maxBufferHole = 1; // Reduce buffer holes for smoother playback
+      baseConfig.hlsOptions.maxFragLookUpTolerance = 0.5; // Better fragment seeking
+    }
+
+    return baseConfig;
+  };
 
   return (
     <>
@@ -82,24 +114,9 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
         onError={onError}
         onPlay={onPlay}
         onPause={onPause}
+        playsinline={true}
         config={{
-          file: {
-            forceHLS: channel.url.includes('.m3u8'),
-            hlsOptions: {
-              backBufferLength: 3,
-              maxBufferLength: 3,
-              maxMaxBufferLength: 3,
-              lowLatencyMode: false,
-              startLevel: 0, // Start with lowest quality and switch up
-              debug: false,
-              progressive: true, // Enable progressive loading
-              maxLoadingDelay: 1, // Reduce loading delay
-              manifestLoadingTimeOut: 5000, // Reduce timeout
-              manifestLoadingMaxRetry: 2, // Limit retries for faster failure
-              levelLoadingTimeOut: 5000, // Reduce level loading timeout
-              fragLoadingTimeOut: 5000 // Reduce fragment loading timeout
-            }
-          }
+          file: getHlsConfig()
         }}
       />
     </>
