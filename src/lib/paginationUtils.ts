@@ -1,7 +1,7 @@
 
 import { Channel, PaginatedChannels, Movie, PaginatedMovies, Series, PaginatedSeries } from "./types";
 
-export const ITEMS_PER_PAGE = 12; // Changed from 50 to 12 channels per page
+export const ITEMS_PER_PAGE = 12; // 12 items per page
 
 /**
  * Paginate an array of channels
@@ -66,7 +66,7 @@ export const paginateItems = <T>(
   itemsPerPage: number;
 } => {
   const totalItems = items.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const currentPage = Math.max(1, Math.min(page, totalPages));
   
   const startIndex = (currentPage - 1) * itemsPerPage;

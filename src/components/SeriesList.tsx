@@ -38,7 +38,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: ITEMS_PER_PAGE, // Use the constant to ensure consistency
+    itemsPerPage: ITEMS_PER_PAGE,
   });
 
   // Effect to initialize with the first category when data loads
@@ -64,11 +64,13 @@ const SeriesList: React.FC<SeriesListProps> = ({
     if (seriesCategories) {
       const category = seriesCategories.find(cat => cat.id === categoryId);
       if (category) {
+        console.log(`Changing to category: ${categoryId} with ${category.series.length} series`);
         const newPaginatedSeries = paginateItems(
           category.series,
           1,
           ITEMS_PER_PAGE
         );
+        console.log(`Paginated series: ${newPaginatedSeries.items.length}/${newPaginatedSeries.totalItems} items, page ${newPaginatedSeries.currentPage}/${newPaginatedSeries.totalPages}`);
         setPaginatedSeries(newPaginatedSeries);
       }
     }
@@ -100,11 +102,13 @@ const SeriesList: React.FC<SeriesListProps> = ({
         }
       }
       
+      console.log(`Search query: "${query}", found ${allSeries.length} series`);
       const newPaginatedSeries = paginateItems(
         allSeries,
         1,
         ITEMS_PER_PAGE
       );
+      console.log(`Search results: ${newPaginatedSeries.items.length}/${newPaginatedSeries.totalItems} items, page ${newPaginatedSeries.currentPage}/${newPaginatedSeries.totalPages}`);
       setPaginatedSeries(newPaginatedSeries);
     }
   };
@@ -132,11 +136,13 @@ const SeriesList: React.FC<SeriesListProps> = ({
         }
       }
       
+      console.log(`Changing to page ${page}, total series: ${seriesList.length}`);
       const newPaginatedSeries = paginateItems(
         seriesList,
         page,
         ITEMS_PER_PAGE
       );
+      console.log(`Page ${page} results: ${newPaginatedSeries.items.length}/${newPaginatedSeries.totalItems} items, page ${newPaginatedSeries.currentPage}/${newPaginatedSeries.totalPages}`);
       setPaginatedSeries(newPaginatedSeries);
     }
   };
@@ -180,16 +186,23 @@ const SeriesList: React.FC<SeriesListProps> = ({
 
   // Render pagination controls
   const renderPagination = () => {
-    if (paginatedSeries.totalPages <= 1) return null;
+    if (paginatedSeries.totalPages <= 1) {
+      console.log("Not showing pagination, only one page or less");
+      return null;
+    }
+    
+    console.log(`Rendering pagination: ${paginatedSeries.currentPage}/${paginatedSeries.totalPages}`);
     
     return (
       <div className="mt-4">
         <Pagination>
           <PaginationContent>
+            {/* Previous page button */}
             {paginatedSeries.currentPage > 1 && (
               <PaginationItem>
                 <PaginationPrevious 
                   onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
+                  className="cursor-pointer"
                 />
               </PaginationItem>
             )}
@@ -197,7 +210,10 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* First page */}
             {paginatedSeries.currentPage > 2 && (
               <PaginationItem>
-                <PaginationLink onClick={() => handlePageChange(1)}>
+                <PaginationLink 
+                  onClick={() => handlePageChange(1)}
+                  className="cursor-pointer"
+                >
                   1
                 </PaginationLink>
               </PaginationItem>
@@ -213,7 +229,10 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* Previous page */}
             {paginatedSeries.currentPage > 1 && (
               <PaginationItem>
-                <PaginationLink onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}>
+                <PaginationLink 
+                  onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
+                  className="cursor-pointer"
+                >
                   {paginatedSeries.currentPage - 1}
                 </PaginationLink>
               </PaginationItem>
@@ -221,7 +240,10 @@ const SeriesList: React.FC<SeriesListProps> = ({
             
             {/* Current page */}
             <PaginationItem>
-              <PaginationLink isActive onClick={() => handlePageChange(paginatedSeries.currentPage)}>
+              <PaginationLink 
+                isActive 
+                className="cursor-pointer"
+              >
                 {paginatedSeries.currentPage}
               </PaginationLink>
             </PaginationItem>
@@ -229,7 +251,10 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* Next page */}
             {paginatedSeries.currentPage < paginatedSeries.totalPages && (
               <PaginationItem>
-                <PaginationLink onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}>
+                <PaginationLink 
+                  onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
+                  className="cursor-pointer"
+                >
                   {paginatedSeries.currentPage + 1}
                 </PaginationLink>
               </PaginationItem>
@@ -245,16 +270,21 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* Last page */}
             {paginatedSeries.currentPage < paginatedSeries.totalPages - 1 && (
               <PaginationItem>
-                <PaginationLink onClick={() => handlePageChange(paginatedSeries.totalPages)}>
+                <PaginationLink 
+                  onClick={() => handlePageChange(paginatedSeries.totalPages)}
+                  className="cursor-pointer"
+                >
                   {paginatedSeries.totalPages}
                 </PaginationLink>
               </PaginationItem>
             )}
             
+            {/* Next page button */}
             {paginatedSeries.currentPage < paginatedSeries.totalPages && (
               <PaginationItem>
                 <PaginationNext
                   onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
+                  className="cursor-pointer"
                 />
               </PaginationItem>
             )}
