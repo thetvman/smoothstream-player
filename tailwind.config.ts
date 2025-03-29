@@ -59,6 +59,14 @@ export default {
 					control: 'hsl(var(--player-control))',
 					'control-hover': 'hsl(var(--player-control-hover))',
 					overlay: 'hsl(var(--player-overlay))'
+				},
+				// Theme customization support
+				'player-theme': {
+					DEFAULT: 'var(--player-theme-bg, black)',
+					foreground: 'var(--player-theme-fg, white)',
+					accent: 'var(--player-theme-accent, hsl(var(--primary)))',
+					control: 'var(--player-theme-control-bg, rgba(0, 0, 0, 0.6))',
+					'control-foreground': 'var(--player-theme-control-fg, white)',
 				}
 			},
 			borderRadius: {

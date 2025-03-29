@@ -4,9 +4,11 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { Channel } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWatchTime } from "@/hooks/use-watch-time";
+import { useApplyPlayerTheme } from "@/hooks/use-player-theme";
 import VideoDisplay from "./player/VideoDisplay";
 import PlayerControls from "./player/PlayerControls";
 import PlayerInfo from "./player/PlayerInfo";
+import PlayerThemeSettings from "./player/PlayerThemeSettings";
 
 interface VideoPlayerProps {
   channel: Channel | null;
@@ -22,6 +24,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onPlaybackChange 
 }) => {
   const isMobile = useIsMobile();
+  const playerTheme = useApplyPlayerTheme();
+  
   const [playerState, setPlayerState] = useState({
     playing: autoPlay,
     muted: false,
@@ -42,6 +46,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   });
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  
+  const getBorderRadius = () => {
+    switch (playerTheme.cornerRadius) {
+      case 'small': return 'rounded-md';
+      case 'medium': return 'rounded-lg';
+      case 'large': return 'rounded-xl';
+      default: return '';
+    }
+  };
+  
+  const getPlayerSizeClass = () => {
+    switch (playerTheme.size) {
+      case 'small': return 'max-w-3xl';
+      case 'large': return 'max-w-6xl';
+      default: return 'max-w-4xl'; // medium
+    }
+  };
   
   useEffect(() => {
     const checkIOS = () => {
@@ -204,81 +225,91 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }
 
   return (
-    <div 
-      className="relative aspect-video bg-black" 
-      ref={playerContainerRef}
-      onClick={handleContainerTap}
-    >
-      <VideoDisplay
-        channel={channel}
-        playing={playerState.playing}
-        muted={playerState.muted}
-        volume={playerState.volume}
-        onReady={() => setIsLoading(false)}
-        onDuration={handleDuration}
-        onProgress={handleProgress}
-        onEnded={() => {
-          if (channel) {
-            handlePlaybackEnd();
-          }
-          
-          if (onEnded) {
-            onEnded();
-          }
+    <div className={`relative ${getPlayerSizeClass()} mx-auto`}>
+      <div 
+        className={`relative aspect-video ${getBorderRadius()} overflow-hidden`}
+        style={{ 
+          backgroundColor: 'var(--player-theme-bg, black)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' 
         }}
-        onError={() => {
-          setIsLoading(false);
-          if (channel) {
-            console.error("Error loading stream for channel:", channel.name);
-          }
-        }}
-        onPlay={() => {
-          setPlayerState(prev => ({ ...prev, playing: true }));
-          
-          if (onPlaybackChange) {
-            onPlaybackChange(true);
-          }
-        }}
-        onPause={() => {
-          setPlayerState(prev => ({ ...prev, playing: false }));
-          
-          if (onPlaybackChange) {
-            onPlaybackChange(false);
-          }
-        }}
-        isLoading={isLoading}
-        isFullscreen={isFullscreen}
-        onStatsUpdate={handleStatsUpdate}
-      />
+        ref={playerContainerRef}
+        onClick={handleContainerTap}
+      >
+        <VideoDisplay
+          channel={channel}
+          playing={playerState.playing}
+          muted={playerState.muted}
+          volume={playerState.volume}
+          onReady={() => setIsLoading(false)}
+          onDuration={handleDuration}
+          onProgress={handleProgress}
+          onEnded={() => {
+            if (channel) {
+              handlePlaybackEnd();
+            }
+            
+            if (onEnded) {
+              onEnded();
+            }
+          }}
+          onError={() => {
+            setIsLoading(false);
+            if (channel) {
+              console.error("Error loading stream for channel:", channel.name);
+            }
+          }}
+          onPlay={() => {
+            setPlayerState(prev => ({ ...prev, playing: true }));
+            
+            if (onPlaybackChange) {
+              onPlaybackChange(true);
+            }
+          }}
+          onPause={() => {
+            setPlayerState(prev => ({ ...prev, playing: false }));
+            
+            if (onPlaybackChange) {
+              onPlaybackChange(false);
+            }
+          }}
+          isLoading={isLoading}
+          isFullscreen={isFullscreen}
+          onStatsUpdate={handleStatsUpdate}
+        />
 
-      {!isIOS && (
-        <>
-          <PlayerControls
-            playing={playerState.playing}
-            muted={playerState.muted}
-            volume={playerState.volume}
-            currentTime={playerState.currentTime}
-            duration={playerState.duration}
-            isFullscreen={isFullscreen}
-            onPlayPause={handlePlayPause}
-            onMuteUnmute={handleMuteUnmute}
-            onVolumeChange={handleVolumeChange}
-            onSeek={handleSeek}
-            onSeekStart={handleSeekMouseDown}
-            onSeekEnd={handleSeekMouseUp}
-            onToggleFullscreen={handleToggleFullscreen}
-          />
-
-          {channel && (
-            <PlayerInfo
-              channel={channel}
-              isVisible={showControls}
+        {!isIOS && (
+          <>
+            <PlayerControls
+              playing={playerState.playing}
+              muted={playerState.muted}
+              volume={playerState.volume}
+              currentTime={playerState.currentTime}
+              duration={playerState.duration}
               isFullscreen={isFullscreen}
-              stats={videoStats}
+              onPlayPause={handlePlayPause}
+              onMuteUnmute={handleMuteUnmute}
+              onVolumeChange={handleVolumeChange}
+              onSeek={handleSeek}
+              onSeekStart={handleSeekMouseDown}
+              onSeekEnd={handleSeekMouseUp}
+              onToggleFullscreen={handleToggleFullscreen}
             />
-          )}
-        </>
-      )}
+
+            {channel && (
+              <PlayerInfo
+                channel={channel}
+                isVisible={showControls}
+                isFullscreen={isFullscreen}
+                stats={videoStats}
+              />
+            )}
+            
+            <div className={`absolute top-4 right-4 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <PlayerThemeSettings />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

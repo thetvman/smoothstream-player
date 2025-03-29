@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePlayerTheme } from "@/lib/playerThemeStore";
 
 interface PlayerControlsProps {
   playing: boolean;
@@ -40,6 +41,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   const isMobile = useIsMobile();
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { theme } = usePlayerTheme();
   
   // Auto-hide controls after inactivity when playing
   useEffect(() => {
@@ -69,6 +71,15 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
     return `${formattedMinutes}:${formattedSeconds}`;
   };
 
+  // Apply theme styles
+  const controlsStyle = {
+    backgroundColor: 'var(--player-theme-control-bg, rgba(0, 0, 0, 0.6))',
+    color: 'var(--player-theme-fg, white)',
+  };
+
+  const sliderTrackClass = "bg-primary/30";
+  const sliderThumbClass = "bg-primary";
+
   return (
     <div 
       className={cn(
@@ -77,8 +88,10 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         isMobile && !showControls ? "opacity-0 pointer-events-none" : "opacity-100"
       )}
       style={{ 
-        marginBottom: isFullscreen ? '16px' : '0', // Add padding in fullscreen mode
-        paddingBottom: isFullscreen ? '8px' : '4px'
+        ...controlsStyle,
+        marginBottom: isFullscreen ? '16px' : '0',
+        paddingBottom: isFullscreen ? '8px' : '4px',
+        backgroundImage: 'linear-gradient(to top, var(--player-theme-control-bg, rgba(0, 0, 0, 0.6)), transparent)'
       }}
     >
       {/* Progress slider */}
@@ -90,19 +103,39 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           onValueChange={onSeek}
           onMouseDown={onSeekStart}
           onValueCommit={onSeekEnd}
-          className={cn(isFullscreen ? "h-2" : "h-1.5")} // Slightly larger in fullscreen
+          className={cn(isFullscreen ? "h-2" : "h-1.5")}
+          trackClassName={sliderTrackClass}
+          thumbClassName={sliderThumbClass}
         />
       </div>
       
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onPlayPause} className={isFullscreen ? "h-10 w-10" : ""}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onPlayPause} 
+            className={cn(
+              isFullscreen ? "h-10 w-10" : "",
+              "hover:bg-primary/20 text-player-theme-fg"
+            )}
+            style={{ color: 'var(--player-theme-fg, white)' }}
+          >
             {playing ? <Pause className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : <Play className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />}
           </Button>
 
           {!isMobile && (
             <>
-              <Button variant="ghost" size="icon" onClick={onMuteUnmute} className={isFullscreen ? "h-10 w-10" : ""}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onMuteUnmute} 
+                className={cn(
+                  isFullscreen ? "h-10 w-10" : "",
+                  "hover:bg-primary/20"
+                )}
+                style={{ color: 'var(--player-theme-fg, white)' }}
+              >
                 {muted ? <VolumeX className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : <Volume2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />}
               </Button>
 
@@ -112,12 +145,14 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                   max={1}
                   step={0.01}
                   onValueChange={onVolumeChange}
+                  trackClassName={sliderTrackClass}
+                  thumbClassName={sliderThumbClass}
                 />
               </div>
             </>
           )}
           
-          <div className={cn("text-sm", isFullscreen && "text-base ml-2")}>
+          <div className={cn("text-sm", isFullscreen && "text-base ml-2")} style={{ color: 'var(--player-theme-fg, white)' }}>
             <span>{formatTime(currentTime)}</span> 
             {!isMobile && <span> / {formatTime(duration)}</span>}
           </div>
@@ -127,7 +162,11 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           variant="ghost" 
           size="icon" 
           onClick={onToggleFullscreen}
-          className={isFullscreen ? "h-10 w-10" : ""}
+          className={cn(
+            isFullscreen ? "h-10 w-10" : "",
+            "hover:bg-primary/20"
+          )}
+          style={{ color: 'var(--player-theme-fg, white)' }}
         >
           {isFullscreen ? 
             <Minimize2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : 
