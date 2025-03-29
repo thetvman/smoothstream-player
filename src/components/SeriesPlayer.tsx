@@ -1,8 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import type { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { updateWatchHistory } from "@/lib/watchHistoryService";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNavigate } from "react-router-dom";
 
 interface SeriesPlayerProps {
   episode: Episode | null;
@@ -17,9 +21,12 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   autoPlay = true,
   onEpisodeEnded
 }) => {
+  const navigate = useNavigate();
   const [showInfo, setShowInfo] = useState(false);
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [prevEpisodeId, setPrevEpisodeId] = useState<string | null>(null);
+  const [nextEpisodeId, setNextEpisodeId] = useState<string | null>(null);
   
   // Only show info initially when explicitly requested
   useEffect(() => {
@@ -31,6 +38,82 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
       return () => clearTimeout(timer);
     }
   }, [showInfo]);
+
+  // Find previous and next episodes
+  useEffect(() => {
+    if (!episode || !series || !series.seasons) return;
+    
+    const currentSeasonNumber = episode.season_number;
+    const currentEpisodeNumber = episode.episode_number;
+    
+    const currentSeason = series.seasons.find(
+      season => season.season_number === currentSeasonNumber
+    );
+    
+    if (currentSeason && currentSeason.episodes) {
+      const sortedEpisodes = [...currentSeason.episodes].sort(
+        (a, b) => parseInt(a.episode_number) - parseInt(b.episode_number)
+      );
+      
+      const currentEpisodeIndex = sortedEpisodes.findIndex(
+        ep => ep.episode_number === currentEpisodeNumber
+      );
+      
+      // Find next episode
+      if (currentEpisodeIndex !== -1 && currentEpisodeIndex < sortedEpisodes.length - 1) {
+        setNextEpisodeId(sortedEpisodes[currentEpisodeIndex + 1].id);
+      } else {
+        const seasonNumbers = series.seasons.map(s => parseInt(s.season_number));
+        const currentSeasonInt = parseInt(currentSeasonNumber);
+        const nextSeasonNumber = seasonNumbers.find(num => num > currentSeasonInt);
+        
+        if (nextSeasonNumber) {
+          const nextSeason = series.seasons.find(
+            season => parseInt(season.season_number) === nextSeasonNumber
+          );
+          
+          if (nextSeason && nextSeason.episodes && nextSeason.episodes.length > 0) {
+            const sortedNextSeasonEpisodes = [...nextSeason.episodes].sort(
+              (a, b) => parseInt(a.episode_number) - parseInt(b.episode_number)
+            );
+            
+            setNextEpisodeId(sortedNextSeasonEpisodes[0].id);
+          } else {
+            setNextEpisodeId(null);
+          }
+        } else {
+          setNextEpisodeId(null);
+        }
+      }
+      
+      // Find previous episode
+      if (currentEpisodeIndex > 0) {
+        setPrevEpisodeId(sortedEpisodes[currentEpisodeIndex - 1].id);
+      } else {
+        const seasonNumbers = series.seasons.map(s => parseInt(s.season_number)).sort((a, b) => a - b);
+        const currentSeasonInt = parseInt(currentSeasonNumber);
+        const prevSeasonNumber = [...seasonNumbers].reverse().find(num => num < currentSeasonInt);
+        
+        if (prevSeasonNumber) {
+          const prevSeason = series.seasons.find(
+            season => parseInt(season.season_number) === prevSeasonNumber
+          );
+          
+          if (prevSeason && prevSeason.episodes && prevSeason.episodes.length > 0) {
+            const sortedPrevSeasonEpisodes = [...prevSeason.episodes].sort(
+              (a, b) => parseInt(a.episode_number) - parseInt(b.episode_number)
+            );
+            
+            setPrevEpisodeId(sortedPrevSeasonEpisodes[sortedPrevSeasonEpisodes.length - 1].id);
+          } else {
+            setPrevEpisodeId(null);
+          }
+        } else {
+          setPrevEpisodeId(null);
+        }
+      }
+    }
+  }, [episode, series]);
 
   // Set up tracking for watch time
   useEffect(() => {
@@ -121,15 +204,59 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   };
 
+  const navigateToEpisode = (episodeId: string | null) => {
+    if (!episodeId || !series) return;
+    navigate(`/series/${series.id}/episode/${episodeId}`);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
-      <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full">
+      <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full group">
         <VideoPlayer 
           channel={channel} 
           autoPlay={autoPlay} 
           onEnded={handleVideoEnded}
           onPlaybackChange={handlePlaybackChange}
         />
+        
+        {/* Navigation controls */}
+        <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {prevEpisodeId && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateToEpisode(prevEpisodeId)}
+                  className="h-10 w-10 rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Previous Episode</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {nextEpisodeId && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateToEpisode(nextEpisodeId)}
+                  className="h-10 w-10 rounded-full bg-black/60 text-white hover:bg-black/80"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Next Episode</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         
         {/* Show info button with transition */}
         <button 
@@ -185,6 +312,32 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
                 <p>{episode.description}</p>
               </div>
             )}
+
+            <div className="flex gap-2 pt-2">
+              {prevEpisodeId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateToEpisode(prevEpisodeId)}
+                  className="text-gray-300 border-gray-700"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+              )}
+              
+              {nextEpisodeId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateToEpisode(nextEpisodeId)}
+                  className="text-gray-300 border-gray-700"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
