@@ -96,7 +96,19 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     if (!video || !values.length) return;
     
     const time = values[0];
+    // Show loading indicator during seeking
+    setPlayerState(prev => ({ ...prev, loading: true }));
     video.currentTime = time;
+    
+    // Set a timeout to clear loading state if seeking takes too long
+    setTimeout(() => {
+      setPlayerState(prev => {
+        if (prev.loading) {
+          return { ...prev, loading: false };
+        }
+        return prev;
+      });
+    }, 1000);
   };
   
   const handleSeekStart = (values: number[]) => {

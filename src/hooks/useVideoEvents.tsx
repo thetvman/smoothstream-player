@@ -36,11 +36,21 @@ export function useVideoEvents({
   });
   
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const [loadingTimeoutId, setLoadingTimeoutId] = useState<NodeJS.Timeout | null>(null);
   
   // Debug loading state changes
   useEffect(() => {
     console.log("Player loading state:", playerState.loading);
   }, [playerState.loading]);
+  
+  // Clear any existing loading timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
+    };
+  }, [loadingTimeoutId]);
   
   // Handle video events (play, pause, timeupdate, etc.)
   useEffect(() => {
@@ -109,21 +119,54 @@ export function useVideoEvents({
     const handleLoadStart = () => {
       console.log("Video loadstart event");
       setPlayerState(prev => ({ ...prev, loading: true }));
+      
+      // Set a timeout to clear loading state if it gets stuck
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.log("Loading timeout triggered, forcing loading state to false");
+        setPlayerState(prev => ({ ...prev, loading: false }));
+      }, 8000);
+      
+      setLoadingTimeoutId(timeoutId);
     };
     
     const handleCanPlay = () => {
       console.log("Video canplay event");
+      
+      // Clear loading timeout if it exists
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+        setLoadingTimeoutId(null);
+      }
+      
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
     const handleError = (e: Event) => {
       console.error("Video error:", e);
+      
+      // Clear loading timeout if it exists
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+        setLoadingTimeoutId(null);
+      }
+      
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
     // Handler for when video starts playing
     const handlePlaying = () => {
       console.log("Video playing event");
+      
+      // Clear loading timeout if it exists
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+        setLoadingTimeoutId(null);
+      }
+      
       // Ensure we set loading to false once playback actually starts
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
@@ -131,23 +174,66 @@ export function useVideoEvents({
     // Add loadeddata event for when metadata and first frame are loaded
     const handleLoadedData = () => {
       console.log("Video loadeddata event");
-      setPlayerState(prev => ({ ...prev, loading: false }));
+      
+      // Set a short timeout to give the browser time to prepare playback
+      // This helps prevent false "not loading" states
+      setTimeout(() => {
+        setPlayerState(prev => ({ ...prev, loading: false }));
+      }, 300);
     };
     
     const handleWaiting = () => {
       console.log("Video waiting event");
       // Show loading indicator when video is waiting/buffering
       setPlayerState(prev => ({ ...prev, loading: true }));
+      
+      // Set a timeout to clear loading state if it gets stuck
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.log("Waiting timeout triggered, forcing loading state to false");
+        setPlayerState(prev => ({ ...prev, loading: false }));
+      }, 10000);
+      
+      setLoadingTimeoutId(timeoutId);
     };
     
     const handleStalled = () => {
       console.log("Video stalled event");
       setPlayerState(prev => ({ ...prev, loading: true }));
+      
+      // Set a timeout to clear loading state if it gets stuck
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.log("Stalled timeout triggered, forcing loading state to false");
+        setPlayerState(prev => ({ ...prev, loading: false }));
+      }, 10000);
+      
+      setLoadingTimeoutId(timeoutId);
     };
     
     const handleSuspend = () => {
       console.log("Video suspend event");
       // Often occurs when media loading is suspended, not necessarily a problem
+    };
+    
+    const handleSeeking = () => {
+      console.log("Video seeking event");
+      setPlayerState(prev => ({ ...prev, loading: true }));
+    };
+    
+    const handleSeeked = () => {
+      console.log("Video seeked event");
+      
+      // Add a small delay to ensure the video has actually resumed playback
+      setTimeout(() => {
+        setPlayerState(prev => ({ ...prev, loading: false }));
+      }, 200);
     };
     
     // Add all event listeners
@@ -164,6 +250,8 @@ export function useVideoEvents({
     video.addEventListener("waiting", handleWaiting);
     video.addEventListener("stalled", handleStalled);
     video.addEventListener("suspend", handleSuspend);
+    video.addEventListener("seeking", handleSeeking);
+    video.addEventListener("seeked", handleSeeked);
     
     // Clean up event listeners on unmount
     return () => {
@@ -180,8 +268,15 @@ export function useVideoEvents({
       video.removeEventListener("waiting", handleWaiting);
       video.removeEventListener("stalled", handleStalled);
       video.removeEventListener("suspend", handleSuspend);
+      video.removeEventListener("seeking", handleSeeking);
+      video.removeEventListener("seeked", handleSeeked);
+      
+      // Clear any active timeout
+      if (loadingTimeoutId) {
+        clearTimeout(loadingTimeoutId);
+      }
     };
-  }, [movie, watchStartTime, videoRef]);
+  }, [movie, watchStartTime, videoRef, loadingTimeoutId]);
   
   return { playerState, setPlayerState };
 }

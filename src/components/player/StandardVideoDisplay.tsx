@@ -114,8 +114,8 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
   return (
     <>
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-          <Loader2 className="h-10 w-10 animate-spin text-white" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-10">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       )}
       <ReactPlayer

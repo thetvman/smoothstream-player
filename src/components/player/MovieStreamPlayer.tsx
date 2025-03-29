@@ -129,13 +129,13 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
       />
       
       {playerState.loading && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
           <LoadingSpinner size="lg" />
         </div>
       )}
       
       {!error && movie && (
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent player-controls">
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent player-controls z-20">
           <h3 className="text-white font-medium truncate">{movie.name}</h3>
         </div>
       )}

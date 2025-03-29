@@ -36,10 +36,10 @@ const PlayerContainer: React.FC<PlayerContainerProps> = ({
   return (
     <div className={`relative ${getPlayerSizeClass()} mx-auto`}>
       <div 
-        className={`relative aspect-video ${getBorderRadius()} overflow-hidden`}
+        className={`relative aspect-video ${getBorderRadius()} overflow-hidden shadow-lg`}
         style={{ 
           backgroundColor: 'var(--player-theme-bg, black)',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' 
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2)' 
         }}
         ref={containerRef}
         onClick={onClick}
