@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { storeEpisodeForPlayback } from "@/lib/mediaService";
 
@@ -100,31 +100,49 @@ const Series = () => {
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
       <AnimatePresence>
         {featuredSeries && (
-          <FeaturedSeriesBanner 
-            series={featuredSeries} 
-            onSelectSeries={setSelectedSeries}
-            onLoadSeasons={handleLoadSeasonsWithToast}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <FeaturedSeriesBanner 
+              series={featuredSeries} 
+              onSelectSeries={setSelectedSeries}
+              onLoadSeasons={handleLoadSeasonsWithToast}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex flex-1 overflow-hidden">
         <AnimatePresence>
-          <SeriesSidebar 
-            seriesCategories={seriesCategories}
-            activeCategory={activeCategory}
-            isLoading={isLoading}
-            isAdvancedSearch={isAdvancedSearch}
-            quickSearch={quickSearch}
-            filteredSeries={filteredSeries}
-            onCategoryChange={handleCategoryChange}
-            onQuickSearchChange={handleQuickSearch}
-            clearAdvancedSearch={clearAdvancedSearch}
-          />
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+          >
+            <SeriesSidebar 
+              seriesCategories={seriesCategories}
+              activeCategory={activeCategory}
+              isLoading={isLoading}
+              isAdvancedSearch={isAdvancedSearch}
+              quickSearch={quickSearch}
+              filteredSeries={filteredSeries}
+              onCategoryChange={handleCategoryChange}
+              onQuickSearchChange={handleQuickSearch}
+              clearAdvancedSearch={clearAdvancedSearch}
+            />
+          </motion.div>
         </AnimatePresence>
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide bg-black">
-          <div className="p-4">
+        <motion.div 
+          className="flex-1 overflow-y-auto scrollbar-hide bg-gradient-to-b from-black to-[#0a0a10]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="p-4 pb-24">
             {!isAdvancedSearch && !isLoading && (
               <RecommendedSeries 
                 series={getSuggestedSeries()} 
@@ -133,16 +151,26 @@ const Series = () => {
               />
             )}
 
-            <div className="mb-6">
-              <h2 className="text-lg font-bold mb-3">
-                {isAdvancedSearch 
-                  ? "Search Results" 
-                  : (activeCategory && seriesCategories 
-                      ? seriesCategories.find(cat => cat.id === activeCategory)?.name || "All Series"
-                      : "All Series"
-                    )
-                }
-              </h2>
+            <motion.div 
+              className="mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                  {isAdvancedSearch 
+                    ? "Search Results" 
+                    : (activeCategory && seriesCategories 
+                        ? seriesCategories.find(cat => cat.id === activeCategory)?.name || "All Series"
+                        : "All Series"
+                      )
+                  }
+                </h2>
+                <div className="text-sm text-white/60">
+                  {paginatedSeries.totalItems} series available
+                </div>
+              </div>
               
               {isLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -162,22 +190,30 @@ const Series = () => {
                   onPageChange={handlePageChange}
                 />
               )}
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         <AnimatePresence>
           {selectedSeries && (
-            <div 
-              className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            <motion.div 
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               onClick={() => setSelectedSeries(null)}
             >
-              <div 
-                className="bg-black/90 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden max-h-[90vh] border border-white/10"
+              <motion.div 
+                className="bg-gradient-to-b from-black/90 to-[#080810]/90 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden max-h-[90vh] border border-white/10"
                 onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
               >
                 <div className="p-4 flex justify-between items-center border-b border-white/10">
-                  <h2 className="text-xl font-bold">{selectedSeries.name}</h2>
+                  <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">{selectedSeries.name}</h2>
                   <button 
                     onClick={() => setSelectedSeries(null)}
                     className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
@@ -195,8 +231,8 @@ const Series = () => {
                     isLoading={isLoading && !selectedSeries.seasons}
                   />
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

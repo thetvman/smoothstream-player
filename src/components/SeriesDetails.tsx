@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Series } from "@/lib/types";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import SeriesBanner from "./series/SeriesBanner";
 import SeriesMetadata from "./series/SeriesMetadata";
@@ -51,32 +51,35 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
       <SeriesBanner series={series} />
       <SeriesMetadata series={series} />
 
-      <div className="mt-4 flex-1 overflow-hidden">
+      <div className="mt-6 flex-1 overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
+          className="bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/5"
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Episodes</h3>
+            <h3 className="text-lg font-bold text-white">Episodes</h3>
             {series.seasons && series.seasons.length > 0 && (
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                {series.seasons.length} Seasons
+                {series.seasons.length} {series.seasons.length === 1 ? 'Season' : 'Seasons'}
               </Badge>
             )}
           </div>
           
-          {!series.seasons ? (
-            <LoadSeasonsButton onLoadSeasons={handleLoadSeasons} />
-          ) : (
-            <SeasonsList 
-              seasons={series.seasons} 
-              onPlayEpisode={onPlayEpisode} 
-              series={series} 
-              expandedSeason={expandedSeason} 
-              onSeasonClick={handleSeasonClick} 
-            />
-          )}
+          <AnimatePresence mode="wait">
+            {!series.seasons ? (
+              <LoadSeasonsButton onLoadSeasons={handleLoadSeasons} />
+            ) : (
+              <SeasonsList 
+                seasons={series.seasons} 
+                onPlayEpisode={onPlayEpisode} 
+                series={series} 
+                expandedSeason={expandedSeason} 
+                onSeasonClick={handleSeasonClick} 
+              />
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>
