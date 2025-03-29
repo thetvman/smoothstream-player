@@ -62,20 +62,22 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     video.muted = !video.muted;
   };
   
-  const handleVolumeChange = (volume: number) => {
+  const handleVolumeChange = (values: number[]) => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !values.length) return;
     
+    const volume = values[0];
     video.volume = volume;
     if (volume > 0) {
       video.muted = false;
     }
   };
   
-  const handleSeek = (time: number) => {
+  const handleSeek = (values: number[]) => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !values.length) return;
     
+    const time = values[0];
     video.currentTime = time;
   };
   

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie } from "@/lib/types";
@@ -20,8 +21,8 @@ interface MovieStreamPlayerProps {
   containerRef: React.RefObject<HTMLDivElement>;
   onPlayPause: () => void;
   onMute: () => void;
-  onVolumeChange: (volume: number) => void;
-  onSeek: (time: number) => void;
+  onVolumeChange: (value: number[]) => void;  // Updated to accept number[]
+  onSeek: (value: number[]) => void;  // Updated to accept number[]
   onFullscreen: () => void;
   autoPlay?: boolean;
   error: string | null;
@@ -117,13 +118,19 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
       
       {movie && !error && (
         <PlayerControls
-          videoRef={videoRef}
-          playerState={playerState}
+          playing={playerState.playing}
+          muted={playerState.muted}
+          volume={playerState.volume}
+          currentTime={playerState.currentTime}
+          duration={playerState.duration}
+          isFullscreen={playerState.fullscreen}
           onPlayPause={onPlayPause}
-          onMute={onMute}
+          onMuteUnmute={onMute}
           onVolumeChange={onVolumeChange}
           onSeek={onSeek}
-          onFullscreen={onFullscreen}
+          onSeekStart={() => {}}
+          onSeekEnd={onSeek}
+          onToggleFullscreen={onFullscreen}
         />
       )}
     </>
