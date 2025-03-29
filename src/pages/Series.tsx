@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Series as SeriesType, XtreamCredentials } from "@/lib/types";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { safeJsonParse } from "@/lib/utils";
-import { fetchAllSeries, fetchSeriesWithEpisodes, storeEpisodeForPlayback, clearOldSeriesData } from "@/lib/mediaService";
-import { AdvancedSearchParams } from "@/components/AdvancedSearch";
+import { storeEpisodeForPlayback } from "@/lib/mediaService";
 
-// Import refactored components
+// Import custom hook
+import { useSeriesState } from "@/hooks/useSeriesState";
+
+// Import components
 import SeriesDetails from "@/components/SeriesDetails";
 import FeaturedSeriesBanner from "@/components/series/FeaturedSeriesBanner";
 import SeriesSidebar from "@/components/series/SeriesSidebar";
@@ -20,98 +19,38 @@ import NoCredentialsView from "@/components/series/NoCredentialsView";
 
 const Series = () => {
   const navigate = useNavigate();
-  const [selectedSeries, setSelectedSeries] = useState<SeriesType | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [featuredSeries, setFeaturedSeries] = useState<SeriesType | null>(null);
-  const [searchParams, setSearchParams] = useState<AdvancedSearchParams>({
-    title: "",
-    genre: "",
-    yearFrom: 1950,
-    yearTo: new Date().getFullYear(),
-    ratingMin: 0
-  });
-  const [filteredSeries, setFilteredSeries] = useState<SeriesType[]>([]);
-  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
-  const [quickSearch, setQuickSearch] = useState("");
+  const { 
+    seriesCategories,
+    selectedSeries,
+    activeCategory,
+    featuredSeries,
+    isLoading,
+    error,
+    filteredSeries,
+    isAdvancedSearch,
+    quickSearch,
+    currentPage,
+    credentials,
+    getPaginatedSeries,
+    handleSelectSeries,
+    setSelectedSeries,
+    handleLoadSeasons,
+    handleCategoryChange,
+    getSuggestedSeries,
+    handleQuickSearch,
+    clearAdvancedSearch,
+    handlePageChange
+  } = useSeriesState();
   
-  const getCredentials = (): XtreamCredentials | null => {
-    const playlist = localStorage.getItem("iptv-playlist");
-    if (!playlist) return null;
-    
-    const parsedPlaylist = safeJsonParse(playlist, null);
-    return parsedPlaylist?.credentials || null;
-  };
-  
-  const credentials = getCredentials();
-  
-  const { data: seriesCategories, isLoading, error } = useQuery({
-    queryKey: ["series", credentials?.server],
-    queryFn: async () => {
-      if (!credentials) {
-        throw new Error("No Xtream credentials found");
-      }
-      return fetchAllSeries(credentials);
-    },
-    enabled: !!credentials,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-  
+  // Handle error notifications
   useEffect(() => {
     if (error) {
       toast.error("Failed to load series: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   }, [error]);
-
-  useEffect(() => {
-    if (seriesCategories && seriesCategories.length > 0 && !activeCategory) {
-      setActiveCategory(seriesCategories[0].id);
-    }
-  }, [seriesCategories, activeCategory]);
-
-  useEffect(() => {
-    if (seriesCategories && seriesCategories.length > 0 && !featuredSeries) {
-      const categoriesWithSeries = seriesCategories.filter(cat => cat.series.length > 0);
-      if (categoriesWithSeries.length > 0) {
-        const randomCategory = categoriesWithSeries[Math.floor(Math.random() * categoriesWithSeries.length)];
-        if (randomCategory && randomCategory.series.length > 0) {
-          const randomSeries = randomCategory.series[Math.floor(Math.random() * randomCategory.series.length)];
-          setFeaturedSeries(randomSeries);
-        }
-      }
-    }
-  }, [seriesCategories, featuredSeries]);
   
-  const handleSelectSeries = (series: SeriesType) => {
-    setSelectedSeries(series);
-  };
-  
-  useEffect(() => {
-    clearOldSeriesData();
-  }, []);
-  
-  const handleLoadSeasons = async (series: SeriesType) => {
-    if (!credentials) {
-      toast.error("No Xtream credentials found");
-      return;
-    }
-    
-    try {
-      toast.info(`Loading seasons for ${series.name}...`);
-      const updatedSeries = await fetchSeriesWithEpisodes(credentials, series);
-      
-      if (!updatedSeries.seasons || updatedSeries.seasons.length === 0) {
-        toast.warning("No episodes found for this series");
-      } else {
-        setSelectedSeries(updatedSeries);
-        toast.success(`Loaded ${updatedSeries.seasons.length} seasons`);
-      }
-    } catch (error) {
-      console.error("Error loading series episodes:", error);
-      toast.error("Failed to load episodes");
-    }
-  };
-  
-  const handlePlayEpisode = (episode: any, series: SeriesType) => {
+  // Handle episode playback
+  const handlePlayEpisode = (episode: any, series: any) => {
     if (!episode) {
       toast.error("No episode selected");
       return;
@@ -125,70 +64,32 @@ const Series = () => {
       toast.error("Failed to prepare episode for playback");
     }
   };
-
-  const handleCategoryChange = (categoryId: string) => {
-    setActiveCategory(categoryId);
-  };
-
-  const getSuggestedSeries = (): SeriesType[] => {
-    if (!seriesCategories) return [];
-    
-    const allSeries: SeriesType[] = [];
-    seriesCategories.forEach(category => {
-      allSeries.push(...category.series);
-    });
-    
-    const filteredSeries = allSeries.filter(series => series.id !== selectedSeries?.id);
-    const shuffled = [...filteredSeries].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 10);
-  };
-
-  const clearAdvancedSearch = () => {
-    setIsAdvancedSearch(false);
-    setQuickSearch("");
-    setSearchParams({
-      title: "",
-      genre: "",
-      yearFrom: 1950,
-      yearTo: new Date().getFullYear(),
-      ratingMin: 0
-    });
-  };
-
-  const handleQuickSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    setQuickSearch(searchTerm);
-    
-    if (!searchTerm.trim()) {
-      setIsAdvancedSearch(false);
+  
+  // Handle load seasons with toast notifications
+  const handleLoadSeasonsWithToast = async (series: any) => {
+    if (!credentials) {
+      toast.error("No Xtream credentials found");
       return;
     }
     
-    if (!seriesCategories) return;
-    
-    setIsAdvancedSearch(true);
-    
-    let results: SeriesType[] = [];
-    seriesCategories.forEach(category => {
-      results = [...results, ...category.series];
-    });
-    
-    results = results.filter(series => 
-      series.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    setFilteredSeries(results);
+    try {
+      toast.info(`Loading seasons for ${series.name}...`);
+      const updatedSeries = await handleLoadSeasons(series);
+      
+      if (!updatedSeries.seasons || updatedSeries.seasons.length === 0) {
+        toast.warning("No episodes found for this series");
+      } else {
+        setSelectedSeries(updatedSeries);
+        toast.success(`Loaded ${updatedSeries.seasons.length} seasons`);
+      }
+    } catch (error) {
+      console.error("Error loading series episodes:", error);
+      toast.error("Failed to load episodes");
+    }
   };
 
-  const getCurrentSeries = (): SeriesType[] => {
-    if (isAdvancedSearch) {
-      return filteredSeries;
-    } else if (activeCategory && seriesCategories) {
-      const category = seriesCategories.find(cat => cat.id === activeCategory);
-      return category?.series || [];
-    }
-    return [];
-  };
+  // Get paginated series for the current view
+  const paginatedSeries = getPaginatedSeries();
 
   // Show no credentials view if no credentials found
   if (!credentials) {
@@ -202,7 +103,7 @@ const Series = () => {
           <FeaturedSeriesBanner 
             series={featuredSeries} 
             onSelectSeries={setSelectedSeries}
-            onLoadSeasons={handleLoadSeasons}
+            onLoadSeasons={handleLoadSeasonsWithToast}
           />
         )}
       </AnimatePresence>
@@ -228,7 +129,7 @@ const Series = () => {
               <RecommendedSeries 
                 series={getSuggestedSeries()} 
                 onSelect={setSelectedSeries}
-                onLoad={handleLoadSeasons}
+                onLoad={handleLoadSeasonsWithToast}
               />
             )}
 
@@ -255,9 +156,10 @@ const Series = () => {
                 </div>
               ) : (
                 <SeriesGrid
-                  series={getCurrentSeries()}
-                  onSelect={setSelectedSeries}
-                  onLoad={handleLoadSeasons}
+                  paginatedSeries={paginatedSeries}
+                  onSelect={handleSelectSeries}
+                  onLoad={handleLoadSeasonsWithToast}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>
@@ -289,7 +191,7 @@ const Series = () => {
                   <SeriesDetails 
                     series={selectedSeries}
                     onPlayEpisode={handlePlayEpisode}
-                    onLoadSeasons={handleLoadSeasons}
+                    onLoadSeasons={handleLoadSeasonsWithToast}
                     isLoading={isLoading && !selectedSeries.seasons}
                   />
                 </div>
