@@ -29,3 +29,9 @@ export interface EPGGuideData {
   startTime: Date;
   endTime: Date;
 }
+
+// Interface for lazy loaded category data
+export interface LazyLoadedCategory {
+  isLoaded: boolean;
+  channels: Channel[];
+}
