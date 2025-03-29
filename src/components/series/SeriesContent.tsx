@@ -28,9 +28,9 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
         <SeriesBanner series={series} />
       </div>
       
-      {/* Main content area with scrolling */}
-      <ScrollArea className="flex-1 w-full">
-        <div className="p-4">
+      {/* Main content area with scrolling - use Radix ScrollArea for smooth scrolling */}
+      <ScrollArea className="flex-grow w-full overflow-hidden">
+        <div className="p-4 pb-8">
           <SeriesMetadata series={series} />
           
           <EpisodeSection

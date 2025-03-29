@@ -10,7 +10,7 @@ interface SeriesMetadataProps {
 
 const SeriesMetadata: React.FC<SeriesMetadataProps> = ({ series }) => {
   return (
-    <>
+    <div className="mb-8">
       {series.genre && (
         <motion.div 
           className="mb-4"
@@ -41,14 +41,14 @@ const SeriesMetadata: React.FC<SeriesMetadataProps> = ({ series }) => {
           transition={{ delay: 0.2 }}
         >
           <h3 className="text-sm font-medium mb-2 text-white/70">Description</h3>
-          <div className="text-white/70 text-sm">
-            <p className="whitespace-pre-wrap break-words leading-relaxed max-w-full">
+          <div className="text-white/70 text-sm overflow-hidden">
+            <p className="whitespace-normal break-words leading-relaxed w-full">
               {series.description}
             </p>
           </div>
         </motion.div>
       )}
-    </>
+    </div>
   );
 };
 

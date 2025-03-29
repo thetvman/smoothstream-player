@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Series, Episode } from "@/lib/types";
 import { motion } from "framer-motion";
 import SeasonsList from "./SeasonsList";
@@ -20,8 +20,7 @@ const EpisodeSection: React.FC<EpisodeSectionProps> = ({
   onPlayEpisode,
   onLoadSeasons
 }) => {
-  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  const [episodeDialogOpen, setEpisodeDialogOpen] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = React.useState<Episode | null>(null);
   
   React.useEffect(() => {
     // Load seasons if they don't exist
@@ -30,17 +29,15 @@ const EpisodeSection: React.FC<EpisodeSectionProps> = ({
     }
   }, [series, onLoadSeasons]);
 
-  const handlePlayEpisode = (episode: Episode, series: Series) => {
+  const handlePlayEpisode = (episode: Episode) => {
     onPlayEpisode(episode, series);
   };
 
   const handleEpisodeClick = (episode: Episode) => {
     setSelectedEpisode(episode);
-    setEpisodeDialogOpen(true);
   };
 
   const handleCloseEpisodeDialog = () => {
-    setEpisodeDialogOpen(false);
     setSelectedEpisode(null);
   };
 
@@ -60,7 +57,7 @@ const EpisodeSection: React.FC<EpisodeSectionProps> = ({
       ) : (
         <SeasonsList
           seasons={series.seasons}
-          onPlayEpisode={handleEpisodeClick}
+          onEpisodeClick={handleEpisodeClick}
           series={series}
           expandedSeason={expandedSeason}
           onSeasonClick={onSeasonClick}
@@ -71,7 +68,7 @@ const EpisodeSection: React.FC<EpisodeSectionProps> = ({
       <EpisodeDetails 
         episode={selectedEpisode}
         series={series}
-        isOpen={episodeDialogOpen}
+        isOpen={!!selectedEpisode}
         onClose={handleCloseEpisodeDialog}
         onPlay={handlePlayEpisode}
       />

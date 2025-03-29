@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -18,7 +17,7 @@ interface EpisodeDetailsProps {
   series: Series | null;
   isOpen: boolean;
   onClose: () => void;
-  onPlay: (episode: Episode, series: Series) => void;
+  onPlay: (episode: Episode) => void;
 }
 
 const EpisodeDetails: React.FC<EpisodeDetailsProps> = ({
@@ -31,61 +30,77 @@ const EpisodeDetails: React.FC<EpisodeDetailsProps> = ({
   if (!episode || !series) return null;
 
   const handlePlay = () => {
-    onPlay(episode, series);
+    onPlay(episode);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-xl">
+      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col bg-black/90 border-white/10 text-white overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">
             {episode.name}
           </DialogTitle>
-          <DialogDescription className="flex items-center gap-2">
-            <span>Season {episode.season_number}, Episode {episode.episode_number}</span>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <div className="bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-300">
+              Season {episode.season_number}
+            </div>
+            <div className="bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-300">
+              Episode {episode.episode_number}
+            </div>
             {episode.duration && (
-              <>
-                <span>•</span>
-                <span className="flex items-center">
-                  <Clock className="h-3.5 w-3.5 mr-1 inline" />
-                  {episode.duration} min
-                </span>
-              </>
+              <div className="flex items-center text-xs text-gray-400">
+                <Clock className="h-3.5 w-3.5 mr-1" />
+                {episode.duration} min
+              </div>
             )}
-          </DialogDescription>
+            {episode.added && (
+              <div className="flex items-center text-xs text-gray-400">
+                <Calendar className="h-3.5 w-3.5 mr-1" />
+                {episode.added}
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 mt-4 pr-4">
-          {episode.logo && (
-            <div className="mb-4">
-              <img 
-                src={episode.logo} 
-                alt={episode.name} 
-                className="w-full h-auto object-cover rounded-md"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+        <ScrollArea className="flex-grow mt-4 overflow-y-auto">
+          <div className="pr-4">
+            {episode.logo && (
+              <div className="mb-6">
+                <img 
+                  src={episode.logo} 
+                  alt={episode.name} 
+                  className="w-full h-auto object-cover rounded-md"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
 
-          {episode.description && (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold mb-2">Description</h3>
-              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                {episode.description}
-              </p>
-            </div>
-          )}
+            {episode.description && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-2 text-white/70">Description</h3>
+                <div className="text-sm text-white/70 overflow-visible">
+                  <p className="whitespace-normal break-words leading-relaxed">
+                    {episode.description}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </ScrollArea>
 
-        <DialogFooter className="flex justify-end gap-2 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="mt-6 pt-4 border-t border-white/10">
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="bg-transparent border-white/20 text-white hover:bg-white/10"
+          >
             Cancel
           </Button>
           <Button 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90"
             onClick={handlePlay}
           >
             <Play className="h-4 w-4" />
