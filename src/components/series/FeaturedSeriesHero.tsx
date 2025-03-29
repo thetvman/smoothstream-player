@@ -67,7 +67,7 @@ const FeaturedSeriesHero: React.FC<FeaturedSeriesHeroProps> = ({
           </div>
           
           <p className="text-white/80 mb-6 line-clamp-2">
-            {series.plot || "Watch this exciting series now!"}
+            {series.description || "Watch this exciting series now!"}
           </p>
           
           <div className="flex gap-4">

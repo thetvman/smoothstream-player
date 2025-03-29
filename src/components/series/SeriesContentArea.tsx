@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SeriesCategory, Series, PaginatedSeries } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import FeaturedSeriesHero from "./FeaturedSeriesHero";
 import SeriesCarousel from "./SeriesCarousel";
 import SeriesGridDisplay from "./SeriesGridDisplay";
 
@@ -48,27 +47,10 @@ const SeriesContentArea: React.FC<SeriesContentAreaProps> = ({
     <div className="flex-1 bg-gradient-to-b from-[#0a0a15] to-black">
       <ScrollArea className="h-full">
         <div className="min-h-full p-6">
-          <AnimatePresence>
-            {!isAdvancedSearch && featuredSeries && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <FeaturedSeriesHero 
-                  series={featuredSeries}
-                  onSelectSeries={setSelectedSeries}
-                  onLoadSeasons={onLoadSeasons}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Recommended Series Carousel (when not searching) */}
           {!isAdvancedSearch && !isLoading && suggestedSeries.length > 0 && (
             <motion.div
-              className="mb-12 mt-8"
+              className="mb-12 mt-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
