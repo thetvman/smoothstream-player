@@ -21,6 +21,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
     handleMute,
     handleVolumeChange,
     handleSeek,
+    handleSeekStart,
     handleFullscreen,
     handleRetry,
     hasAlternativeFormat
@@ -46,6 +47,7 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
           onMute={handleMute}
           onVolumeChange={handleVolumeChange}
           onSeek={handleSeek}
+          onSeekStart={handleSeekStart}
           onFullscreen={handleFullscreen}
           autoPlay={autoPlay}
           error={error}

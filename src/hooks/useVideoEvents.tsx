@@ -87,7 +87,7 @@ export function useVideoEvents({
         }
       }
       
-      setPlayerState(prev => ({ ...prev, playing: false }));
+      setPlayerState(prev => ({ ...prev, playing: false, loading: false }));
     };
     
     const handleVolumeChange = () => {
@@ -112,7 +112,18 @@ export function useVideoEvents({
     
     // Handler for when video starts playing
     const handlePlaying = () => {
+      // Ensure we set loading to false once playback actually starts
       setPlayerState(prev => ({ ...prev, loading: false }));
+    };
+    
+    // Add loadeddata event for when metadata and first frame are loaded
+    const handleLoadedData = () => {
+      setPlayerState(prev => ({ ...prev, loading: false }));
+    };
+    
+    const handleWaiting = () => {
+      // Show loading indicator when video is waiting/buffering
+      setPlayerState(prev => ({ ...prev, loading: true }));
     };
     
     video.addEventListener("timeupdate", handleTimeUpdate);
@@ -124,6 +135,8 @@ export function useVideoEvents({
     video.addEventListener("canplay", handleCanPlay);
     video.addEventListener("error", handleError);
     video.addEventListener("ended", handleEnded);
+    video.addEventListener("loadeddata", handleLoadedData);
+    video.addEventListener("waiting", handleWaiting);
     
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
@@ -135,6 +148,8 @@ export function useVideoEvents({
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("error", handleError);
       video.removeEventListener("ended", handleEnded);
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("waiting", handleWaiting);
     };
   }, [movie, watchStartTime, videoRef]);
   

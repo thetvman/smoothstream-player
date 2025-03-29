@@ -81,6 +81,12 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     video.currentTime = time;
   };
   
+  const handleSeekStart = (values: number[]) => {
+    // This is a pass-through function for seek start events
+    // We don't actually need to modify the video here
+    return values;
+  };
+  
   const handleRetry = () => {
     const newUrl = tryAlternativeFormat(movie, streamUrl);
     if (newUrl) {
@@ -105,6 +111,7 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     handleMute,
     handleVolumeChange,
     handleSeek,
+    handleSeekStart,
     handleFullscreen,
     handleRetry,
     hasAlternativeFormat: movie ? hasAlternativeFormat(movie, streamUrl) : false

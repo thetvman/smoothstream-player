@@ -21,8 +21,9 @@ interface MovieStreamPlayerProps {
   containerRef: React.RefObject<HTMLDivElement>;
   onPlayPause: () => void;
   onMute: () => void;
-  onVolumeChange: (value: number[]) => void;  // Updated to accept number[]
-  onSeek: (value: number[]) => void;  // Updated to accept number[]
+  onVolumeChange: (value: number[]) => void;
+  onSeek: (value: number[]) => void;
+  onSeekStart: (value: number[]) => void;
   onFullscreen: () => void;
   autoPlay?: boolean;
   error: string | null;
@@ -38,6 +39,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
   onMute,
   onVolumeChange,
   onSeek,
+  onSeekStart,
   onFullscreen,
   autoPlay = true,
   error
@@ -73,6 +75,26 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
           video.play().catch((e) => {
             console.error("Failed to autoplay:", e);
           });
+        }
+      });
+      
+      // Add error handling for HLS errors
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error("HLS error:", data);
+        if (data.fatal) {
+          switch(data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.error("HLS network error - trying to recover");
+              hls?.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.error("HLS media error - trying to recover");
+              hls?.recoverMediaError();
+              break;
+            default:
+              console.error("Fatal HLS error, cannot recover");
+              break;
+          }
         }
       });
     } 
@@ -128,7 +150,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
           onMuteUnmute={onMute}
           onVolumeChange={onVolumeChange}
           onSeek={onSeek}
-          onSeekStart={() => {}}
+          onSeekStart={onSeekStart}
           onSeekEnd={onSeek}
           onToggleFullscreen={onFullscreen}
         />
