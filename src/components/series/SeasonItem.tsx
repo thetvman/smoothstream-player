@@ -68,7 +68,7 @@ const SeasonItem: React.FC<SeasonItemProps> = ({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <ScrollArea className="max-h-[500px]">
+            <ScrollArea className="max-h-full">
               <div className="divide-y divide-white/5">
                 {season.episodes.map((episode, episodeIndex) => (
                   <EpisodeItem 
