@@ -37,6 +37,11 @@ export function useVideoEvents({
   
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   
+  // Debug loading state changes
+  useEffect(() => {
+    console.log("Player loading state:", playerState.loading);
+  }, [playerState.loading]);
+  
   // Handle video events (play, pause, timeupdate, etc.)
   useEffect(() => {
     const video = videoRef.current;
@@ -51,11 +56,13 @@ export function useVideoEvents({
     };
     
     const handlePlay = () => {
+      console.log("Video play event");
       setPlayerState(prev => ({ ...prev, playing: true }));
       setWatchStartTime(Date.now());
     };
     
     const handlePause = () => {
+      console.log("Video pause event");
       setPlayerState(prev => ({ ...prev, playing: false }));
       
       if (watchStartTime && movie) {
@@ -74,6 +81,7 @@ export function useVideoEvents({
     };
     
     const handleEnded = () => {
+      console.log("Video ended event");
       if (watchStartTime && movie) {
         const watchTimeSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
         if (watchTimeSeconds > 3) {
@@ -99,10 +107,12 @@ export function useVideoEvents({
     };
     
     const handleLoadStart = () => {
+      console.log("Video loadstart event");
       setPlayerState(prev => ({ ...prev, loading: true }));
     };
     
     const handleCanPlay = () => {
+      console.log("Video canplay event");
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
@@ -113,18 +123,31 @@ export function useVideoEvents({
     
     // Handler for when video starts playing
     const handlePlaying = () => {
+      console.log("Video playing event");
       // Ensure we set loading to false once playback actually starts
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
     // Add loadeddata event for when metadata and first frame are loaded
     const handleLoadedData = () => {
+      console.log("Video loadeddata event");
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
     const handleWaiting = () => {
+      console.log("Video waiting event");
       // Show loading indicator when video is waiting/buffering
       setPlayerState(prev => ({ ...prev, loading: true }));
+    };
+    
+    const handleStalled = () => {
+      console.log("Video stalled event");
+      setPlayerState(prev => ({ ...prev, loading: true }));
+    };
+    
+    const handleSuspend = () => {
+      console.log("Video suspend event");
+      // Often occurs when media loading is suspended, not necessarily a problem
     };
     
     // Add all event listeners
@@ -139,6 +162,8 @@ export function useVideoEvents({
     video.addEventListener("ended", handleEnded);
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("waiting", handleWaiting);
+    video.addEventListener("stalled", handleStalled);
+    video.addEventListener("suspend", handleSuspend);
     
     // Clean up event listeners on unmount
     return () => {
@@ -153,6 +178,8 @@ export function useVideoEvents({
       video.removeEventListener("ended", handleEnded);
       video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("waiting", handleWaiting);
+      video.removeEventListener("stalled", handleStalled);
+      video.removeEventListener("suspend", handleSuspend);
     };
   }, [movie, watchStartTime, videoRef]);
   

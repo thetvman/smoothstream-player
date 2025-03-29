@@ -38,6 +38,19 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
       setError(null);
       // Reset loading state when movie changes
       setPlayerState(prev => ({ ...prev, loading: true }));
+      
+      // Add a safety timeout to clear loading state if it gets stuck
+      const safetyTimeout = setTimeout(() => {
+        setPlayerState(prev => {
+          if (prev.loading) {
+            console.log('Safety timeout: forcing loading state to false');
+            return { ...prev, loading: false };
+          }
+          return prev;
+        });
+      }, 8000); // 8 seconds should be enough for most videos to start loading
+      
+      return () => clearTimeout(safetyTimeout);
     }
   }, [movie, setPlayerState]);
   
@@ -49,9 +62,13 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     if (playerState.playing) {
       video.pause();
     } else {
+      // Reset loading state when attempting to play
+      setPlayerState(prev => ({ ...prev, loading: true }));
       video.play().catch((e) => {
         console.error("Failed to play:", e);
         setError("Failed to play video. Please try again.");
+        // Clear loading state on error
+        setPlayerState(prev => ({ ...prev, loading: false }));
       });
     }
   };
@@ -84,24 +101,37 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
   
   const handleSeekStart = (values: number[]) => {
     // This is a pass-through function for seek start events
-    // We don't actually need to modify the video here
     return values;
   };
   
   const handleRetry = () => {
+    // Clear any existing errors
+    setError(null);
+    
+    // Set loading state
+    setPlayerState(prev => ({ ...prev, loading: true }));
+    
+    // Try alternative format if available
     const newUrl = tryAlternativeFormat(movie, streamUrl);
     if (newUrl) {
+      console.log("Trying alternative format:", newUrl);
       setStreamUrl(newUrl);
-      setError(null);
     } else {
-      setError(null);
+      console.log("No alternative format available, reloading current stream");
       const video = videoRef.current;
       if (video) {
+        // Force reload the video element
         video.load();
+        // Attempt to play after a short delay
+        setTimeout(() => {
+          video.play().catch(e => {
+            console.error("Retry playback failed:", e);
+            setPlayerState(prev => ({ ...prev, loading: false }));
+            setError("Failed to play video after retry. Please try again.");
+          });
+        }, 1000);
       }
     }
-    // Reset loading state
-    setPlayerState(prev => ({ ...prev, loading: true }));
   };
   
   return {

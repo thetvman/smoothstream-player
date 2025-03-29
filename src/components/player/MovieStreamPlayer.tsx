@@ -150,7 +150,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
           onMuteUnmute={onMute}
           onVolumeChange={onVolumeChange}
           onSeek={onSeek}
-          onSeekStart={onSeekStart}
+          onSeekStart={() => onSeekStart([playerState.currentTime])}
           onSeekEnd={onSeek}
           onToggleFullscreen={onFullscreen}
         />
