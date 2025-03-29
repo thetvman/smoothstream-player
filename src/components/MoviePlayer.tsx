@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, memo } from "react";
 import Hls from "hls.js";
 import { Movie, PlayerState } from "@/lib/types";
@@ -86,10 +85,9 @@ const MoviePlayer: React.FC<MoviePlayerProps> = ({ movie, autoPlay = true }) => 
           fragLoadingMaxRetry: 3,
           lowLatencyMode: false,
           enableWorker: true,
-          // Reduced buffer settings
-          backBufferLength: 10,
-          maxBufferLength: 15,
-          maxMaxBufferLength: 30
+          backBufferLength: 3,
+          maxBufferLength: 3,
+          maxMaxBufferLength: 3
         });
         
         hlsRef.current = hls;

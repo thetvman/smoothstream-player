@@ -86,9 +86,9 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
           file: {
             forceHLS: channel.url.includes('.m3u8'),
             hlsOptions: {
-              backBufferLength: 10,
-              maxBufferLength: 15,
-              maxMaxBufferLength: 30,
+              backBufferLength: 3,
+              maxBufferLength: 3,
+              maxMaxBufferLength: 3,
               lowLatencyMode: false
             }
           }
