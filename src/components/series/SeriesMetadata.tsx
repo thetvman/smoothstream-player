@@ -41,7 +41,9 @@ const SeriesMetadata: React.FC<SeriesMetadataProps> = ({ series }) => {
           transition={{ delay: 0.2 }}
         >
           <h3 className="text-sm font-medium mb-2 text-white/70">Description</h3>
-          <p className="text-white/70 whitespace-normal break-words leading-relaxed">{series.description}</p>
+          <p className="text-white/70 break-words whitespace-pre-wrap leading-relaxed max-w-full overflow-hidden text-sm">
+            {series.description}
+          </p>
         </motion.div>
       )}
     </>

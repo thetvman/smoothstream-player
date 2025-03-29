@@ -22,15 +22,15 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
   onLoadSeasons
 }) => {
   return (
-    <div className="flex flex-col max-h-[80vh] h-full">
+    <div className="flex flex-col h-full">
       {/* Banner section with fixed height */}
       <div className="flex-shrink-0">
         <SeriesBanner series={series} />
       </div>
       
       {/* Scrollable content area for metadata and episodes */}
-      <ScrollArea className="flex-1 pr-4">
-        <div className="py-4">
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="py-4 px-1">
           <SeriesMetadata series={series} />
           
           <EpisodeSection

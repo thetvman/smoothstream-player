@@ -69,7 +69,9 @@ const EpisodeInfo: React.FC<EpisodeInfoProps> = ({
         
         {episode.description && (
           <div className="text-gray-400">
-            <p className="whitespace-normal break-words leading-relaxed">{episode.description}</p>
+            <p className="whitespace-pre-wrap break-words leading-relaxed text-sm">
+              {episode.description}
+            </p>
           </div>
         )}
 
