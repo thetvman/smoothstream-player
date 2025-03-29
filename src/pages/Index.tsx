@@ -8,11 +8,12 @@ import PlayerSection from "@/components/PlayerSection";
 import { usePlaylist } from "@/hooks/use-playlist";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Moon, Sun, Radio } from "lucide-react";
+import { Moon, Sun, Radio, Film, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const {
@@ -30,6 +31,7 @@ const Index = () => {
   } = usePlaylist();
   
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const navigate = useNavigate();
   
   return (
     <Layout fullHeight className="py-4 md:py-6 px-3 md:px-6">
@@ -53,6 +55,29 @@ const Index = () => {
             </div>
           </div>
           <p className="text-sm text-muted-foreground">Watch your favorite content with a premium experience</p>
+          
+          {/* Navigation Buttons */}
+          <div className="flex mt-2 gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/movies')}
+              className="flex items-center gap-1"
+            >
+              <Film className="h-4 w-4" />
+              Movies
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/series')}
+              className="flex items-center gap-1"
+            >
+              <Tv className="h-4 w-4" />
+              Series
+            </Button>
+          </div>
+          
           <Separator className="mt-2" />
         </div>
           
