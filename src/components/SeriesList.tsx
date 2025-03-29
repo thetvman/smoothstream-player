@@ -7,14 +7,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { paginateItems } from "@/lib/paginationUtils";
+import { paginateItems, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious
+  PaginationPrevious,
+  PaginationEllipsis
 } from "@/components/ui/pagination";
 
 interface SeriesListProps {
@@ -37,7 +38,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 20, // Show 20 series per page
+    itemsPerPage: ITEMS_PER_PAGE, // Use the constant to ensure consistency
   });
 
   // Effect to initialize with the first category when data loads
@@ -48,12 +49,12 @@ const SeriesList: React.FC<SeriesListProps> = ({
       const initialSeries = paginateItems(
         seriesCategories[0].series,
         1,
-        paginatedSeries.itemsPerPage
+        ITEMS_PER_PAGE
       );
       
       setPaginatedSeries(initialSeries);
     }
-  }, [seriesCategories, currentCategory, paginatedSeries.itemsPerPage]);
+  }, [seriesCategories, currentCategory]);
 
   // Handle category change
   const handleCategoryChange = (categoryId: string) => {
@@ -66,7 +67,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
         const newPaginatedSeries = paginateItems(
           category.series,
           1,
-          paginatedSeries.itemsPerPage
+          ITEMS_PER_PAGE
         );
         setPaginatedSeries(newPaginatedSeries);
       }
@@ -102,7 +103,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
       const newPaginatedSeries = paginateItems(
         allSeries,
         1,
-        paginatedSeries.itemsPerPage
+        ITEMS_PER_PAGE
       );
       setPaginatedSeries(newPaginatedSeries);
     }
@@ -134,7 +135,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
       const newPaginatedSeries = paginateItems(
         seriesList,
         page,
-        paginatedSeries.itemsPerPage
+        ITEMS_PER_PAGE
       );
       setPaginatedSeries(newPaginatedSeries);
     }
@@ -205,7 +206,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* Ellipsis for many pages */}
             {paginatedSeries.currentPage > 3 && (
               <PaginationItem>
-                <span className="flex h-9 w-9 items-center justify-center">...</span>
+                <PaginationEllipsis />
               </PaginationItem>
             )}
             
@@ -237,7 +238,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
             {/* Ellipsis for many pages */}
             {paginatedSeries.currentPage < paginatedSeries.totalPages - 2 && (
               <PaginationItem>
-                <span className="flex h-9 w-9 items-center justify-center">...</span>
+                <PaginationEllipsis />
               </PaginationItem>
             )}
             
