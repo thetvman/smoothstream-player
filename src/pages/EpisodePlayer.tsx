@@ -26,19 +26,14 @@ const EpisodePlayer = () => {
   const [showNextEpisode, setShowNextEpisode] = useState(false);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
   
-  useEffect(() => {
+  // Load episode and series data
+  const loadEpisodeData = (epId: string, seriesId: string) => {
     setIsLoading(true);
     setShowNextEpisode(false);
-    console.log("Looking for episode with ID:", episodeId);
-    
-    if (!episodeId || !seriesId) {
-      toast.error("No episode or series ID provided");
-      navigate("/series");
-      return;
-    }
+    console.log("Looking for episode with ID:", epId);
     
     const foundSeries = getSeriesById(seriesId);
-    const foundEpisode = getEpisodeById(episodeId);
+    const foundEpisode = getEpisodeById(epId);
     
     console.log("Found series:", foundSeries?.name);
     console.log("Found episode:", foundEpisode?.name);
@@ -90,10 +85,21 @@ const EpisodePlayer = () => {
       
       setIsLoading(false);
     } else {
-      console.error("Episode or series not found in storage. IDs:", { seriesId, episodeId });
+      console.error("Episode or series not found in storage. IDs:", { seriesId, epId });
       toast.error("Episode not found");
       navigate("/series");
     }
+  };
+  
+  // Initial load
+  useEffect(() => {
+    if (!episodeId || !seriesId) {
+      toast.error("No episode or series ID provided");
+      navigate("/series");
+      return;
+    }
+    
+    loadEpisodeData(episodeId, seriesId);
   }, [episodeId, seriesId, navigate]);
   
   const handleBackClick = (e: React.MouseEvent) => {
@@ -107,7 +113,7 @@ const EpisodePlayer = () => {
       
       const timer = setTimeout(() => {
         if (nextEpisodeId && seriesId) {
-          navigate(`/series/${seriesId}/episode/${nextEpisodeId}`);
+          handleEpisodeChange(nextEpisodeId);
         }
       }, 10000);
       
@@ -116,16 +122,23 @@ const EpisodePlayer = () => {
   };
   
   const playNextEpisode = () => {
-    if (nextEpisodeId && seriesId) {
-      navigate(`/series/${seriesId}/episode/${nextEpisodeId}`);
+    if (nextEpisodeId) {
+      handleEpisodeChange(nextEpisodeId);
     }
   };
 
-  const navigateToEpisode = (episodeId: string) => {
-    if (seriesId) {
-      navigate(`/series/${seriesId}/episode/${episodeId}`);
-      setShowEpisodeList(false);
-    }
+  const handleEpisodeChange = (newEpisodeId: string) => {
+    if (!seriesId) return;
+    
+    // Update the URL without full page reload
+    navigate(`/series/${seriesId}/episode/${newEpisodeId}`, { replace: true });
+    
+    // Load the new episode data
+    loadEpisodeData(newEpisodeId, seriesId);
+    
+    // Hide UI elements
+    setShowEpisodeList(false);
+    setShowNextEpisode(false);
   };
 
   const toggleEpisodeList = () => {
@@ -227,7 +240,7 @@ const EpisodePlayer = () => {
                           const firstEpisode = [...season.episodes].sort(
                             (a, b) => parseInt(a.episode_number) - parseInt(b.episode_number)
                           )[0];
-                          navigateToEpisode(firstEpisode.id);
+                          handleEpisodeChange(firstEpisode.id);
                         }
                       }}
                     >
@@ -254,7 +267,7 @@ const EpisodePlayer = () => {
                             ? "bg-primary/20 text-primary" 
                             : "text-white/70 hover:text-white hover:bg-white/10"
                         }`}
-                        onClick={() => navigateToEpisode(ep.id)}
+                        onClick={() => handleEpisodeChange(ep.id)}
                       >
                         <span className="w-8 text-xs">{ep.episode_number}.</span>
                         <span className="truncate">{ep.name}</span>
@@ -268,7 +281,12 @@ const EpisodePlayer = () => {
         
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
-            <div className="text-white flex items-center justify-center h-full">Loading episode...</div>
+            <div className="text-white flex items-center justify-center h-full">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-white/70">Loading episode...</p>
+              </div>
+            </div>
           ) : (
             <div className="animate-fade-in">
               <SeriesPlayer 
@@ -276,6 +294,7 @@ const EpisodePlayer = () => {
                 series={series} 
                 autoPlay 
                 onEpisodeEnded={handleEpisodeEnded}
+                onEpisodeChange={handleEpisodeChange}
               />
             </div>
           )}

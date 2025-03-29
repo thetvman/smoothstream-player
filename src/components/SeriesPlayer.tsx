@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import type { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
@@ -13,13 +12,15 @@ interface SeriesPlayerProps {
   series: Series | null;
   autoPlay?: boolean;
   onEpisodeEnded?: () => void;
+  onEpisodeChange?: (episodeId: string) => void;
 }
 
 const SeriesPlayer: React.FC<SeriesPlayerProps> = ({ 
   episode,
   series,
   autoPlay = true,
-  onEpisodeEnded
+  onEpisodeEnded,
+  onEpisodeChange
 }) => {
   const navigate = useNavigate();
   const [showInfo, setShowInfo] = useState(false);
@@ -39,7 +40,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   }, [showInfo]);
 
-  // Find previous and next episodes
+  // Find previous and next episodes whenever the episode changes
   useEffect(() => {
     if (!episode || !series || !series.seasons) return;
     
@@ -115,7 +116,7 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
     }
   }, [episode, series]);
 
-  // Set up tracking for watch time
+  // Reset tracking for watch time when episode changes
   useEffect(() => {
     if (!episode) return;
     
@@ -205,19 +206,29 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   };
 
   const navigateToEpisode = (episodeId: string | null) => {
-    if (!episodeId || !series) return;
-    navigate(`/series/${series.id}/episode/${episodeId}`);
+    if (!episodeId) return;
+    
+    // Use the callback if provided (for in-page navigation)
+    if (onEpisodeChange) {
+      onEpisodeChange(episodeId);
+    }
+    // Otherwise use the router (for full page navigation)
+    else if (series) {
+      navigate(`/series/${series.id}/episode/${episodeId}`);
+    }
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
       <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full group">
-        <VideoPlayer 
-          channel={channel} 
-          autoPlay={autoPlay} 
-          onEnded={handleVideoEnded}
-          onPlaybackChange={handlePlaybackChange}
-        />
+        {channel && (
+          <VideoPlayer 
+            channel={channel} 
+            autoPlay={autoPlay} 
+            onEnded={handleVideoEnded}
+            onPlaybackChange={handlePlaybackChange}
+          />
+        )}
         
         {/* Navigation controls */}
         <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

@@ -71,6 +71,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
       hls.attachMedia(video);
       
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log("HLS manifest parsed, attempting to play");
         if (autoPlay) {
           video.play().catch((e) => {
             console.error("Failed to autoplay:", e);
@@ -103,6 +104,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
       video.src = streamUrl;
       
       if (autoPlay) {
+        console.log("Using native playback, attempting to play");
         video.play().catch(e => {
           console.error("Direct playback failed:", e);
         });
