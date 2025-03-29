@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { SeriesCategory } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowLeft, ChevronRight, X } from "lucide-react";
+import { Search, ArrowLeft, ChevronRight, X, Home, Bookmark, Clock, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SeriesSidebarProps {
   seriesCategories: SeriesCategory[] | null;
@@ -37,18 +38,18 @@ const SeriesSidebar: React.FC<SeriesSidebarProps> = ({
 
   return (
     <motion.div 
-      className="w-64 border-r border-white/5 bg-gradient-to-b from-black to-[#080810] h-full flex-shrink-0"
+      className="w-64 border-r border-white/5 bg-gradient-to-b from-black via-[#080810] to-[#08080f] h-screen flex-shrink-0"
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center p-4 border-b border-white/5">
+        <div className="flex items-center p-6 border-b border-white/5">
           <Button 
             onClick={() => navigate("/")}
             variant="ghost"
             size="icon"
-            className="mr-2 hover:bg-white/5 rounded-full transition-colors"
+            className="mr-3 hover:bg-white/5 rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -73,6 +74,74 @@ const SeriesSidebar: React.FC<SeriesSidebarProps> = ({
               </button>
             )}
           </div>
+        </div>
+        
+        {/* Quick navigation */}
+        <div className="py-6 px-4 border-b border-white/5">
+          <TooltipProvider>
+            <div className="flex gap-2 justify-around">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full hover:bg-white/5"
+                    onClick={() => navigate("/")}
+                  >
+                    <Home className="h-5 w-5 text-white/70" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Home</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full hover:bg-white/5"
+                  >
+                    <Bookmark className="h-5 w-5 text-white/70" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bookmarks</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full hover:bg-white/5"
+                  >
+                    <Clock className="h-5 w-5 text-white/70" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Watch History</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full hover:bg-white/5"
+                  >
+                    <Settings className="h-5 w-5 text-white/70" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Settings</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
         
         <ScrollArea className="flex-1">

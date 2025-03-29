@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton";
 import { storeEpisodeForPlayback } from "@/lib/mediaService";
 
 // Import custom hook
@@ -11,10 +10,8 @@ import { useSeriesState } from "@/hooks/useSeriesState";
 
 // Import components
 import SeriesDetails from "@/components/SeriesDetails";
-import FeaturedSeriesBanner from "@/components/series/FeaturedSeriesBanner";
 import SeriesSidebar from "@/components/series/SeriesSidebar";
-import SeriesGrid from "@/components/series/SeriesGrid";
-import RecommendedSeries from "@/components/series/RecommendedSeries";
+import SeriesContentArea from "@/components/series/SeriesContentArea";
 import NoCredentialsView from "@/components/series/NoCredentialsView";
 
 const Series = () => {
@@ -97,30 +94,13 @@ const Series = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
-      <AnimatePresence>
-        {featuredSeries && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <FeaturedSeriesBanner 
-              series={featuredSeries} 
-              onSelectSeries={setSelectedSeries}
-              onLoadSeasons={handleLoadSeasonsWithToast}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className="flex flex-col h-screen bg-gradient-to-b from-black to-[#0a0a15] text-white overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
         <AnimatePresence>
           <motion.div
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+            transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
           >
             <SeriesSidebar 
               seriesCategories={seriesCategories}
@@ -136,63 +116,19 @@ const Series = () => {
           </motion.div>
         </AnimatePresence>
 
-        <motion.div 
-          className="flex-1 overflow-y-auto scrollbar-hide bg-gradient-to-b from-black to-[#0a0a10]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <div className="p-4 pb-24">
-            {!isAdvancedSearch && !isLoading && (
-              <RecommendedSeries 
-                series={getSuggestedSeries()} 
-                onSelect={setSelectedSeries}
-                onLoad={handleLoadSeasonsWithToast}
-              />
-            )}
-
-            <motion.div 
-              className="mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-                  {isAdvancedSearch 
-                    ? "Search Results" 
-                    : (activeCategory && seriesCategories 
-                        ? seriesCategories.find(cat => cat.id === activeCategory)?.name || "All Series"
-                        : "All Series"
-                      )
-                  }
-                </h2>
-                <div className="text-sm text-white/60">
-                  {paginatedSeries.totalItems} series available
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={i} className="flex flex-col">
-                      <Skeleton className="h-40 w-full bg-white/5 rounded-xl" />
-                      <Skeleton className="h-5 w-3/4 mt-3 bg-white/5 rounded-md" />
-                      <Skeleton className="h-4 w-1/2 mt-2 bg-white/5 rounded-md" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <SeriesGrid
-                  paginatedSeries={paginatedSeries}
-                  onSelect={handleSelectSeries}
-                  onLoad={handleLoadSeasonsWithToast}
-                  onPageChange={handlePageChange}
-                />
-              )}
-            </motion.div>
-          </div>
-        </motion.div>
+        <SeriesContentArea 
+          isLoading={isLoading}
+          isAdvancedSearch={isAdvancedSearch}
+          activeCategory={activeCategory}
+          seriesCategories={seriesCategories}
+          featuredSeries={featuredSeries}
+          paginatedSeries={paginatedSeries}
+          suggestedSeries={getSuggestedSeries()}
+          onSelectSeries={handleSelectSeries}
+          onLoadSeasons={handleLoadSeasonsWithToast}
+          onPageChange={handlePageChange}
+          setSelectedSeries={setSelectedSeries}
+        />
 
         <AnimatePresence>
           {selectedSeries && (
@@ -223,7 +159,7 @@ const Series = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="overflow-y-auto max-h-[calc(90vh-4rem)]">
+                <div className="overflow-hidden max-h-[calc(90vh-4rem)]">
                   <SeriesDetails 
                     series={selectedSeries}
                     onPlayEpisode={handlePlayEpisode}
