@@ -15,6 +15,20 @@ const EpisodeItem: React.FC<EpisodeItemProps> = ({
   episodeIndex, 
   onEpisodeClick 
 }) => {
+  // Function to truncate description to 10 words
+  const truncateDescription = (text: string, wordLimit: number = 10) => {
+    if (!text) return "";
+    const words = text.split(" ");
+    if (words.length <= wordLimit) return text;
+    return words.slice(0, wordLimit).join(" ") + "...";
+  };
+
+  // Function to truncate title if it's too long
+  const truncateTitle = (title: string, charLimit: number = 35) => {
+    if (!title) return "";
+    return title.length > charLimit ? title.substring(0, charLimit) + "..." : title;
+  };
+
   return (
     <motion.div 
       className="flex items-center p-3 hover:bg-white/5 transition-colors cursor-pointer"
@@ -37,7 +51,7 @@ const EpisodeItem: React.FC<EpisodeItemProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <div className="font-medium text-white truncate">
-            {episode.episode_number}. {episode.name}
+            {episode.episode_number}. {truncateTitle(episode.name)}
           </div>
           <div className="flex items-center text-white/60 ml-2 text-sm flex-shrink-0">
             {episode.duration && (
@@ -49,7 +63,7 @@ const EpisodeItem: React.FC<EpisodeItemProps> = ({
           </div>
         </div>
         {episode.description && (
-          <p className="text-xs text-white/50 truncate mt-1">{episode.description}</p>
+          <p className="text-xs text-white/50 truncate mt-1">{truncateDescription(episode.description)}</p>
         )}
       </div>
     </motion.div>
