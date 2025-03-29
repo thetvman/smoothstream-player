@@ -89,7 +89,15 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
               backBufferLength: 3,
               maxBufferLength: 3,
               maxMaxBufferLength: 3,
-              lowLatencyMode: false
+              lowLatencyMode: false,
+              startLevel: 0, // Start with lowest quality and switch up
+              debug: false,
+              progressive: true, // Enable progressive loading
+              maxLoadingDelay: 1, // Reduce loading delay
+              manifestLoadingTimeOut: 5000, // Reduce timeout
+              manifestLoadingMaxRetry: 2, // Limit retries for faster failure
+              levelLoadingTimeOut: 5000, // Reduce level loading timeout
+              fragLoadingTimeOut: 5000 // Reduce fragment loading timeout
             }
           }
         }}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -10,6 +11,7 @@ import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerNavigation from "@/components/player/PlayerNavigation";
 import PlayerInfo from "@/components/player/PlayerInfo";
 import EPGPanel from "@/components/player/EPGPanel";
+import ChannelPreloader from "@/components/player/ChannelPreloader";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -170,7 +172,17 @@ const Player = () => {
     }
     
     const newChannel = playlist.channels[newIndex];
-    navigate(`/player/${newChannel.id}`);
+    
+    // Optimize channel switching
+    setIsEpgLoading(true);
+    setEpgData(null);
+    setEpgLoaded(false);
+    
+    // Pre-set the channel immediately to avoid delay
+    setChannel(newChannel);
+    
+    // Update URL asynchronously
+    navigate(`/player/${newChannel.id}`, { replace: true });
   };
   
   if (!channel) {
@@ -215,6 +227,14 @@ const Player = () => {
           onClose={handleHideInfo}
         />
       </div>
+      
+      {/* Add preloader component for faster channel switching */}
+      {playlist && channel && (
+        <ChannelPreloader 
+          currentChannel={channel} 
+          playlist={playlist} 
+        />
+      )}
     </div>
   );
 };
