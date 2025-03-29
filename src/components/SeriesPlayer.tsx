@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import type { Episode, Series } from "@/lib/types";
 import VideoPlayer from "./VideoPlayer";
 import { Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -6,6 +7,7 @@ import { updateWatchHistory } from "@/lib/watchHistoryService";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
+import { toggleFullscreen } from "@/lib/playerUtils";
 
 interface SeriesPlayerProps {
   episode: Episode | null;
@@ -28,17 +30,69 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [prevEpisodeId, setPrevEpisodeId] = useState<string | null>(null);
   const [nextEpisodeId, setNextEpisodeId] = useState<string | null>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const infoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Only show info initially when explicitly requested
+  // Handle fullscreen
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  const handleToggleFullscreen = async () => {
+    if (playerContainerRef.current) {
+      const fullscreenState = await toggleFullscreen(playerContainerRef.current);
+      setIsFullscreen(fullscreenState);
+    }
+  };
+
+  // Auto-hide info after 5 seconds
   useEffect(() => {
     if (showInfo) {
-      const timer = setTimeout(() => {
-        setShowInfo(false);
-      }, 7000);
+      if (infoTimeoutRef.current) {
+        clearTimeout(infoTimeoutRef.current);
+      }
       
-      return () => clearTimeout(timer);
+      infoTimeoutRef.current = setTimeout(() => {
+        setShowInfo(false);
+      }, 5000);
+      
+      return () => {
+        if (infoTimeoutRef.current) {
+          clearTimeout(infoTimeoutRef.current);
+          infoTimeoutRef.current = null;
+        }
+      };
     }
   }, [showInfo]);
+
+  // Reset timeout on mouse move
+  useEffect(() => {
+    const handleMouseMove = () => {
+      if (showInfo && infoTimeoutRef.current) {
+        clearTimeout(infoTimeoutRef.current);
+        infoTimeoutRef.current = setTimeout(() => {
+          setShowInfo(false);
+        }, 5000);
+      }
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [showInfo]);
+
+  // Update fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   // Find previous and next episodes whenever the episode changes
   useEffect(() => {
@@ -219,8 +273,11 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
-      <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full group">
+    <div 
+      ref={playerContainerRef}
+      className={`${isFullscreen ? 'fixed inset-0 bg-black z-50' : 'w-full max-w-full mx-auto flex flex-col gap-6'}`}
+    >
+      <div className="relative rounded-lg overflow-hidden bg-black aspect-video w-full group h-full">
         {channel && (
           <VideoPlayer 
             channel={channel} 
@@ -269,17 +326,30 @@ const SeriesPlayer: React.FC<SeriesPlayerProps> = ({
           )}
         </div>
         
-        {/* Show info button with transition */}
-        <button 
-          className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors z-20"
-          onClick={() => setShowInfo(true)}
-        >
-          Show Info
-        </button>
+        {/* Fullscreen and info buttons */}
+        <div className="absolute bottom-4 right-4 flex gap-2 z-20">
+          <Button 
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleFullscreen}
+            className="bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors"
+          >
+            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          </Button>
+          
+          <Button 
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowInfo(true)}
+            className="bg-black/60 hover:bg-black/80 text-white px-3 py-1 rounded-md text-sm transition-colors"
+          >
+            Show Info
+          </Button>
+        </div>
       </div>
       
       {series && episode && showInfo && (
-        <div className="p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md animate-fade-in">
+        <div className={`${isFullscreen ? 'absolute bottom-20 left-0 right-0 mx-4 z-30' : ''} p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md animate-fade-in`}>
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1">
               <h2 className="text-xl font-bold text-white">{series.name}</h2>

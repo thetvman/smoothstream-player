@@ -5,6 +5,7 @@ import { Channel, Playlist } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { safeJsonParse } from "@/lib/utils";
 import { fetchEPGData } from "@/lib/epg";
+import { setupAutoHideTimeout } from "@/lib/playerUtils";
 
 export function usePlayerPage() {
   const { channelId } = useParams<{ channelId: string }>();
@@ -109,7 +110,7 @@ export function usePlayerPage() {
         setShowControls(true);
         controlsTimeoutRef.current = setTimeout(() => {
           setShowControls(false);
-        }, 3000);
+        }, 5000);
       }
     };
     
@@ -152,7 +153,7 @@ export function usePlayerPage() {
     
     controlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
-    }, 3000);
+    }, 5000);
   };
   
   const navigateToChannel = (direction: 'next' | 'prev') => {

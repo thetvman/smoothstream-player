@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Clock } from "lucide-react";
 
 interface PlayerInfoProps {

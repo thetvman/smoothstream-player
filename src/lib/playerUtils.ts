@@ -57,3 +57,17 @@ export function findOptimalStreamQuality(
   // This could be expanded as needed
   return channel.url;
 }
+
+/**
+ * Auto-hide UI element after specified time
+ */
+export function setupAutoHideTimeout(
+  setVisibility: (visible: boolean) => void,
+  timeoutMs: number = 5000
+): () => void {
+  const timeout = setTimeout(() => {
+    setVisibility(false);
+  }, timeoutMs);
+  
+  return () => clearTimeout(timeout);
+}
