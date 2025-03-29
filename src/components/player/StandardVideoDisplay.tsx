@@ -28,6 +28,26 @@ interface StandardVideoDisplayProps {
   }) => void;
 }
 
+// Define a more complete HLS options interface to match what we're using
+interface ExtendedHlsOptions {
+  backBufferLength: number;
+  maxBufferLength: number;
+  maxMaxBufferLength: number;
+  lowLatencyMode: boolean;
+  debug: boolean;
+  progressive: boolean;
+  manifestLoadingTimeOut: number;
+  manifestLoadingMaxRetry: number;
+  levelLoadingTimeOut: number;
+  fragLoadingTimeOut: number;
+  // Additional options for mobile optimization
+  startLevel?: number;
+  abrEwmaDefaultEstimate?: number;
+  liveSyncDurationCount?: number;
+  maxBufferHole?: number;
+  maxFragLookUpTolerance?: number;
+}
+
 const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
   channel,
   playing,
@@ -63,7 +83,7 @@ const StandardVideoDisplay: React.FC<StandardVideoDisplayProps> = ({
 
   // Create HLS config based on device type
   const getHlsConfig = () => {
-    const baseConfig = {
+    const baseConfig: { forceHLS: boolean, hlsOptions: ExtendedHlsOptions } = {
       forceHLS: channel.url.includes('.m3u8'),
       hlsOptions: {
         backBufferLength: isMobile ? 0 : 3,
