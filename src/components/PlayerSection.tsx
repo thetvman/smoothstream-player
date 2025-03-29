@@ -29,7 +29,7 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
 
   if (!selectedChannel) {
     return (
-      <div className="aspect-video flex flex-col items-center justify-center bg-card/50 text-muted-foreground p-4">
+      <div className="aspect-video flex flex-col items-center justify-center bg-card/50 text-muted-foreground p-4 rounded-lg shadow-lg transform transition-all hover:shadow-xl">
         <div className="text-center space-y-2">
           <h3 className="font-medium">No Channel Selected</h3>
           <p className="text-sm">Select a channel from the list to start watching</p>
@@ -39,15 +39,15 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="relative">
+    <div className="flex flex-col transform transition-all duration-300 hover:translate-z-6 rounded-lg overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+      <div className="relative rounded-t-lg overflow-hidden transition-transform duration-300 hover:scale-[1.01]">
         <VideoPlayer channel={selectedChannel} />
         
         <Button
           variant="default"
           size="lg"
           onClick={openFullscreenPlayer}
-          className="absolute top-4 right-4 text-sm bg-primary hover:bg-primary/90 shadow-md"
+          className="absolute top-4 right-4 text-sm bg-primary hover:bg-primary/90 shadow-md transform transition-all duration-300 hover:shadow-lg hover:scale-105"
         >
           <Maximize2 className="h-4 w-4 mr-1" />
           Fullscreen
@@ -55,9 +55,9 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
       </div>
       
       {selectedChannel && (
-        <div className="p-3">
+        <div className="p-3 bg-gradient-to-b from-background/95 to-background rounded-b-lg">
           <div className="flex items-start justify-between mb-2">
-            <div>
+            <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
               <h3 className="font-medium">{selectedChannel.name}</h3>
               {selectedChannel.group && (
                 <p className="text-xs text-muted-foreground">{selectedChannel.group}</p>
