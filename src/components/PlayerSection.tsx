@@ -44,12 +44,12 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
         <VideoPlayer channel={selectedChannel} />
         
         <Button
-          variant="secondary"
-          size="sm"
+          variant="default"
+          size="lg"
           onClick={openFullscreenPlayer}
-          className="absolute bottom-4 right-4 text-xs bg-background/80 backdrop-blur-sm hover:bg-background/90"
+          className="absolute top-4 right-4 text-sm bg-primary hover:bg-primary/90 shadow-md"
         >
-          <Maximize2 className="h-3.5 w-3.5 mr-1" />
+          <Maximize2 className="h-4 w-4 mr-1" />
           Fullscreen
         </Button>
       </div>
