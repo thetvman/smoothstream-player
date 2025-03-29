@@ -1,22 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Series, SeriesCategory, PaginatedSeries } from "@/lib/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Tabs } from "@/components/ui/tabs";
 import { paginateItems, ITEMS_PER_PAGE } from "@/lib/paginationUtils";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis
-} from "@/components/ui/pagination";
+
+// Import refactored components
+import SeriesSearchBar from "./series-list/SeriesSearchBar";
+import SeriesCategoryTabs from "./series-list/SeriesCategoryTabs";
+import SeriesListItems from "./series-list/SeriesListItems";
+import SeriesListPagination from "./series-list/SeriesListPagination";
 
 interface SeriesListProps {
   seriesCategories: SeriesCategory[] | null;
@@ -147,249 +140,40 @@ const SeriesList: React.FC<SeriesListProps> = ({
     }
   };
 
-  // Create loading skeletons
-  const renderSkeletons = () => (
-    <div className="space-y-4">
-      {Array.from({ length: 10 }).map((_, index) => (
-        <div key={index} className="flex space-x-3 items-center p-2">
-          <Skeleton className="h-12 w-20 rounded" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // Create categories tabs
-  const renderCategoryTabs = () => {
-    if (!seriesCategories || seriesCategories.length === 0) {
-      return <p className="text-muted-foreground text-center p-4">No series categories available</p>;
-    }
-
-    return (
-      <TabsList className="w-full mb-4 flex overflow-x-auto">
-        {seriesCategories.map(category => (
-          <TabsTrigger
-            key={category.id}
-            value={category.id}
-            className="flex-shrink-0"
-            onClick={() => handleCategoryChange(category.id)}
-          >
-            {category.name} ({category.series.length})
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    );
-  };
-
-  // Render pagination controls
-  const renderPagination = () => {
-    if (paginatedSeries.totalPages <= 1) {
-      console.log("Not showing pagination, only one page or less");
-      return null;
-    }
-    
-    console.log(`Rendering pagination: ${paginatedSeries.currentPage}/${paginatedSeries.totalPages}`);
-    
-    return (
-      <div className="mt-4">
-        <Pagination>
-          <PaginationContent>
-            {/* Previous page button */}
-            {paginatedSeries.currentPage > 1 && (
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
-                  className="cursor-pointer"
-                />
-              </PaginationItem>
-            )}
-            
-            {/* First page */}
-            {paginatedSeries.currentPage > 2 && (
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handlePageChange(1)}
-                  className="cursor-pointer"
-                >
-                  1
-                </PaginationLink>
-              </PaginationItem>
-            )}
-            
-            {/* Ellipsis for many pages */}
-            {paginatedSeries.currentPage > 3 && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-            
-            {/* Previous page */}
-            {paginatedSeries.currentPage > 1 && (
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
-                  className="cursor-pointer"
-                >
-                  {paginatedSeries.currentPage - 1}
-                </PaginationLink>
-              </PaginationItem>
-            )}
-            
-            {/* Current page */}
-            <PaginationItem>
-              <PaginationLink 
-                isActive 
-                className="cursor-pointer"
-              >
-                {paginatedSeries.currentPage}
-              </PaginationLink>
-            </PaginationItem>
-            
-            {/* Next page */}
-            {paginatedSeries.currentPage < paginatedSeries.totalPages && (
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
-                  className="cursor-pointer"
-                >
-                  {paginatedSeries.currentPage + 1}
-                </PaginationLink>
-              </PaginationItem>
-            )}
-            
-            {/* Ellipsis for many pages */}
-            {paginatedSeries.currentPage < paginatedSeries.totalPages - 2 && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-            )}
-            
-            {/* Last page */}
-            {paginatedSeries.currentPage < paginatedSeries.totalPages - 1 && (
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handlePageChange(paginatedSeries.totalPages)}
-                  className="cursor-pointer"
-                >
-                  {paginatedSeries.totalPages}
-                </PaginationLink>
-              </PaginationItem>
-            )}
-            
-            {/* Next page button */}
-            {paginatedSeries.currentPage < paginatedSeries.totalPages && (
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
-                  className="cursor-pointer"
-                />
-              </PaginationItem>
-            )}
-          </PaginationContent>
-        </Pagination>
-        
-        <div className="text-xs text-center text-muted-foreground mt-2">
-          Showing {(paginatedSeries.currentPage - 1) * paginatedSeries.itemsPerPage + 1}-
-          {Math.min(paginatedSeries.currentPage * paginatedSeries.itemsPerPage, paginatedSeries.totalItems)} of {paginatedSeries.totalItems} series
-        </div>
-      </div>
-    );
-  };
-
-  // Render series list
-  const renderSeriesList = () => {
-    if (isLoading) {
-      return renderSkeletons();
-    }
-
-    if (!paginatedSeries.items.length) {
-      return (
-        <p className="text-muted-foreground text-center p-4">
-          {searchQuery ? "No series match your search" : "No series in this category"}
-        </p>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        {paginatedSeries.items.map(series => (
-          <Card
-            key={series.id}
-            className={`cursor-pointer transition-colors hover:bg-accent ${
-              selectedSeries?.id === series.id ? "bg-accent border-primary" : ""
-            }`}
-            onClick={() => onSelectSeries(series)}
-          >
-            <CardContent className="p-3 flex items-center space-x-3">
-              <div className="relative h-16 w-28 flex-shrink-0 bg-muted rounded overflow-hidden">
-                {series.logo ? (
-                  <img
-                    src={series.logo}
-                    alt={series.name}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-muted">
-                    <span className="text-xs text-muted-foreground">No Image</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm truncate">{series.name}</h3>
-                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                  {series.year && <span>{series.year}</span>}
-                  {series.rating && (
-                    <>
-                      <span>•</span>
-                      <span>⭐ {series.rating}</span>
-                    </>
-                  )}
-                </div>
-                {series.genre && (
-                  <div className="text-xs text-muted-foreground mt-1 truncate">
-                    {series.genre}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Pagination */}
-        {renderPagination()}
-      </div>
-    );
-  };
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 mb-4">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            className="pl-9"
-            placeholder="Search series..."
-            value={searchQuery}
-            onChange={handleSearch}
-          />
-        </div>
+        <SeriesSearchBar 
+          searchQuery={searchQuery} 
+          onSearch={handleSearch} 
+        />
         
         {seriesCategories && seriesCategories.length > 0 && (
           <Tabs value={currentCategory || ""} className="w-full">
-            {renderCategoryTabs()}
+            <SeriesCategoryTabs 
+              seriesCategories={seriesCategories}
+              currentCategory={currentCategory}
+              onCategoryChange={handleCategoryChange}
+            />
           </Tabs>
         )}
       </div>
       
       <ScrollArea className="flex-1 rounded-md border">
         <div className="p-4">
-          {renderSeriesList()}
+          <SeriesListItems 
+            items={paginatedSeries.items}
+            selectedSeries={selectedSeries}
+            onSelectSeries={onSelectSeries}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
+          />
+          
+          {/* Pagination */}
+          <SeriesListPagination 
+            paginatedSeries={paginatedSeries}
+            onPageChange={handlePageChange}
+          />
         </div>
       </ScrollArea>
     </div>

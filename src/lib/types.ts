@@ -233,3 +233,11 @@ export interface WatchHistoryItem {
   lastWatched: string;
   thumbnailUrl?: string;
 }
+
+export interface AdvancedSearchParams {
+  title: string;
+  genre: string;
+  yearFrom: number;
+  yearTo: number;
+  ratingMin: number;
+}
