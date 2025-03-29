@@ -104,7 +104,7 @@ const MovieStreamPlayer: React.FC<MovieStreamPlayerProps> = ({
         preload="metadata"
       />
       
-      {playerState.loading && (
+      {playerState.loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <LoadingSpinner size="lg" />
         </div>

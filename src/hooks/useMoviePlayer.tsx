@@ -32,6 +32,8 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     if (movie?.url) {
       setStreamUrl(movie.url);
       setError(null);
+      // Reset loading state when movie changes
+      setPlayerState(prev => ({ ...prev, loading: true }));
     }
   }, [movie]);
   
@@ -140,9 +142,14 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
+    // Add a handler for when video starts playing
+    const handlePlaying = () => {
+      setPlayerState(prev => ({ ...prev, loading: false }));
+    };
+    
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("play", handlePlay);
-    video.addEventListener("playing", handlePlay);
+    video.addEventListener("playing", handlePlaying);
     video.addEventListener("pause", handlePause);
     video.addEventListener("volumechange", handleVolumeChange);
     video.addEventListener("loadstart", handleLoadStart);
@@ -153,7 +160,7 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("play", handlePlay);
-      video.removeEventListener("playing", handlePlay);
+      video.removeEventListener("playing", handlePlaying);
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("volumechange", handleVolumeChange);
       video.removeEventListener("loadstart", handleLoadStart);
