@@ -141,7 +141,7 @@ const Series = () => {
               onClick={() => setSelectedSeries(null)}
             >
               <motion.div 
-                className="bg-gradient-to-b from-black/90 to-[#080810]/90 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden max-h-[90vh] border border-white/10"
+                className="bg-gradient-to-b from-black/90 to-[#080810]/90 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden border border-white/10"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -149,7 +149,7 @@ const Series = () => {
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
               >
                 <div className="p-4 flex justify-between items-center border-b border-white/10">
-                  <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">{selectedSeries.name}</h2>
+                  <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 truncate max-w-[calc(100%-3rem)]">{selectedSeries.name}</h2>
                   <button 
                     onClick={() => setSelectedSeries(null)}
                     className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
@@ -159,7 +159,7 @@ const Series = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="overflow-hidden max-h-[calc(90vh-4rem)]">
+                <div className="overflow-hidden h-[calc(90vh-6rem)] max-h-[700px]">
                   <SeriesDetails 
                     series={selectedSeries}
                     onPlayEpisode={handlePlayEpisode}

@@ -10,7 +10,7 @@ interface SeriesBannerProps {
 
 const SeriesBanner: React.FC<SeriesBannerProps> = ({ series }) => {
   return (
-    <div className="relative mb-6 rounded-xl overflow-hidden h-64 bg-gradient-to-br from-gray-900 to-black shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+    <div className="relative mb-4 rounded-xl overflow-hidden h-48 bg-gradient-to-br from-gray-900 to-black shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       {series.backdrop ? (
         <img
           src={series.backdrop}
@@ -36,7 +36,7 @@ const SeriesBanner: React.FC<SeriesBannerProps> = ({ series }) => {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent flex items-end">
         <div className="p-4 text-white">
-          <h2 className="text-2xl font-bold mb-2">{series.name}</h2>
+          <h2 className="text-xl font-bold mb-2 line-clamp-2">{series.name}</h2>
           
           <div className="flex flex-wrap gap-2">
             {series.year && (
@@ -52,7 +52,7 @@ const SeriesBanner: React.FC<SeriesBannerProps> = ({ series }) => {
               </Badge>
             )}
             {series.group && (
-              <Badge className="bg-white/10 backdrop-blur-md border-none text-white">
+              <Badge className="bg-white/10 backdrop-blur-md border-none text-white truncate max-w-[120px]">
                 {series.group}
               </Badge>
             )}

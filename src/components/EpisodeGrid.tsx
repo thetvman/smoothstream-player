@@ -44,7 +44,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
     paginatedEpisodes, 
     handlePageChange,
     setCurrentPage
-  } = useEpisodePagination(allSeasonEpisodes);
+  } = useEpisodePagination(allSeasonEpisodes, viewMode === "grid" ? 16 : 10);
 
   const handleSeasonChange = (value: string) => {
     setActiveSeason(value);
@@ -53,12 +53,14 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
 
   const handleViewModeChange = (mode: "grid" | "list") => {
     setViewMode(mode);
+    // Also reset pagination when changing view mode
+    setCurrentPage(1);
   };
 
   return (
     <TooltipProvider>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between mb-4">
           <SeasonSelector 
             seasons={seasons}
             activeSeason={activeSeason}
@@ -71,27 +73,31 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
           />
         </div>
 
-        <div className="h-[450px] overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <ScrollArea className="h-full pr-4">
-            {viewMode === "grid" ? (
-              <EpisodeGridView 
-                episodes={paginatedEpisodes.items}
-                onPlayEpisode={onPlayEpisode}
-                currentEpisodeId={currentEpisodeId}
-              />
-            ) : (
-              <EpisodeListView 
-                episodes={paginatedEpisodes.items}
-                onPlayEpisode={onPlayEpisode}
-                currentEpisodeId={currentEpisodeId}
+            <div className="pb-4">
+              {viewMode === "grid" ? (
+                <EpisodeGridView 
+                  episodes={paginatedEpisodes.items}
+                  onPlayEpisode={onPlayEpisode}
+                  currentEpisodeId={currentEpisodeId}
+                />
+              ) : (
+                <EpisodeListView 
+                  episodes={paginatedEpisodes.items}
+                  onPlayEpisode={onPlayEpisode}
+                  currentEpisodeId={currentEpisodeId}
+                />
+              )}
+            </div>
+            
+            {paginatedEpisodes.totalPages > 1 && (
+              <EpisodePagination 
+                currentPage={currentPage}
+                totalPages={paginatedEpisodes.totalPages}
+                onPageChange={handlePageChange}
               />
             )}
-            
-            <EpisodePagination 
-              currentPage={currentPage}
-              totalPages={paginatedEpisodes.totalPages}
-              onPageChange={handlePageChange}
-            />
           </ScrollArea>
         </div>
       </div>
