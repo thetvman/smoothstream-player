@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Episode, Series } from "@/lib/types";
 import { Play, Clock, Calendar } from "lucide-react";
@@ -35,8 +34,13 @@ const EpisodeDetails: React.FC<EpisodeDetailsProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col bg-black/90 border-white/10 text-white overflow-hidden">
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => !open && onClose()}
+    >
+      <DialogContent 
+        className="sm:max-w-md md:max-w-lg lg:max-w-xl max-h-[90vh] flex flex-col bg-black/90 border-white/10 text-white overflow-hidden"
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
             {episode.name}
