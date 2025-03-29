@@ -95,21 +95,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {!isIOS && (
         <>
           <PlayerControls
-            videoRef={{ current: null }} // This prop is needed for the interface but unused
-            playerState={{
-              playing: playerState.playing,
-              currentTime: playerState.currentTime,
-              duration: playerState.duration,
-              volume: playerState.volume,
-              muted: playerState.muted,
-              loading: isLoading,
-              fullscreen: isFullscreen
-            }}
+            playing={playerState.playing}
+            muted={playerState.muted}
+            volume={playerState.volume}
+            currentTime={playerState.currentTime}
+            duration={playerState.duration}
+            isFullscreen={isFullscreen}
             onPlayPause={handlePlayPause}
-            onMute={handleMuteUnmute}
-            onVolumeChange={(vol) => handleVolumeChange([vol])}
-            onSeek={(time) => handleSeek([time])}
-            onFullscreen={handleToggleFullscreen}
+            onMuteUnmute={handleMuteUnmute}
+            onVolumeChange={handleVolumeChange}
+            onSeek={handleSeek}
+            onSeekStart={handleSeekMouseDown}
+            onSeekEnd={handleSeekMouseUp}
+            onToggleFullscreen={handleToggleFullscreen}
           />
 
           {channel && (
