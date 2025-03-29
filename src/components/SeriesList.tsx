@@ -8,6 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { paginateItems } from "@/lib/paginationUtils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
 
 interface SeriesListProps {
   seriesCategories: SeriesCategory[] | null;
@@ -29,7 +37,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 20,
+    itemsPerPage: 20, // Show 20 series per page
   });
 
   // Effect to initialize with the first category when data loads
@@ -169,6 +177,97 @@ const SeriesList: React.FC<SeriesListProps> = ({
     );
   };
 
+  // Render pagination controls
+  const renderPagination = () => {
+    if (paginatedSeries.totalPages <= 1) return null;
+    
+    return (
+      <div className="mt-4">
+        <Pagination>
+          <PaginationContent>
+            {paginatedSeries.currentPage > 1 && (
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
+                />
+              </PaginationItem>
+            )}
+            
+            {/* First page */}
+            {paginatedSeries.currentPage > 2 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(1)}>
+                  1
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Ellipsis for many pages */}
+            {paginatedSeries.currentPage > 3 && (
+              <PaginationItem>
+                <span className="flex h-9 w-9 items-center justify-center">...</span>
+              </PaginationItem>
+            )}
+            
+            {/* Previous page */}
+            {paginatedSeries.currentPage > 1 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}>
+                  {paginatedSeries.currentPage - 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Current page */}
+            <PaginationItem>
+              <PaginationLink isActive onClick={() => handlePageChange(paginatedSeries.currentPage)}>
+                {paginatedSeries.currentPage}
+              </PaginationLink>
+            </PaginationItem>
+            
+            {/* Next page */}
+            {paginatedSeries.currentPage < paginatedSeries.totalPages && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}>
+                  {paginatedSeries.currentPage + 1}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {/* Ellipsis for many pages */}
+            {paginatedSeries.currentPage < paginatedSeries.totalPages - 2 && (
+              <PaginationItem>
+                <span className="flex h-9 w-9 items-center justify-center">...</span>
+              </PaginationItem>
+            )}
+            
+            {/* Last page */}
+            {paginatedSeries.currentPage < paginatedSeries.totalPages - 1 && (
+              <PaginationItem>
+                <PaginationLink onClick={() => handlePageChange(paginatedSeries.totalPages)}>
+                  {paginatedSeries.totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+            
+            {paginatedSeries.currentPage < paginatedSeries.totalPages && (
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
+                />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
+        
+        <div className="text-xs text-center text-muted-foreground mt-2">
+          Showing {(paginatedSeries.currentPage - 1) * paginatedSeries.itemsPerPage + 1}-
+          {Math.min(paginatedSeries.currentPage * paginatedSeries.itemsPerPage, paginatedSeries.totalItems)} of {paginatedSeries.totalItems} series
+        </div>
+      </div>
+    );
+  };
+
   // Render series list
   const renderSeriesList = () => {
     if (isLoading) {
@@ -232,27 +331,7 @@ const SeriesList: React.FC<SeriesListProps> = ({
         ))}
 
         {/* Pagination */}
-        {paginatedSeries.totalPages > 1 && (
-          <div className="flex justify-center items-center space-x-2 mt-4">
-            <button
-              className="px-3 py-1 rounded bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
-              disabled={paginatedSeries.currentPage === 1}
-              onClick={() => handlePageChange(paginatedSeries.currentPage - 1)}
-            >
-              Previous
-            </button>
-            <span className="text-sm">
-              Page {paginatedSeries.currentPage} of {paginatedSeries.totalPages}
-            </span>
-            <button
-              className="px-3 py-1 rounded bg-secondary text-secondary-foreground text-sm disabled:opacity-50"
-              disabled={paginatedSeries.currentPage === paginatedSeries.totalPages}
-              onClick={() => handlePageChange(paginatedSeries.currentPage + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {renderPagination()}
       </div>
     );
   };
