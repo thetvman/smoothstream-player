@@ -46,7 +46,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-black overflow-hidden">
       <PlayerHeader 
         isVisible={showControls}
         onInfoToggle={handleShowInfo}
@@ -60,7 +60,7 @@ const PlayerView: React.FC<PlayerViewProps> = ({
         showInfo={showInfo}
       />
       
-      <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
+      <div className={`h-full flex ${isMobile ? 'flex-col' : ''} overflow-hidden`}>
         <div className={`${isMobile ? 'h-1/2' : 'flex-1'} flex items-center justify-center p-0 z-10`}>
           <div className="w-full h-full mx-auto relative">
             <VideoPlayer channel={channel} autoPlay />

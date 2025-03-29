@@ -67,7 +67,7 @@ const SeriesListItems: React.FC<SeriesListItemsProps> = ({
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5"
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 pb-6"
     >
       {items.map(series => (
         <motion.div key={series.id} variants={item}>

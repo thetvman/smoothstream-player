@@ -9,6 +9,7 @@ import SeasonsList from "./series/SeasonsList";
 import LoadSeasonsButton from "./series/LoadSeasonsButton";
 import NoSeriesSelected from "./series/NoSeriesSelected";
 import SeriesDetailsSkeleton from "./series/SeriesDetailsSkeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SeriesDetailsProps {
   series: Series | null;
@@ -47,16 +48,16 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
   };
 
   return (
-    <div className="p-6 h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <SeriesBanner series={series} />
       <SeriesMetadata series={series} />
 
-      <div className="mt-6 flex-1 overflow-hidden">
+      <ScrollArea className="flex-1 pr-4 mt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/5"
+          className="bg-gradient-to-br from-black/60 to-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/5 mb-6"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white">Episodes</h3>
@@ -81,7 +82,7 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
+      </ScrollArea>
     </div>
   );
 };
