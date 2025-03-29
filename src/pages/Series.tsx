@@ -14,6 +14,9 @@ import SeriesSidebar from "@/components/series/SeriesSidebar";
 import SeriesContentArea from "@/components/series/SeriesContentArea";
 import NoCredentialsView from "@/components/series/NoCredentialsView";
 
+// Import dialog components for the modal
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 const Series = () => {
   const navigate = useNavigate();
   const { 
@@ -130,26 +133,18 @@ const Series = () => {
           setSelectedSeries={setSelectedSeries}
         />
 
-        <AnimatePresence>
-          {selectedSeries && (
-            <motion.div 
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setSelectedSeries(null)}
-            >
-              <motion.div 
-                className="bg-gradient-to-b from-black/90 to-[#080810]/90 w-full max-w-4xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden border border-white/10"
-                onClick={(e) => e.stopPropagation()}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              >
+        {/* Replacing the previous modal with a Dialog component */}
+        <Dialog open={!!selectedSeries} onOpenChange={(open) => !open && setSelectedSeries(null)}>
+          <DialogContent 
+            className="bg-gradient-to-b from-black/95 to-[#080810]/95 p-0 border border-white/10 max-w-5xl w-[90vw] max-h-[90vh] overflow-hidden"
+            onInteractOutside={(e) => e.preventDefault()}
+          >
+            {selectedSeries && (
+              <div className="h-full">
                 <div className="p-4 flex justify-between items-center border-b border-white/10">
-                  <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 truncate max-w-[calc(100%-3rem)]">{selectedSeries.name}</h2>
+                  <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 truncate max-w-[calc(100%-3rem)]">
+                    {selectedSeries.name}
+                  </h2>
                   <button 
                     onClick={() => setSelectedSeries(null)}
                     className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
@@ -159,7 +154,7 @@ const Series = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="overflow-hidden h-[calc(90vh-6rem)] max-h-[700px]">
+                <div className="h-[calc(90vh-72px)]">
                   <SeriesDetails 
                     series={selectedSeries}
                     onPlayEpisode={handlePlayEpisode}
@@ -167,10 +162,10 @@ const Series = () => {
                     isLoading={isLoading && !selectedSeries.seasons}
                   />
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

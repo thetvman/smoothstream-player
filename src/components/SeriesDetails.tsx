@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Series } from "@/lib/types";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import SeriesContent from "./series/SeriesContent";
 import NoSeriesSelected from "./series/NoSeriesSelected";
 import SeriesDetailsSkeleton from "./series/SeriesDetailsSkeleton";
@@ -44,7 +44,7 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
 
   return (
     <motion.div 
-      className="h-full w-full overflow-hidden"
+      className="h-full"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

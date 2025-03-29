@@ -29,19 +29,21 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
       </div>
       
       {/* Scrollable content area for metadata and episodes */}
-      <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="py-4 px-1">
-          <SeriesMetadata series={series} />
-          
-          <EpisodeSection
-            series={series}
-            expandedSeason={expandedSeason}
-            onSeasonClick={onSeasonClick}
-            onPlayEpisode={onPlayEpisode}
-            onLoadSeasons={onLoadSeasons}
-          />
-        </div>
-      </ScrollArea>
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            <SeriesMetadata series={series} />
+            
+            <EpisodeSection
+              series={series}
+              expandedSeason={expandedSeason}
+              onSeasonClick={onSeasonClick}
+              onPlayEpisode={onPlayEpisode}
+              onLoadSeasons={onLoadSeasons}
+            />
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   );
 };

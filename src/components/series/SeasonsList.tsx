@@ -4,6 +4,7 @@ import { Season, Series } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tv, ChevronDown, ChevronUp, Play, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SeasonsListProps {
   seasons: Season[];
@@ -67,52 +68,54 @@ const SeasonsList: React.FC<SeasonsListProps> = ({
           <AnimatePresence>
             {expandedSeason === season.id && season.episodes && (
               <motion.div 
-                className="border-t border-white/10 bg-black/30 max-h-[300px] overflow-y-auto"
+                className="border-t border-white/10 bg-black/30"
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {season.episodes.map((episode, episodeIndex) => (
-                  <motion.div 
-                    key={episode.id}
-                    className="flex items-center p-3 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 last:border-b-0"
-                    onClick={() => onPlayEpisode(episode, series)}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ 
-                      opacity: 1, 
-                      x: 0,
-                      transition: { 
-                        delay: 0.1 + (episodeIndex * 0.03),
-                        duration: 0.3
-                      }
-                    }}
-                    whileHover={{ x: 5 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3 flex-shrink-0">
-                      <Play className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium text-white truncate">
-                          {episode.episode_number}. {episode.name}
-                        </div>
-                        <div className="flex items-center text-white/60 ml-2 text-sm flex-shrink-0">
-                          {episode.duration && (
-                            <div className="flex items-center">
-                              <Clock className="h-3.5 w-3.5 mr-1" />
-                              {episode.duration} min
-                            </div>
-                          )}
-                        </div>
+                <ScrollArea className="max-h-[300px]">
+                  {season.episodes.map((episode, episodeIndex) => (
+                    <motion.div 
+                      key={episode.id}
+                      className="flex items-center p-3 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 last:border-b-0"
+                      onClick={() => onPlayEpisode(episode, series)}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ 
+                        opacity: 1, 
+                        x: 0,
+                        transition: { 
+                          delay: 0.1 + (episodeIndex * 0.03),
+                          duration: 0.3
+                        }
+                      }}
+                      whileHover={{ x: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-3 flex-shrink-0">
+                        <Play className="h-4 w-4" />
                       </div>
-                      {episode.description && (
-                        <p className="text-xs text-white/50 truncate mt-1">{episode.description}</p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium text-white truncate">
+                            {episode.episode_number}. {episode.name}
+                          </div>
+                          <div className="flex items-center text-white/60 ml-2 text-sm flex-shrink-0">
+                            {episode.duration && (
+                              <div className="flex items-center">
+                                <Clock className="h-3.5 w-3.5 mr-1" />
+                                {episode.duration} min
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {episode.description && (
+                          <p className="text-xs text-white/50 truncate mt-1">{episode.description}</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </ScrollArea>
               </motion.div>
             )}
           </AnimatePresence>
