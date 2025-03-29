@@ -1,11 +1,13 @@
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePlayerTheme } from "@/lib/playerThemeStore";
+import { useAutoHideUI } from "@/hooks/useAutoHideUI";
+import { formatPlayerTime } from "@/lib/playerUtils";
 
 interface PlayerControlsProps {
   playing: boolean;
@@ -39,46 +41,19 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   onToggleFullscreen
 }) => {
   const isMobile = useIsMobile();
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { theme } = usePlayerTheme();
   
-  // Auto-hide controls after inactivity when playing
-  useEffect(() => {
-    if (playing) {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-      
-      setShowControls(true);
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    } else {
-      // Always show controls when paused
-      setShowControls(true);
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    }
-    
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, [playing, currentTime]);
+  // Use our auto-hide UI hook
+  const { isVisible: showControls, updateVisibilityOnPlayState } = useAutoHideUI({
+    initialVisibility: true,
+    hideDelay: 3000, // Hide controls after 3 seconds of inactivity
+    showOnPlay: true
+  });
   
-  const formatTime = (seconds: number): string => {
-    if (isNaN(seconds) || !isFinite(seconds)) {
-      return "00:00";
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    const formattedMinutes = String(minutes).padStart(2, '0');
-    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
-    return `${formattedMinutes}:${formattedSeconds}`;
-  };
+  // Update visibility when playing state changes
+  useEffect(() => {
+    updateVisibilityOnPlayState(playing);
+  }, [playing, updateVisibilityOnPlayState]);
 
   // Apply theme styles
   const controlsStyle = {
@@ -158,12 +133,12 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           </div>
           
           <div className={cn("text-sm", isFullscreen && "text-base ml-2")}>
-            <span>{formatTime(currentTime)}</span> 
-            <span className="text-white/70"> / {formatTime(duration)}</span>
+            <span>{formatPlayerTime(currentTime)}</span> 
+            <span className="text-white/70"> / {formatPlayerTime(duration)}</span>
           </div>
         </div>
 
-        {/* Fullscreen Button - Updated to be more prominent */}
+        {/* Fullscreen Button */}
         <Button 
           variant={isFullscreen ? "secondary" : "outline"}
           size="sm" 

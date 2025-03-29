@@ -71,3 +71,64 @@ export function setupAutoHideTimeout(
   
   return () => clearTimeout(timeout);
 }
+
+/**
+ * Check if device is in portrait orientation
+ */
+export function isPortraitOrientation(): boolean {
+  return window.matchMedia("(orientation: portrait)").matches;
+}
+
+/**
+ * Format duration from minutes to hours and minutes
+ */
+export function formatDuration(minutes: number): string {
+  if (!minutes) return '';
+  
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (remainingMinutes === 0) {
+    return `${hours} hr`;
+  }
+  
+  return `${hours} hr ${remainingMinutes} min`;
+}
+
+/**
+ * Generate placeholder image with initials
+ */
+export function generatePlaceholderImage(text: string, width = 300, height = 200): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  
+  if (!ctx) return '';
+  
+  // Background
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, width, height);
+  
+  // Text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${Math.floor(width / 8)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Get initials
+  const initials = text
+    .split(' ')
+    .filter(word => word.length > 0)
+    .slice(0, 2)
+    .map(word => word[0].toUpperCase())
+    .join('');
+  
+  ctx.fillText(initials, width / 2, height / 2);
+  
+  return canvas.toDataURL('image/png');
+}

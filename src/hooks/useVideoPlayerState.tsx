@@ -1,10 +1,11 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Channel } from "@/lib/types";
 import { usePlayerControls } from "./player/usePlayerControls";
 import { usePlayerEvents } from "./player/usePlayerEvents";
 import { usePlayerFullscreen } from "./player/usePlayerFullscreen";
 import { usePlayerUI } from "./player/usePlayerUI";
+import { useAutoHideUI } from "./useAutoHideUI";
 
 interface UseVideoPlayerStateProps {
   channel: Channel | null;
@@ -56,18 +57,25 @@ export function useVideoPlayerState({
   } = usePlayerFullscreen();
   
   const {
-    showControls,
-    setShowControls,
     isIOS,
     videoStats,
-    handleContainerTap,
     handleStatsUpdate
   } = usePlayerUI();
   
+  // Use auto-hide UI hook for controls
+  const { isVisible: showControls, updateVisibilityOnPlayState, show: showControlsUI } = useAutoHideUI({
+    initialVisibility: true,
+    hideDelay: 3000,
+    showOnPlay: true
+  });
+  
   // Handle fullscreen changes
-  useEffect(() => {
-    return setupScreenfullListeners();
-  }, [setupScreenfullListeners]);
+  const handleScreenfullChange = setupScreenfullListeners();
+  
+  // Handle tap on container
+  const handleContainerTap = () => {
+    showControlsUI();
+  };
 
   // Wrap the handleReady function to update loading state
   const handleReady = () => {
@@ -100,6 +108,6 @@ export function useVideoPlayerState({
     handlePause,
     handleStatsUpdate,
     handleContainerTap,
-    setShowControls
+    handleScreenfullChange
   };
 }

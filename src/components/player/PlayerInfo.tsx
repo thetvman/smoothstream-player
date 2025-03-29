@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import { getCurrentTime } from "@/lib/playerUtils";
+import { useAutoHideUI } from "@/hooks/useAutoHideUI";
 
 interface PlayerInfoProps {
   channel: {
@@ -25,8 +26,10 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({
   stats
 }) => {
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
-  const infoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [localVisible, setLocalVisible] = useState(isVisible);
+  const { isVisible: localVisible, updateVisibilityOnPlayState } = useAutoHideUI({
+    initialVisibility: isVisible,
+    hideDelay: 5000
+  });
   
   // Update current time
   useEffect(() => {
@@ -37,51 +40,10 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({
     return () => clearInterval(interval);
   }, []);
   
-  // Auto-hide info after 5 seconds
+  // Update visibility when parent visibility changes
   useEffect(() => {
-    // When parent visibility changes, update local visibility
-    setLocalVisible(isVisible);
-    
-    if (isVisible) {
-      // Clear any existing timeout
-      if (infoTimeoutRef.current) {
-        clearTimeout(infoTimeoutRef.current);
-      }
-      
-      // Set a new timeout to hide the info
-      infoTimeoutRef.current = setTimeout(() => {
-        setLocalVisible(false);
-      }, 5000);
-    }
-    
-    return () => {
-      if (infoTimeoutRef.current) {
-        clearTimeout(infoTimeoutRef.current);
-      }
-    };
-  }, [isVisible]);
-  
-  // Reset timeout on mouse move if info is visible
-  useEffect(() => {
-    const handleMouseMove = () => {
-      if (isVisible && !localVisible) {
-        setLocalVisible(true);
-      }
-      
-      if (isVisible && infoTimeoutRef.current) {
-        clearTimeout(infoTimeoutRef.current);
-        infoTimeoutRef.current = setTimeout(() => {
-          setLocalVisible(false);
-        }, 5000);
-      }
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isVisible, localVisible]);
+    updateVisibilityOnPlayState(!isVisible);
+  }, [isVisible, updateVisibilityOnPlayState]);
   
   return (
     <div 
