@@ -14,3 +14,18 @@ export interface EPGParsingOptions {
   singleChannelMode?: boolean;
   channelId?: string;
 }
+
+// New interface for channel in EPG guide
+export interface EPGChannel {
+  id: string;
+  name: string;
+  logo?: string;
+  programs: EPGProgram[];
+}
+
+// New interface for the guide data structure
+export interface EPGGuideData {
+  channels: EPGChannel[];
+  startTime: Date;
+  endTime: Date;
+}

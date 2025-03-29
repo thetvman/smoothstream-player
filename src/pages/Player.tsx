@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -12,6 +11,9 @@ import PlayerNavigation from "@/components/player/PlayerNavigation";
 import PlayerInfo from "@/components/player/PlayerInfo";
 import EPGPanel from "@/components/player/EPGPanel";
 import ChannelPreloader from "@/components/player/ChannelPreloader";
+import EPGModal from "@/components/player/EPGModal";
+import { Button } from "@/components/ui/button";
+import { ListFilter } from "lucide-react";
 
 const Player = () => {
   const { channelId } = useParams<{ channelId: string }>();
@@ -27,6 +29,7 @@ const Player = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   
   useEffect(() => {
     const savedPlaylist = localStorage.getItem("iptv-playlist");
@@ -214,6 +217,20 @@ const Player = () => {
               isVisible={showControls && !showInfo}
               isFullscreen={isFullscreen}
             />
+            
+            {showControls && !showInfo && (
+              <div className="absolute bottom-20 right-6 z-20">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-black/70 hover:bg-black/90 text-white"
+                  onClick={() => setShowGuide(true)}
+                >
+                  <ListFilter className="h-4 w-4 mr-2" />
+                  TV Guide
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -228,7 +245,18 @@ const Player = () => {
         />
       </div>
       
-      {/* Add preloader component for faster channel switching */}
+      <EPGModal
+        open={showGuide}
+        onOpenChange={setShowGuide}
+        channels={playlist?.channels || []}
+        currentChannel={channel}
+        onSelectChannel={(selectedChannel) => {
+          if (selectedChannel.id !== channel.id) {
+            navigate(`/player/${selectedChannel.id}`, { replace: true });
+          }
+        }}
+      />
+      
       {playlist && channel && (
         <ChannelPreloader 
           currentChannel={channel} 
