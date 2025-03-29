@@ -106,7 +106,8 @@ export function useVideoEvents({
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
-    const handleError = () => {
+    const handleError = (e: Event) => {
+      console.error("Video error:", e);
       setPlayerState(prev => ({ ...prev, loading: false }));
     };
     
@@ -126,6 +127,7 @@ export function useVideoEvents({
       setPlayerState(prev => ({ ...prev, loading: true }));
     };
     
+    // Add all event listeners
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("play", handlePlay);
     video.addEventListener("playing", handlePlaying);
@@ -138,6 +140,7 @@ export function useVideoEvents({
     video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("waiting", handleWaiting);
     
+    // Clean up event listeners on unmount
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("play", handlePlay);

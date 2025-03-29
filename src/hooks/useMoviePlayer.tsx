@@ -51,6 +51,7 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
     } else {
       video.play().catch((e) => {
         console.error("Failed to play:", e);
+        setError("Failed to play video. Please try again.");
       });
     }
   };
@@ -99,6 +100,8 @@ export function useMoviePlayer({ movie, autoPlay = true }: UseMoviePlayerProps) 
         video.load();
       }
     }
+    // Reset loading state
+    setPlayerState(prev => ({ ...prev, loading: true }));
   };
   
   return {
