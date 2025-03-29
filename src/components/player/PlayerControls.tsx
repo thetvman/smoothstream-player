@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2 } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -163,19 +163,27 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           </div>
         </div>
 
+        {/* Fullscreen Button - Updated to be more prominent */}
         <Button 
-          variant="ghost" 
-          size="icon" 
+          variant={isFullscreen ? "secondary" : "outline"}
+          size="sm" 
           onClick={onToggleFullscreen}
           className={cn(
-            isFullscreen ? "h-10 w-10" : "",
-            "hover:bg-primary/20 text-white rounded-full"
+            "hover:bg-primary/20 text-white rounded-md flex items-center gap-1",
+            isFullscreen ? "bg-primary/30" : "bg-black/50 border-white/20"
           )}
         >
-          {isFullscreen ? 
-            <Minimize2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} /> : 
-            <Maximize2 className={cn("h-5 w-5", isFullscreen && "h-6 w-6")} />
-          }
+          {isFullscreen ? (
+            <>
+              <Minimize className="h-4 w-4" />
+              <span className="hidden sm:inline">Exit</span>
+            </>
+          ) : (
+            <>
+              <Maximize className="h-4 w-4" />
+              <span className="hidden sm:inline">Fullscreen</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

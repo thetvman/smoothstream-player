@@ -1,6 +1,7 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Clock } from "lucide-react";
+import { getCurrentTime } from "@/lib/playerUtils";
 
 interface PlayerInfoProps {
   channel: {
@@ -23,14 +24,68 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isFullscreen = false,
   stats
 }) => {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const currentTime = `${hours}:${minutes}`;
+  const [currentTime, setCurrentTime] = useState(getCurrentTime());
+  const infoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [localVisible, setLocalVisible] = useState(isVisible);
+  
+  // Update current time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(getCurrentTime());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Auto-hide info after 5 seconds
+  useEffect(() => {
+    // When parent visibility changes, update local visibility
+    setLocalVisible(isVisible);
+    
+    if (isVisible) {
+      // Clear any existing timeout
+      if (infoTimeoutRef.current) {
+        clearTimeout(infoTimeoutRef.current);
+      }
+      
+      // Set a new timeout to hide the info
+      infoTimeoutRef.current = setTimeout(() => {
+        setLocalVisible(false);
+      }, 5000);
+    }
+    
+    return () => {
+      if (infoTimeoutRef.current) {
+        clearTimeout(infoTimeoutRef.current);
+      }
+    };
+  }, [isVisible]);
+  
+  // Reset timeout on mouse move if info is visible
+  useEffect(() => {
+    const handleMouseMove = () => {
+      if (isVisible && !localVisible) {
+        setLocalVisible(true);
+      }
+      
+      if (isVisible && infoTimeoutRef.current) {
+        clearTimeout(infoTimeoutRef.current);
+        infoTimeoutRef.current = setTimeout(() => {
+          setLocalVisible(false);
+        }, 5000);
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isVisible, localVisible]);
   
   return (
     <div 
-      className={`absolute bottom-20 left-4 transition-opacity duration-300 z-20 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`absolute bottom-20 left-4 transition-opacity duration-300 z-20 ${localVisible && isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       style={{ 
         marginBottom: isFullscreen ? '16px' : '0'
       }}
