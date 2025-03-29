@@ -152,8 +152,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [onPlaybackChange]);
 
-  const handleStatsUpdate = useCallback((stats: any) => {
-    setVideoStats(stats);
+  const handleStatsUpdate = useCallback((stats: {
+    resolution?: string;
+    frameRate?: number;
+    audioBitrate?: string;
+    audioChannels?: string;
+  }) => {
+    setVideoStats(prevStats => ({
+      resolution: stats.resolution !== undefined ? stats.resolution : prevStats.resolution,
+      frameRate: stats.frameRate !== undefined ? stats.frameRate : prevStats.frameRate,
+      audioBitrate: stats.audioBitrate !== undefined ? stats.audioBitrate : prevStats.audioBitrate,
+      audioChannels: stats.audioChannels !== undefined ? stats.audioChannels : prevStats.audioChannels
+    }));
   }, []);
 
   useHotkeys('space', (e) => {
@@ -238,7 +248,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         }}
         isLoading={isLoading}
         isFullscreen={isFullscreen}
-        onStatsUpdate={setVideoStats}
+        onStatsUpdate={handleStatsUpdate}
       />
 
       {!isIOS && (
