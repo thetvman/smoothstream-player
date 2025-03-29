@@ -31,23 +31,29 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] p-0 overflow-hidden bg-black text-white border border-white/10 shadow-2xl">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] p-0 overflow-hidden bg-black text-white border border-white/10 shadow-2xl rounded-2xl">
         <AnimatePresence>
           {isOpen && (
             <div className="relative flex flex-col h-full">
               {/* Backdrop image */}
               <div className="relative h-64 md:h-80">
                 {movie.backdrop ? (
-                  <img
+                  <motion.img
                     src={movie.backdrop}
                     alt={movie.name}
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover opacity-80"
+                    initial={{ scale: 1.1, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 0.8 }}
+                    transition={{ duration: 1.2 }}
                   />
                 ) : movie.logo ? (
-                  <img
+                  <motion.img
                     src={movie.logo}
                     alt={movie.name}
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover opacity-80"
+                    initial={{ scale: 1.1, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 0.8 }}
+                    transition={{ duration: 1.2 }}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-r from-gray-900 to-black flex items-center justify-center">
@@ -87,19 +93,19 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
                     transition={{ delay: 0.3 }}
                   >
                     {movie.year && (
-                      <Badge variant="outline" className="bg-white/10 backdrop-blur-md">
+                      <Badge className="bg-white/10 backdrop-blur-md border-none">
                         <CalendarIcon className="mr-1 h-3 w-3" />
                         {movie.year}
                       </Badge>
                     )}
                     {movie.duration && (
-                      <Badge variant="outline" className="bg-white/10 backdrop-blur-md">
+                      <Badge className="bg-white/10 backdrop-blur-md border-none">
                         <Clock className="mr-1 h-3 w-3" />
                         {movie.duration} min
                       </Badge>
                     )}
                     {movie.rating && (
-                      <Badge variant="outline" className="bg-white/10 backdrop-blur-md">
+                      <Badge className="bg-white/10 backdrop-blur-md border-none">
                         <Star className="mr-1 h-3 w-3 text-yellow-400" />
                         {movie.rating}
                       </Badge>
@@ -120,7 +126,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
                       <h3 className="text-sm font-medium mb-2 text-white/70">Genre</h3>
                       <div className="flex flex-wrap gap-2">
                         {movie.genre.split(',').map((genre, index) => (
-                          <Badge key={index} variant="secondary" className="bg-white/5 hover:bg-white/10">
+                          <Badge key={index} variant="secondary" className="bg-primary/10 hover:bg-primary/20 text-primary border-none">
                             {genre.trim()}
                           </Badge>
                         ))}
