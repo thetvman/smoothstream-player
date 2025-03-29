@@ -18,7 +18,7 @@ const SeriesItem: React.FC<SeriesItemProps> = ({
     <Card
       className={`cursor-pointer transition-all hover:scale-105 hover:shadow-lg ${
         isSelected ? "ring-2 ring-primary" : ""
-      } overflow-hidden bg-black/30 border-0`}
+      } overflow-hidden bg-black/30 border-white/10`}
       onClick={() => onSelect(series)}
     >
       <div className="relative aspect-[2/3] overflow-hidden">

@@ -23,14 +23,14 @@ const RecommendedSeries: React.FC<RecommendedSeriesProps> = ({ series, onSelect,
 
   return (
     <motion.div 
-      className="mb-8"
+      className="mb-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Recommended For You</h2>
-        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-bold">Recommended For You</h2>
+        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white text-xs">
           See all
         </Button>
       </div>
@@ -38,7 +38,7 @@ const RecommendedSeries: React.FC<RecommendedSeriesProps> = ({ series, onSelect,
       <Carousel className="w-full">
         <CarouselContent className="-ml-4">
           {series.map((series, index) => (
-            <CarouselItem key={series.id} className="pl-4 md:basis-1/4 lg:basis-1/5">
+            <CarouselItem key={series.id} className="pl-4 basis-1/2 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
               <motion.div 
                 className="cursor-pointer group"
                 initial={{ opacity: 0, y: 20 }}
@@ -59,7 +59,7 @@ const RecommendedSeries: React.FC<RecommendedSeriesProps> = ({ series, onSelect,
                   onLoad(series);
                 }}
               >
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden mb-3 bg-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.12)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300">
+                <div className="relative aspect-[2/3] rounded-md overflow-hidden mb-2 bg-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300">
                   {series.logo ? (
                     <img 
                       src={series.logo} 
@@ -86,17 +86,17 @@ const RecommendedSeries: React.FC<RecommendedSeriesProps> = ({ series, onSelect,
                     </motion.div>
                   </div>
                 </div>
-                <h3 className="font-medium text-sm truncate text-white">{series.name}</h3>
+                <h3 className="font-medium text-xs truncate text-white">{series.name}</h3>
                 <div className="flex text-xs text-gray-400 gap-2">
-                  {series.year && <span>{series.year}</span>}
-                  {series.rating && <span className="flex items-center"><Star className="h-3 w-3 text-yellow-500 mr-0.5" /> {series.rating}</span>}
+                  {series.year && <span className="text-xs">{series.year}</span>}
+                  {series.rating && <span className="flex items-center text-xs"><Star className="h-3 w-3 text-yellow-500 mr-0.5" /> {series.rating}</span>}
                 </div>
               </motion.div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2 bg-black/70 text-white hover:bg-black/90 border-none" />
-        <CarouselNext className="right-2 bg-black/70 text-white hover:bg-black/90 border-none" />
+        <CarouselPrevious className="left-1 w-6 h-6 bg-black/70 text-white hover:bg-black/90 border-none" />
+        <CarouselNext className="right-1 w-6 h-6 bg-black/70 text-white hover:bg-black/90 border-none" />
       </Carousel>
     </motion.div>
   );

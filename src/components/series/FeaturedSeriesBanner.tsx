@@ -26,7 +26,7 @@ const FeaturedSeriesBanner: React.FC<FeaturedSeriesBannerProps> = ({
 
   return (
     <motion.div 
-      className="relative w-full h-[50vh] overflow-hidden"
+      className="relative w-full h-[40vh] overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
@@ -71,13 +71,13 @@ const FeaturedSeriesBanner: React.FC<FeaturedSeriesBannerProps> = ({
       )}
       
       <motion.div 
-        className="absolute bottom-0 left-0 p-8 z-20 max-w-2xl"
+        className="absolute bottom-0 left-0 p-6 z-20 max-w-2xl"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.7 }}
       >
         <motion.h2 
-          className="text-4xl font-bold mb-3 text-white/90"
+          className="text-3xl font-bold mb-2 text-white/90"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.7, duration: 0.5 }}
@@ -86,7 +86,7 @@ const FeaturedSeriesBanner: React.FC<FeaturedSeriesBannerProps> = ({
         </motion.h2>
         
         <motion.div 
-          className="flex flex-wrap gap-3 mb-4"
+          className="flex flex-wrap gap-2 mb-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.5 }}
@@ -112,7 +112,7 @@ const FeaturedSeriesBanner: React.FC<FeaturedSeriesBannerProps> = ({
         
         {series.description && (
           <motion.p 
-            className="text-white/70 mb-6 line-clamp-3"
+            className="text-white/70 mb-4 line-clamp-2 text-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.5 }}
@@ -127,10 +127,10 @@ const FeaturedSeriesBanner: React.FC<FeaturedSeriesBannerProps> = ({
           transition={{ delay: 1.1, duration: 0.5 }}
         >
           <Button 
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 rounded-lg transition-all shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg transition-all shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
             onClick={handleViewDetails}
           >
-            <Tv className="h-5 w-5 mr-2" />
+            <Tv className="h-4 w-4 mr-2" />
             View Details
           </Button>
         </motion.div>

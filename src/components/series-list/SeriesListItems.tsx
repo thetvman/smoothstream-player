@@ -25,7 +25,7 @@ const SeriesListItems: React.FC<SeriesListItemsProps> = ({
 
   if (!items.length) {
     return (
-      <p className="text-muted-foreground text-center p-4">
+      <p className="text-muted-foreground text-center p-8 bg-white/5 rounded-lg">
         {searchQuery ? "No series match your search" : "No series in this category"}
       </p>
     );
