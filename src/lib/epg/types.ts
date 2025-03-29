@@ -1,5 +1,6 @@
 
 // EPG service type definitions
+import { Channel } from "@/lib/types";
 
 export interface EPGProgram {
   title: string;
