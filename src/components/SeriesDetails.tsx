@@ -43,13 +43,20 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
   };
 
   return (
-    <SeriesContent
-      series={series}
-      expandedSeason={expandedSeason}
-      onSeasonClick={handleSeasonClick}
-      onPlayEpisode={onPlayEpisode}
-      onLoadSeasons={handleLoadSeasons}
-    />
+    <motion.div 
+      className="h-full"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <SeriesContent
+        series={series}
+        expandedSeason={expandedSeason}
+        onSeasonClick={handleSeasonClick}
+        onPlayEpisode={onPlayEpisode}
+        onLoadSeasons={handleLoadSeasons}
+      />
+    </motion.div>
   );
 };
 

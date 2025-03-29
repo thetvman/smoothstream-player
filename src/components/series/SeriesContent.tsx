@@ -26,15 +26,17 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
       <SeriesBanner series={series} />
       <SeriesMetadata series={series} />
 
-      <ScrollArea className="flex-1 pr-4 mt-6 h-[calc(90vh-350px)]">
-        <EpisodeSection
-          series={series}
-          expandedSeason={expandedSeason}
-          onSeasonClick={onSeasonClick}
-          onPlayEpisode={onPlayEpisode}
-          onLoadSeasons={onLoadSeasons}
-        />
-      </ScrollArea>
+      <div className="flex-1 mt-6 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-450px)] min-h-[300px] pr-4">
+          <EpisodeSection
+            series={series}
+            expandedSeason={expandedSeason}
+            onSeasonClick={onSeasonClick}
+            onPlayEpisode={onPlayEpisode}
+            onLoadSeasons={onLoadSeasons}
+          />
+        </ScrollArea>
+      </div>
     </div>
   );
 };
