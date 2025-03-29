@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Series, Episode } from "@/lib/types";
 import { motion } from "framer-motion";
