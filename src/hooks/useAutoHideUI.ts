@@ -81,6 +81,7 @@ export function useAutoHideUI({
   
   return {
     isVisible,
+    setIsVisible, // Explicitly exposing the setter
     show,
     hide,
     toggle,

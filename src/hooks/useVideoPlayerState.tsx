@@ -63,7 +63,7 @@ export function useVideoPlayerState({
   } = usePlayerUI();
   
   // Use auto-hide UI hook for controls
-  const { isVisible: showControls, updateVisibilityOnPlayState, show: showControlsUI } = useAutoHideUI({
+  const { isVisible: showControls, updateVisibilityOnPlayState, show: showControlsUI, setIsVisible: setShowControls } = useAutoHideUI({
     initialVisibility: true,
     hideDelay: 3000,
     showOnPlay: true
@@ -108,6 +108,7 @@ export function useVideoPlayerState({
     handlePause,
     handleStatsUpdate,
     handleContainerTap,
-    handleScreenfullChange
+    handleScreenfullChange,
+    setShowControls
   };
 }

@@ -50,6 +50,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     handlePause,
     handleStatsUpdate,
     handleContainerTap,
+    handleScreenfullChange,
     setShowControls
   } = useVideoPlayerState({
     channel,
