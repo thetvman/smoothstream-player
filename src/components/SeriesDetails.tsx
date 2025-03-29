@@ -44,7 +44,7 @@ const SeriesDetails: React.FC<SeriesDetailsProps> = ({
 
   return (
     <motion.div 
-      className="h-full flex flex-col"
+      className="h-full w-full"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

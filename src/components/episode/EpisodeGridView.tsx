@@ -44,7 +44,7 @@ const EpisodeGridView: React.FC<EpisodeGridViewProps> = ({
               </div>
             </div>
             <div className="text-xs text-muted-foreground mb-1">Episode {episode.episode_number}</div>
-            <h4 className="font-medium text-sm truncate">{episode.name}</h4>
+            <h4 className="font-medium text-sm line-clamp-2">{episode.name}</h4>
           </CardContent>
         </Card>
       ))}

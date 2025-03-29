@@ -28,13 +28,13 @@ const EpisodeInfo: React.FC<EpisodeInfoProps> = ({
   if (!showInfo) return null;
   
   return (
-    <div className={`${isFullscreen ? 'absolute bottom-20 left-0 right-0 mx-4 z-30' : ''} p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md animate-fade-in`}>
+    <div className={`${isFullscreen ? 'absolute bottom-20 left-0 right-0 mx-4 z-30' : ''} p-6 bg-gray-900 rounded-lg border border-gray-800 shadow-md animate-fade-in max-h-[60vh] overflow-auto`}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-white">{series.name}</h2>
+          <h2 className="text-xl font-bold text-white line-clamp-2">{series.name}</h2>
         </div>
         <button 
-          className="text-gray-400 hover:text-white text-sm bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+          className="text-gray-400 hover:text-white text-sm bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded transition-colors flex-shrink-0 ml-2"
           onClick={onHideInfo}
         >
           Hide
@@ -65,11 +65,11 @@ const EpisodeInfo: React.FC<EpisodeInfoProps> = ({
           </div>
         </div>
         
-        <h3 className="text-lg font-semibold text-white">{episode.name}</h3>
+        <h3 className="text-lg font-semibold text-white line-clamp-2">{episode.name}</h3>
         
         {episode.description && (
-          <div className="text-gray-400 max-w-none">
-            <p>{episode.description}</p>
+          <div className="text-gray-400">
+            <p className="whitespace-normal break-words leading-relaxed">{episode.description}</p>
           </div>
         )}
 

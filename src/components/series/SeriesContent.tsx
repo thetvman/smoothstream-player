@@ -22,16 +22,17 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
   onLoadSeasons
 }) => {
   return (
-    <div className="flex flex-col h-full max-h-[80vh] overflow-hidden">
-      {/* Banner and metadata section with fixed height */}
+    <div className="flex flex-col max-h-[80vh] h-full">
+      {/* Banner section with fixed height */}
       <div className="flex-shrink-0">
         <SeriesBanner series={series} />
-        <SeriesMetadata series={series} />
       </div>
-
-      {/* Episode section with flexible height and scrolling */}
-      <div className="flex-1 mt-4 min-h-0">
-        <ScrollArea className="h-full pr-4">
+      
+      {/* Scrollable content area for metadata and episodes */}
+      <ScrollArea className="flex-1 pr-4">
+        <div className="py-4">
+          <SeriesMetadata series={series} />
+          
           <EpisodeSection
             series={series}
             expandedSeason={expandedSeason}
@@ -39,8 +40,8 @@ const SeriesContent: React.FC<SeriesContentProps> = ({
             onPlayEpisode={onPlayEpisode}
             onLoadSeasons={onLoadSeasons}
           />
-        </ScrollArea>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 };
