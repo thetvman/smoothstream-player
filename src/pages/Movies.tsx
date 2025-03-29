@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, MovieCategory, XtreamCredentials } from "@/lib/types";
@@ -6,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { safeJsonParse } from "@/lib/utils";
 import Layout from "@/components/Layout";
-import { ArrowLeft, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Search, Film, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { paginateItems } from "@/lib/paginationUtils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const Movies = () => {
   const navigate = useNavigate();
@@ -182,23 +187,26 @@ const Movies = () => {
 
   if (!credentials) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 text-center min-h-screen">
-        <p className="text-lg mb-4">No Xtream Codes credentials found</p>
-        <p className="text-muted-foreground mb-6">
-          Please load a playlist with Xtream Codes credentials to access movies
-        </p>
-        <button
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-          onClick={() => navigate("/")}
-        >
-          Go to Playlist
-        </button>
+      <div className="flex flex-col items-center justify-center p-6 text-center min-h-screen bg-black text-white">
+        <div className="mb-6 p-8 rounded-lg bg-black/40 backdrop-blur-lg border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+          <Film className="w-16 h-16 mx-auto mb-4 text-primary/80" />
+          <p className="text-2xl font-bold mb-4">No Credentials Found</p>
+          <p className="text-gray-400 mb-6">
+            Please load a playlist with Xtream Codes credentials to access movies
+          </p>
+          <Button
+            className="px-6 py-6 bg-primary/90 hover:bg-primary text-white rounded-md font-medium text-lg transition-all duration-300 hover:shadow-lg hover:scale-105"
+            onClick={() => navigate("/")}
+          >
+            Go to Playlist
+          </Button>
+        </div>
       </div>
     );
   }
   
   return (
-    <Layout withSidebar fullHeight maxWidth="full" className="bg-black text-white">
+    <Layout className="p-0 m-0 max-w-none bg-black/95 text-white">
       <MovieDetailModal 
         movie={selectedMovie}
         isOpen={isModalOpen}
@@ -206,155 +214,193 @@ const Movies = () => {
         onPlay={handlePlayMovie}
       />
       
-      <div className="w-64 border-r border-gray-800 bg-black h-screen flex-shrink-0 overflow-y-auto">
-        <div>
-          <div className="flex items-center mb-6 p-4">
-            <button 
-              onClick={() => navigate("/")}
-              className="mr-2 p-2 hover:bg-gray-800 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold">All Movies</h2>
-          </div>
-
-          <div className="px-4">
-            {isLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-full bg-gray-800" />
-                ))}
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {movieCategories?.map((category) => (
-                  <li key={category.id}>
-                    <button
-                      onClick={() => handleCategoryChange(category.id)}
-                      className={cn(
-                        "w-full text-left py-2 px-3 rounded-md text-sm transition-colors hover:bg-gray-800",
-                        activeCategory === category.id ? "bg-gray-800 font-medium" : "text-gray-400"
-                      )}
-                    >
-                      {category.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <div className="p-6 flex-shrink-0 border-b border-gray-800">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              {searchQuery
-                ? `Search Results: "${searchQuery}"`
-                : activeCategory && movieCategories
-                  ? movieCategories.find(c => c.id === activeCategory)?.name || "All Movies"
-                  : "All Movies"}
-            </h1>
-            
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  className="bg-gray-800 border-gray-700 pl-9 text-white w-64 h-9"
-                  placeholder="Search movies..."
-                  value={searchQuery}
-                  onChange={handleSearch}
-                />
+      <div className="flex flex-col min-h-screen">
+        {/* Header with glassmorphism effect */}
+        <div className="sticky top-0 z-10 backdrop-blur-xl bg-black/80 border-b border-white/10 shadow-md">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => navigate("/")}
+                  className="rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                  Movies
+                </h1>
               </div>
               
-              <button className="bg-gray-800 p-2 rounded-md">
-                <SlidersHorizontal className="w-5 h-5" />
-                <span className="sr-only">Filter</span>
-              </button>
+              <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  className="bg-white/5 border-white/10 pl-9 text-white w-full rounded-full focus:ring-primary"
+                  placeholder="Search movies..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e)}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="aspect-[2/3] w-full max-w-[280px] rounded-md bg-gray-800" />
-                  <Skeleton className="h-4 w-3/4 rounded bg-gray-800" />
+        <div className="flex flex-1 overflow-hidden">
+          {/* Categories sidebar with glassmorphism */}
+          <div className="hidden md:block w-64 overflow-y-auto p-4 backdrop-blur-md bg-black/40 border-r border-white/10">
+            <h2 className="text-lg font-medium mb-4 text-white/80">Categories</h2>
+            <ScrollArea className="h-[calc(100vh-160px)]">
+              <div className="space-y-1 pr-4">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full bg-white/5" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {movieCategories?.map((category) => (
+                      <motion.button
+                        key={category.id}
+                        onClick={() => handleCategoryChange(category.id)}
+                        className={cn(
+                          "w-full text-left py-3 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 flex justify-between items-center",
+                          activeCategory === category.id 
+                            ? "bg-white/10 border-l-4 border-primary" 
+                            : "border-l-4 border-transparent text-gray-400"
+                        )}
+                        whileHover={{ x: 5 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="font-medium truncate">{category.name}</span>
+                        <Badge variant="outline" className="bg-white/5">
+                          {category.movies.length}
+                        </Badge>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Main content area */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="container mx-auto px-4 py-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white">
+                  {searchQuery
+                    ? `Search: "${searchQuery}"`
+                    : activeCategory && movieCategories
+                      ? movieCategories.find(c => c.id === activeCategory)?.name || "All Movies"
+                      : "All Movies"}
+                </h2>
+                
+                {/* Mobile categories dropdown would go here */}
+              </div>
+
+              {isLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="space-y-3">
+                      <Skeleton className="aspect-[2/3] w-full rounded-xl bg-white/5" />
+                      <Skeleton className="h-5 w-3/4 rounded bg-white/5" />
+                      <Skeleton className="h-4 w-2/4 rounded bg-white/5" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {paginatedMovies.items.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-lg text-gray-400">
+              ) : paginatedMovies.items.length === 0 ? (
+                <div className="text-center py-16 my-16">
+                  <Film className="h-20 w-20 mx-auto mb-4 text-white/20" />
+                  <p className="text-xl text-white/60">
                     {searchQuery ? "No movies found matching your search" : "No movies available in this category"}
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    {paginatedMovies.items.map((movie) => (
-                      <div 
-                        key={movie.id} 
-                        className="group cursor-pointer"
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    {paginatedMovies.items.map((movie, index) => (
+                      <motion.div 
+                        key={movie.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: Math.min(0.05 * (index % 12), 0.5) }}
+                        className="group relative"
                         onClick={() => handleMovieClick(movie)}
+                        whileHover={{ scale: 1.03, y: -5 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <div className="aspect-[2/3] relative rounded-md overflow-hidden mb-2 mx-auto w-full max-w-[280px]">
+                        <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-black/40 shadow-lg group-hover:shadow-2xl transition-all duration-300">
                           {movie.logo ? (
                             <img
                               src={movie.logo}
                               alt={movie.name}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = "/placeholder.svg";
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                              <span className="text-gray-500">No Image</span>
+                            <div className="w-full h-full flex items-center justify-center bg-black/60">
+                              <Film className="h-16 w-16 text-white/30" />
                             </div>
                           )}
                           
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center">
-                            <button className="bg-white text-black font-medium mb-4 py-2 px-6 text-sm rounded hover:bg-gray-200 transition-colors">
-                              Details
-                            </button>
+                          {/* Movie overlay with gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <h3 className="font-medium text-white line-clamp-1 text-sm group-hover:text-lg transition-all duration-300">
+                                {movie.name}
+                              </h3>
+                              <div className="flex items-center text-xs text-gray-400 mt-1 space-x-2">
+                                {movie.year && <span>{movie.year}</span>}
+                                {movie.rating && (
+                                  <span className="flex items-center">
+                                    <span className="text-yellow-400 mr-1">★</span> 
+                                    {movie.rating}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <h3 className="font-medium text-sm line-clamp-1 max-w-[280px] mx-auto">{movie.name}</h3>
-                        <div className="flex items-center text-xs text-gray-400 mt-1 max-w-[280px] mx-auto">
-                          {movie.year && <span>{movie.year}</span>}
-                          {movie.duration && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <span>{movie.duration} min</span>
-                            </>
+                          
+                          {/* Play button that appears on hover */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <motion.div 
+                              className="bg-primary/80 text-white p-3 rounded-full"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Play className="h-8 w-8" />
+                            </motion.div>
+                          </div>
+                          
+                          {/* Genre badge */}
+                          {movie.genre && (
+                            <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                              {movie.genre.split(',').slice(0, 2).map((genre, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs bg-black/60 backdrop-blur-md">
+                                  {genre.trim()}
+                                </Badge>
+                              ))}
+                            </div>
                           )}
-                          {movie.rating && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <span>⭐ {movie.rating}</span>
-                            </>
-                          )}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                   
+                  {/* Pagination */}
                   {paginatedMovies.totalPages > 1 && (
-                    <div className="mt-8 flex justify-center">
+                    <div className="mt-12 flex justify-center">
                       <Pagination>
                         <PaginationContent>
                           {paginatedMovies.currentPage > 1 && (
                             <PaginationItem>
                               <PaginationPrevious 
                                 onClick={() => handlePageChange(paginatedMovies.currentPage - 1)}
-                                className="cursor-pointer"
+                                className="cursor-pointer bg-white/5 hover:bg-white/10 transition-colors"
                               />
                             </PaginationItem>
                           )}
@@ -378,7 +424,7 @@ const Movies = () => {
                                   <PaginationItem>
                                     <PaginationLink 
                                       onClick={() => handlePageChange(1)}
-                                      className="cursor-pointer"
+                                      className="cursor-pointer bg-white/5 hover:bg-white/10 transition-colors"
                                     >
                                       1
                                     </PaginationLink>
@@ -403,7 +449,7 @@ const Movies = () => {
                                   <PaginationItem>
                                     <PaginationLink 
                                       onClick={() => handlePageChange(paginatedMovies.totalPages)}
-                                      className="cursor-pointer"
+                                      className="cursor-pointer bg-white/5 hover:bg-white/10 transition-colors"
                                     >
                                       {paginatedMovies.totalPages}
                                     </PaginationLink>
@@ -417,7 +463,12 @@ const Movies = () => {
                                 <PaginationLink 
                                   isActive={pageNumber === paginatedMovies.currentPage}
                                   onClick={() => handlePageChange(pageNumber)}
-                                  className="cursor-pointer"
+                                  className={cn(
+                                    "cursor-pointer transition-colors",
+                                    pageNumber === paginatedMovies.currentPage 
+                                      ? "bg-primary text-white" 
+                                      : "bg-white/5 hover:bg-white/10"
+                                  )}
                                 >
                                   {pageNumber}
                                 </PaginationLink>
@@ -429,7 +480,7 @@ const Movies = () => {
                             <PaginationItem>
                               <PaginationNext 
                                 onClick={() => handlePageChange(paginatedMovies.currentPage + 1)}
-                                className="cursor-pointer"
+                                className="cursor-pointer bg-white/5 hover:bg-white/10 transition-colors"
                               />
                             </PaginationItem>
                           )}
@@ -439,8 +490,8 @@ const Movies = () => {
                   )}
                 </>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
